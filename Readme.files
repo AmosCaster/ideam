@@ -1,0 +1,34 @@
+Ideam files
+================================================================================
+
+|  --Credits.............................Credits file
+|  --Ideam.rdef..........................Resources file (text)
+|  --License.md..........................License
+|  --Makefile............................Makefile
+|  --Readme.files........................This file
+|  --Readme.md...........................Readme file
+|  --Roadmap.............................Rough roadmap
+|
+|  --app.................................Application binary storage
+|	+
+|	|  -- ...............................Empty until compilation
+|
+|  --locales.............................Localization files
+|	+
+|	|  --en.catkeys......................English locales
+|	|  --it.catkeys......................Italian locales
+|
+|  --src
+|	+ 
+|	|  --IdeamApp.cpp....................Main Application class
+|	|  --IdeamApp.h......................Main Application header
+|	|
+|	|  --ui..............................Graphical user interface classes
+|	|	+
+|	|	|  --IdeamWindow.cpp.............Main window class
+|	|	|  --IdeamWindow.h...............Main window header
+
+
+
+
+

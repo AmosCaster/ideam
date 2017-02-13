@@ -1,0 +1,26 @@
+Ideam Roadmap
+================================================================================
+
+0.0.1) Graphical window with menu
+
+done) Basic window application
+done) Compilation tested in g++/clang++
+done) About window
+________________________________________________________________________________
+
+
+0.0.2) Storing window placement
+
+0.0.3) Add ui elements
+
+0.0.4) Tab Interface
+
+0.1.0) Integrate Scintilla
+
+0.2.0) Storing window settings
+
+0.3.0) Project class & settings
+
+0.4.0) Build/Run/Debug interface
+
+0.5.0) Classes parser
