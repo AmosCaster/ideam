@@ -23,6 +23,11 @@ Ideam files
 |	|  --IdeamApp.cpp....................Main Application class
 |	|  --IdeamApp.h......................Main Application header
 |	|
+|	|  --helpers.........................Helper classes
+|	|	+
+|	|	|  --TPreferences.cpp............Settings storage helper class
+|	|	|  --TPreferences.h..............Settings storage helper header
+|	|
 |	|  --ui..............................Graphical user interface classes
 |	|	+
 |	|	|  --IdeamWindow.cpp.............Main window class

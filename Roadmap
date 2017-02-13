@@ -6,10 +6,13 @@ Ideam Roadmap
 done) Basic window application
 done) Compilation tested in g++/clang++
 done) About window
-________________________________________________________________________________
 
 
 0.0.2) Storing window placement
+
+done) Ui settings file
+
+________________________________________________________________________________
 
 0.0.3) Add ui elements
 

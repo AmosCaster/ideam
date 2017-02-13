@@ -16,6 +16,8 @@ APP_MIME_SIG := "application/x-vnd.Ideam-Ideam"
 
 SRCS :=  src/IdeamApp.cpp
 SRCS +=  src/ui/IdeamWindow.cpp
+SRCS +=  src/helpers/TPreferences.cpp
+
 
 RDEFS := Ideam.rdef
 
