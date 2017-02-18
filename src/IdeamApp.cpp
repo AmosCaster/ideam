@@ -102,15 +102,16 @@ int
 main(int argc, char* argv[])
 {
 	try {
-		new IdeamApp();
+		IdeamApp *app = new IdeamApp();
 
-		be_app->Run();
+		app->Run();
 
-		delete be_app;
+		delete app;
 
 	} catch (...) {
 
 		debugger("Exception caught.");
+
 	}
 
 	return 0;

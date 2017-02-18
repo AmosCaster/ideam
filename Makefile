@@ -21,16 +21,23 @@ SRCS +=  src/helpers/TPreferences.cpp
 
 RDEFS := Ideam.rdef
 
-LIBS = be localestub $(STDCPPLIBS)
+LIBS = be shared translation localestub $(STDCPPLIBS)
 
-LIBPATHS =
+# Include libraries based on arch
+ifeq ($(arch), x86_gcc2)
+LIBS +=	/boot/system/develop/lib/x86/libcolumnlistview.a
+else
+LIBS +=	/boot/system/develop/lib/libcolumnlistview.a
+endif
+
+LIBPATHS = /boot/home/config/non-packaged/develop/lib/
 
 SYSTEM_INCLUDE_PATHS = /system/develop/headers/private/shared/ \
 	/system/develop/headers/private/interface/ 
 
 OPTIMIZE := FULL
 
-CFLAGS := -Wall -Werror
+CFLAGS := -Wall #-Werror
 
 CXXFLAGS := -std=c++11
 
@@ -38,7 +45,8 @@ LOCALES := en it
 
 DEBUGGER := TRUE
 
-ifeq ($(CXX), $(filter $(CXX), clang++ c++-analyzer))
+
+ifneq ($(CXX), g++)
 SYSTEM_INCLUDE_PATHS += /system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++/ \
 	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++/x86_64-unknown-haiku/
 

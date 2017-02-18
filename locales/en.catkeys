@@ -1,7 +1,14 @@
-1	English	application/x-vnd.Ideam-Ideam	1043482379
+1	English	application/x-vnd.Ideam-Ideam	2608034647
 Help	IdeamWindow		Help
 About…	IdeamWindow		About…
 Project	IdeamWindow		Project
+Type	IdeamWindow		Type
+Notifications	IdeamWindow		Notifications
+Time	IdeamWindow		Time
+Show/Hide Output panes	IdeamWindow		Show/Hide Output panes
 uses	IdeamApp		uses
+Message	IdeamWindow		Message
 Quit	IdeamWindow		Quit
 Ideam	System name		Ideam
+Show/Hide Projects panes	IdeamWindow		Show/Hide Projects panes
+Projects	IdeamWindow		Projects
