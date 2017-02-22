@@ -15,29 +15,39 @@ TYPE := APP
 APP_MIME_SIG := "application/x-vnd.Ideam-Ideam"
 
 SRCS :=  src/IdeamApp.cpp
+SRCS +=  src/ui/Editor.cpp
 SRCS +=  src/ui/IdeamWindow.cpp
 SRCS +=  src/helpers/TPreferences.cpp
+SRCS +=  src/helpers/tabview/TabContainerView.cpp
+SRCS +=  src/helpers/tabview/TabManager.cpp
+SRCS +=  src/helpers/tabview/TabView.cpp
+
 
 
 RDEFS := Ideam.rdef
 
 LIBS = be shared translation localestub $(STDCPPLIBS)
+LIBS += scintilla columnlistview
 
 # Include libraries based on arch
-ifeq ($(arch), x86_gcc2)
-LIBS +=	/boot/system/develop/lib/x86/libcolumnlistview.a
-else
-LIBS +=	/boot/system/develop/lib/libcolumnlistview.a
-endif
+#ifeq ($(arch), x86_gcc2)
+#LIBS +=	/boot/system/develop/lib/x86/libcolumnlistview.a
+#else
+#LIBS +=	/boot/system/develop/lib/libcolumnlistview.a
+#endif
 
-LIBPATHS = /boot/home/config/non-packaged/develop/lib/
+LIBPATHS = $(shell findpaths -a "$(arch)" B_FIND_PATH_DEVELOP_LIB_DIRECTORY)
+#$(info LIBPATHS="$(LIBPATHS)")
 
-SYSTEM_INCLUDE_PATHS = /system/develop/headers/private/shared/ \
-	/system/develop/headers/private/interface/ 
+SYSTEM_INCLUDE_PATHS = \
+	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/shared) \
+	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/interface) \
+	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY scintilla)
+
 
 OPTIMIZE := FULL
 
-CFLAGS := -Wall #-Werror
+CFLAGS := -Wall -Werror
 
 CXXFLAGS := -std=c++11
 

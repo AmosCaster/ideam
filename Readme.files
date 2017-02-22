@@ -27,9 +27,20 @@ Ideam files
 |	|	+
 |	|	|  --TPreferences.cpp............Settings storage helper class
 |	|	|  --TPreferences.h..............Settings storage helper header
+|	|	|
+|	|	|  --tabview.....................Tabview classes
+|	|	|	+
+|	|	|	|  --TabContainerView.cpp....Tab container class
+|	|	|	|  --TabContainerView.h......Tab container header
+|	|	|	|  --TabManager.cpp..........Tab manager class
+|	|	|	|  --TabManager.h............Tab manager header
+|	|	|	|  --TabView.cpp.............Tab view class
+|	|	|	|  --TabView.h...............Tab view header
 |	|
 |	|  --ui..............................Graphical user interface classes
 |	|	+
+|	|	|  --Editor.cpp..................Scintilla editor class
+|	|	|  --Editor.h....................Main window header
 |	|	|  --IdeamWindow.cpp.............Main window class
 |	|	|  --IdeamWindow.h...............Main window header
 

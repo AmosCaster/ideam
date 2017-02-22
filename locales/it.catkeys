@@ -1,14 +1,18 @@
-1	English	application/x-vnd.Ideam-Ideam	2608034647
+1	English	application/x-vnd.Ideam-Ideam	1462189784
 Help	IdeamWindow		Aiuto
 About…	IdeamWindow		About…
+Double-click or middle-click to open new tab.	Tab Manager		Double-click or middle-click to open new tab.
+Show/Hide Output split	IdeamWindow		Mostra/Nascondi split di Output
 Project	IdeamWindow		Progetto
 Type	IdeamWindow		Tipo
 Notifications	IdeamWindow		Notifiche
 Time	IdeamWindow		Data
-Show/Hide Output panes	IdeamWindow		Mostra/Nascondi pannelli di Output
+New	IdeamWindow		Nuovo
 uses	IdeamApp		utilizza
 Message	IdeamWindow		Messaggio
 Quit	IdeamWindow		Esci
+Show/Hide Projects split	IdeamWindow		Mostra/Nascondi split dei Progetti
+Open	IdeamWindow		Apri
+File	IdeamWindow		File
 Ideam	System name		Ideam
-Show/Hide Projects panes	IdeamWindow		Mostra/Nascondi pannelli dei Progetti
 Projects	IdeamWindow		Progetti

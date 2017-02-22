@@ -18,11 +18,16 @@
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "IdeamWindow"
 
-static const auto kToolBarSize = 24;
-
+//static const auto kToolBarSize = 24;
+static float kProjectsWeight = 1.0f;
+static float kEditorWeight  = 3.0f;
+static float kOutputWeight  = 0.4f;
 
 
 enum {
+	// File menu
+	MSG_FILE_NEW				= 'fnew',
+	MSG_FILE_OPEN				= 'fope',
 
 	MSG_SHOW_HIDE_PROJECTS		= 'shpr',
 	MSG_SHOW_HIDE_OUTPUT		= 'shou',
@@ -39,6 +44,10 @@ IdeamWindow::IdeamWindow(BRect frame)
 		.AddMenu(B_TRANSLATE("Project"))
 			.AddItem(B_TRANSLATE("Quit"), B_QUIT_REQUESTED, 'Q')
 		.End()
+		.AddMenu(B_TRANSLATE("File"))
+			.AddItem(B_TRANSLATE("New"), MSG_FILE_NEW, 'N')
+			.AddItem(B_TRANSLATE("Open"), MSG_FILE_OPEN, 'O')
+		.End()
 		.AddMenu(B_TRANSLATE("Help"))
 			.AddItem(B_TRANSLATE("About" B_UTF8_ELLIPSIS), B_ABOUT_REQUESTED)
 		.End()
@@ -46,9 +55,9 @@ IdeamWindow::IdeamWindow(BRect frame)
 
 	// toolbar group
 	fProjectsButton = _LoadIconButton("ProjectsButton", MSG_SHOW_HIDE_PROJECTS,
-						111, true, B_TRANSLATE("Show/Hide Projects panes"));
+						111, true, B_TRANSLATE("Show/Hide Projects split"));
 	fOutputButton = _LoadIconButton("OutputButton", MSG_SHOW_HIDE_OUTPUT,
-						115, true, B_TRANSLATE("Show/Hide Output panes"));
+						115, true, B_TRANSLATE("Show/Hide Output split"));
 
 	BGroupLayout* toolBar = BLayoutBuilder::Group<>(B_VERTICAL, 0.1)
 		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, 1)
@@ -68,6 +77,20 @@ IdeamWindow::IdeamWindow(BRect frame)
 		fProjectsOutline, B_FRAME_EVENTS | B_WILL_DRAW, true, true, B_NO_BORDER);
 	fProjectsTabView->AddTab(fProjectsScroll);
 
+	// Editor tab & view
+	fEditorObjectList = new BObjectList<Editor>();
+	BMessage* dummyMessage = new BMessage('dumm');
+	fTabManager = new TabManager(BMessenger(this), dummyMessage);
+	fTabManager->TabGroup()->SetExplicitMaxSize(BSize(B_SIZE_UNSET, 30.0));
+
+	BGroupLayout* editorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.SetInsets(1, 1, 1, 1)
+		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+			.Add(fTabManager->TabGroup())
+			.Add(fTabManager->ContainerView())
+		)
+	;
+
 	// Output
 	fOutputTabView = new BTabView("OutputTabview");
 
@@ -80,7 +103,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Type"),
 								140.0, 140.0, 140.0, 0), kTypeColumn);
 
-	fNotificationText = new BTextView("NotificationText");
+//	fNotificationText = new BTextView("NotificationText");
 
 	fOutputTabView->AddTab(fNotificationsListView);
 
@@ -91,12 +114,12 @@ IdeamWindow::IdeamWindow(BRect frame)
 		.Add(toolBar)
 			.AddSplit(B_VERTICAL, 0) // output split
 				.AddSplit(B_HORIZONTAL, 0) // sidebar split
-					.Add(fProjectsTabView, 1.0f)
-					.AddGroup(B_VERTICAL, 0, 3.0f)  // Editor
-
+					.Add(fProjectsTabView, kProjectsWeight)
+					.AddGroup(B_VERTICAL, 0, kEditorWeight)  // Editor
+						.Add(editorTabsGroup)
 					.End() // editor group
 				.End() // sidebar split
-				.Add(fOutputTabView, 0.4f)
+				.Add(fOutputTabView, kOutputWeight)
 			.End() //  output split
 	;
 
@@ -104,7 +127,8 @@ IdeamWindow::IdeamWindow(BRect frame)
 
 IdeamWindow::~IdeamWindow()
 {
-
+	delete fEditorObjectList;
+	delete fTabManager;
 }
 
 void
@@ -113,6 +137,12 @@ IdeamWindow::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case B_ABOUT_REQUESTED:
 			be_app->PostMessage(B_ABOUT_REQUESTED);
+			break;
+		case B_REFS_RECEIVED:
+			_FilesOpen(message);
+			break;
+		case MSG_FILE_NEW:
+
 			break;
 		case MSG_SHOW_HIDE_PROJECTS:
 		{
@@ -138,14 +168,21 @@ IdeamWindow::MessageReceived(BMessage* message)
 	}
 }
 
+status_t
+IdeamWindow::_FilesOpen(BMessage* msg)
+{
+	return B_OK;
+}
+
 BIconButton*
 IdeamWindow::_LoadIconButton(const char* name, int32 msg,
 								int32 resIndex, bool enabled, const char* tooltip)
 {
 	BIconButton* button = new BIconButton(name, NULL, new BMessage(msg));
-	button->SetIcon(_LoadSizedVectorIcon(resIndex, kToolBarSize));
+//	button->SetIcon(_LoadSizedVectorIcon(resIndex, kToolBarSize));
+	button->SetIcon(resIndex);
 	button->SetEnabled(enabled);
-	button->SetToolTip(tooltip);
+//	button->SetToolTip(tooltip);
 
 	return button;
 }
