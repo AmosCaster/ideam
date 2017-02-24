@@ -47,7 +47,7 @@ SYSTEM_INCLUDE_PATHS = \
 
 OPTIMIZE := FULL
 
-CFLAGS := -Wall -Werror
+CFLAGS := -Wall #-Werror
 
 CXXFLAGS := -std=c++11
 

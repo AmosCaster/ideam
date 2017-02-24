@@ -19,7 +19,9 @@ public:
 		virtual	void			TabSelected(int32 tabIndex) = 0;
 		virtual	bool			HasFrames() = 0;
 		virtual	TabView*		CreateTabView() = 0;
+#if 0
 		virtual	void			DoubleClickOutsideTabs() = 0;
+#endif
 		virtual	void			UpdateTabScrollability(bool canScrollLeft,
 									bool canScrollRight) = 0;
 		virtual	void			SetToolTip(const BString& text) = 0;
@@ -44,7 +46,10 @@ public:
 
 			void				AddTab(const char* label, int32 index = -1);
 			void				AddTab(TabView* tab, int32 index = -1);
+#if 0
 			TabView*			RemoveTab(int32 index);
+#endif
+			TabView*			RemoveTab(int32 index, int32 currentSelection, bool isLast);
 			TabView*			TabAt(int32 index) const;
 
 			int32				IndexOf(TabView* tab) const;

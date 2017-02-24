@@ -42,6 +42,7 @@ private:
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);
 
 			BGroupLayout*		fRootLayout;
+			BGroupLayout*		fEditorTabsGroup;
 
 			BIconButton*		fProjectsButton;
 			BIconButton*		fOutputButton;
@@ -50,12 +51,15 @@ private:
 			BOutlineListView*	fProjectsOutline;
 			BScrollView*		fProjectsScroll;
 
-		BObjectList<Editor>*	fEditorObjectList;
 			TabManager*			fTabManager;
+
+		BObjectList<Editor>*	fEditorObjectList;
+			Editor*				fEditor;
+			int32				fCurrentEditorIndex;
 
 			BTabView*			fOutputTabView;
 			BColumnListView*	fNotificationsListView;
-			BTextView*			fNotificationText;
+//			BTextView*			fNotificationText;
 
 };
 

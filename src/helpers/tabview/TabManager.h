@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2010 Stephan Aßmus <superstippi@gmx.de>
  *
+ * Modified by:
+ *		A. Mosca, amoscaster@gmail.com
+ * 
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -8,11 +11,12 @@
 #define TAB_MANAGER_H
 
 #include <Messenger.h>
-#include <TabView.h>
+#include "TabView.h"
 
 enum {
-    TAB_CHANGED = 'tcha',
-    CLOSE_TAB = 'cltb'
+    TABMANAGER_TAB_CHANGED		= 'Ttch',
+    TABMANAGER_TAB_CLOSE		= 'Ttcl',
+    TABMANAGER_TAB_NEW_OPENED	= 'Ttno'
 };
 
 class BBitmap;
@@ -25,8 +29,8 @@ class TabManagerController;
 
 class TabManager {
 public:
-    							TabManager(const BMessenger& target,
-    								BMessage* newTabMessage);
+    							TabManager(const BMessenger& target);
+//    								, BMessage* newTabMessage);
 	virtual						~TabManager();
 
 			void				SetTarget(const BMessenger& target);
@@ -44,13 +48,12 @@ public:
 			int32				TabForView(const BView* containedView) const;
 			bool				HasView(const BView* containedView) const;
 
-			void				SelectTab(int32 tabIndex);
+			void				SelectTab(int32 tabIndex, bool isNewTab = false);
 			void				SelectTab(const BView* containedView);
 			int32				SelectedTabIndex() const;
 			void				CloseTab(int32 tabIndex);
 
-			void				AddTab(BView* view, const char* label,
-									int32 index = -1);
+			void				AddTab(BView* view, const char* label, int32 index = -1);
 			BView*				RemoveTab(int32 index);
 			int32				CountTabs() const;
 

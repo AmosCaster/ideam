@@ -2,6 +2,9 @@
  * Copyright (C) 2010 Rene Gollent <rene@gollent.com>
  * Copyright (C) 2010 Stephan Aßmus <superstippi@gmx.de>
  *
+ * Modified by:
+ *		A. Mosca, amoscaster@gmail.com
+ *
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -33,7 +36,6 @@
 
 
 const static BString kEmptyString;
-
 
 // #pragma mark - Helper classes
 
@@ -126,7 +128,7 @@ public:
 	}
 };
 
-
+#if 0
 class NewTabButton : public TabButton {
 public:
 	NewTabButton(BMessage* message)
@@ -154,7 +156,7 @@ public:
 			frame.right - inset, frame.bottom), 1, 1);
 	}
 };
-
+#endif
 
 class TabMenuTabButton : public TabButton {
 public:
@@ -369,9 +371,9 @@ public:
 	}
 
 	virtual TabView* CreateTabView();
-
+#if 0
 	virtual void DoubleClickOutsideTabs();
-
+#endif
 	virtual void UpdateTabScrollability(bool canScrollLeft,
 		bool canScrollRight)
 	{
@@ -400,10 +402,10 @@ public:
 	{
 		return fCloseButtonsAvailable;
 	}
-
+#if 0
 	void SetDoubleClickOutsideTabsMessage(const BMessage& message,
 		const BMessenger& target);
-
+#endif
 	void SetTabContainerGroup(TabContainerGroup* tabContainerGroup)
 	{
 		fTabContainerGroup = tabContainerGroup;
@@ -413,8 +415,10 @@ private:
 	TabManager*			fManager;
 	TabContainerGroup*	fTabContainerGroup;
 	bool				fCloseButtonsAvailable;
+#if 0
 	BMessage*			fDoubleClickOutsideTabsMessage;
 	BMessenger			fTarget;
+#endif
 	BString				fCurrentToolTip;
 };
 
@@ -577,8 +581,9 @@ WebTabView::MouseMoved(BPoint where, uint32 transit,
 	}
 
 	// Set the tool tip
+	#if 0
 	fController->SetToolTip(Label());
-
+	#endif
 	TabView::MouseMoved(where, transit, dragMessage);
 }
 
@@ -655,15 +660,20 @@ TabManagerController::TabManagerController(TabManager* manager)
 	:
 	fManager(manager),
 	fTabContainerGroup(NULL),
+#if 0
 	fCloseButtonsAvailable(false),
 	fDoubleClickOutsideTabsMessage(NULL)
+#endif
+	fCloseButtonsAvailable(true)
 {
 }
 
 
 TabManagerController::~TabManagerController()
 {
+#if 0
 	delete fDoubleClickOutsideTabsMessage;
+#endif
 }
 
 
@@ -673,13 +683,13 @@ TabManagerController::CreateTabView()
 	return new WebTabView(this);
 }
 
-
+#if 0
 void
 TabManagerController::DoubleClickOutsideTabs()
 {
 	fTarget.SendMessage(fDoubleClickOutsideTabsMessage);
 }
-
+#endif
 
 void
 TabManagerController::CloseTab(int32 index)
@@ -687,7 +697,7 @@ TabManagerController::CloseTab(int32 index)
 	fManager->CloseTab(index);
 }
 
-
+#if 0
 void
 TabManagerController::SetDoubleClickOutsideTabsMessage(const BMessage& message,
 	const BMessenger& target)
@@ -696,19 +706,20 @@ TabManagerController::SetDoubleClickOutsideTabsMessage(const BMessage& message,
 	fDoubleClickOutsideTabsMessage = new BMessage(message);
 	fTarget = target;
 }
-
+#endif
 
 // #pragma mark - TabManager
 
 
-TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
+TabManager::TabManager(const BMessenger& target)
     :
     fController(new TabManagerController(this)),
     fTarget(target)
 {
+#if 0
 	fController->SetDoubleClickOutsideTabsMessage(*newTabMessage,
 		be_app_messenger);
-
+#endif
 	fContainerView = new BView("web view container", 0);
 	fCardLayout = new BCardLayout();
 	fContainerView->SetLayout(fCardLayout);
@@ -733,9 +744,11 @@ TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
 		new BMessage(MSG_SCROLL_TABS_LEFT)));
 	fTabContainerGroup->AddScrollRightButton(new ScrollRightTabButton(
 		new BMessage(MSG_SCROLL_TABS_RIGHT)));
+#if 0
 	NewTabButton* newTabButton = new NewTabButton(newTabMessage);
 	newTabButton->SetTarget(be_app);
 	fTabContainerGroup->GroupLayout()->AddView(newTabButton, 0.0f);
+#endif
 	fTabContainerGroup->AddTabMenuButton(new TabMenuTabButton(
 		new BMessage(MSG_OPEN_TAB_MENU)));
 }
@@ -820,16 +833,26 @@ TabManager::HasView(const BView* containedView) const
 	return TabForView(containedView) >= 0;
 }
 
-
+/*
+ * Need to know if it is a new tab, so to load caret position
+ */
 void
-TabManager::SelectTab(int32 tabIndex)
+TabManager::SelectTab(int32 tabIndex, bool isNewTab)
 {
 	fCardLayout->SetVisibleItem(tabIndex);
 	fTabContainerView->SelectTab(tabIndex);
 
-    BMessage message(TAB_CHANGED);
-    message.AddInt32("tab index", tabIndex);
-    fTarget.SendMessage(&message);
+	if (isNewTab == true) {
+		BMessage message(TABMANAGER_TAB_NEW_OPENED);
+		message.AddInt32("index", tabIndex);
+		fTarget.SendMessage(&message);
+		
+	}
+	else {
+		BMessage message(TABMANAGER_TAB_CHANGED);
+		message.AddInt32("index", tabIndex);
+		fTarget.SendMessage(&message);
+    }
 }
 
 
@@ -852,8 +875,8 @@ TabManager::SelectedTabIndex() const
 void
 TabManager::CloseTab(int32 tabIndex)
 {
-    BMessage message(CLOSE_TAB);
-    message.AddInt32("tab index", tabIndex);
+    BMessage message(TABMANAGER_TAB_CLOSE);
+    message.AddInt32("index", tabIndex);
     fTarget.SendMessage(&message);
 }
 
@@ -862,7 +885,9 @@ void
 TabManager::AddTab(BView* view, const char* label, int32 index)
 {
 	fTabContainerView->AddTab(label, index);
+fCardLayout->Relayout(true);
 	fCardLayout->AddView(index, view);
+
 }
 
 
@@ -877,11 +902,14 @@ TabManager::RemoveTab(int32 index)
 	if (item == NULL)
 		return NULL;
 
-	TabView* tab = fTabContainerView->RemoveTab(index);
+	bool isLast = index == CountTabs();
+
+	TabView* tab = fTabContainerView->RemoveTab(index, SelectedTabIndex(), isLast);
 	delete tab;
 
 	BView* view = item->View();
 	delete item;
+
 	return view;
 }
 

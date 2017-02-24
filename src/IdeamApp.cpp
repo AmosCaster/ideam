@@ -50,14 +50,13 @@ IdeamApp::AboutRequested()
 		NULL
 	}; 
 
-	BString extraInfo;
-
 	window->AddCopyright(2017, "A. Mosca");
 	window->AddAuthors(authors);
+
+	BString extraInfo;
 	extraInfo << kApplicationName << " " << B_TRANSLATE("uses") << ":\n";
 	extraInfo << "Scintilla lib";
 	extraInfo << "\nCopyright 1998-2003 by Neil Hodgson <neilh@scintilla.org>";
-
 	extraInfo << "\n\nScintilla for Haiku";
 	extraInfo << "\nCopyright 2011 by Andrea Anzani <andrea.anzani@gmail.com>";
 	extraInfo << "\nCopyright 2014-2015 by Kacper Kasper <kacperkasper@gmail.com>";

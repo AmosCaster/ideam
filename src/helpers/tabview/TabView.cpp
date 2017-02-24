@@ -2,6 +2,9 @@
  * Copyright (C) 2010 Rene Gollent <rene@gollent.com>
  * Copyright (C) 2010 Stephan Aßmus <superstippi@gmx.de>
  *
+ * Modified by:
+ *		A. Mosca, amoscaster@gmail.com
+ *
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -45,7 +48,10 @@ BSize
 TabView::MinSize()
 {
 	BSize size(MaxSize());
+#if 0
 	size.width = 60.0f;
+#endif
+	size.width = 200.0f;
 	return size;
 }
 

@@ -2,28 +2,41 @@ Ideam Roadmap
 ================================================================================
 
 0.0.1) Graphical window with menu
+=================================
 
 done) Basic window application
 done) Compilation tested in g++/clang++
 done) About window
 
+] makefile-engine lacks $(CXXFLAGS) in .cpp pattern rules
+] g++ include path in clang++ compilation
+--------------------------------------------------------------------------------
 
 0.0.2) Storing window placement
+===============================
 
 done) Ui settings file
-
+--------------------------------------------------------------------------------
 
 0.0.3) Added ui elements
 
 done) Added toolbar & icons
+
+] BIconButton->SetIcon(int32) could let user set frame/size
+] ToolTips seems to leak, disable them for now
+
 done) Added Projects view
 done) Added Notifications view
-
-________________________________________________________________________________
-
-
+--------------------------------------------------------------------------------
 
 0.0.4) Tab Interface
+
+] Scintilla multitab has bad behaviour with layout
+] Tabview messes up menubar on resizing
+--------------------------------------------------------------------------------
+________________________________________________________________________________
+________________________________________________________________________________
+
 
 0.1.0) Integrate Scintilla
 

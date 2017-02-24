@@ -35,8 +35,9 @@ enum {
 
 IdeamWindow::IdeamWindow(BRect frame)
 	:
-	BWindow(frame, "Ideam", B_TITLED_WINDOW,
+	BWindow(frame, "Ideam", B_TITLED_WINDOW, B_ASYNCHRONOUS_CONTROLS |
 												B_QUIT_ON_WINDOW_CLOSE)
+	,fCurrentEditorIndex(-1)
 {
 	// Menu
 	BMenuBar* menuBar = new BMenuBar("menubar");
@@ -79,12 +80,12 @@ IdeamWindow::IdeamWindow(BRect frame)
 
 	// Editor tab & view
 	fEditorObjectList = new BObjectList<Editor>();
-	BMessage* dummyMessage = new BMessage('dumm');
-	fTabManager = new TabManager(BMessenger(this), dummyMessage);
+
+	fTabManager = new TabManager(BMessenger(this));
 	fTabManager->TabGroup()->SetExplicitMaxSize(BSize(B_SIZE_UNSET, 30.0));
 
-	BGroupLayout* editorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.SetInsets(1, 1, 1, 1)
+	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.SetInsets(0, 0, 0, 0)
 		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
 			.Add(fTabManager->TabGroup())
 			.Add(fTabManager->ContainerView())
@@ -116,7 +117,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 				.AddSplit(B_HORIZONTAL, 0) // sidebar split
 					.Add(fProjectsTabView, kProjectsWeight)
 					.AddGroup(B_VERTICAL, 0, kEditorWeight)  // Editor
-						.Add(editorTabsGroup)
+						.Add(fEditorTabsGroup)
 					.End() // editor group
 				.End() // sidebar split
 				.Add(fOutputTabView, kOutputWeight)
@@ -129,6 +130,7 @@ IdeamWindow::~IdeamWindow()
 {
 	delete fEditorObjectList;
 	delete fTabManager;
+
 }
 
 void
@@ -142,8 +144,18 @@ IdeamWindow::MessageReceived(BMessage* message)
 			_FilesOpen(message);
 			break;
 		case MSG_FILE_NEW:
+		{
+			entry_ref ref;
+			ref.set_name("New file");
+
+			fEditor = new Editor(&ref, BMessenger(this));
+
+			fTabManager->AddTab(fEditor, ref.name);
+			fEditorObjectList->AddItem(fEditor);
+			fTabManager->SelectTab(fTabManager->CountTabs() - 1);
 
 			break;
+		}
 		case MSG_SHOW_HIDE_PROJECTS:
 		{
 			if (fProjectsTabView->IsHidden()) {
@@ -162,6 +174,30 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+		case TABMANAGER_TAB_CHANGED:
+		{
+
+			break;
+		}
+		case TABMANAGER_TAB_CLOSE:
+		{
+			int32 index;
+			if (message->FindInt32("index", &index) != B_OK)
+				break;
+
+			BView* view = fTabManager->RemoveTab(index);
+			Editor* editorView = dynamic_cast<Editor*>(view);
+			fEditorObjectList->RemoveItem(fEditorObjectList->ItemAt(index));
+			delete editorView;
+
+			break;
+		}
+		case TABMANAGER_TAB_NEW_OPENED:
+		{
+
+			break;
+		}
+
 		default:
 			BWindow::MessageReceived(message);
 			break;

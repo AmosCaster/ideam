@@ -120,8 +120,10 @@ TabContainerView::MouseDown(BPoint where)
 		fLastMouseEventTab->MouseDown(where, buttons);
 	else {
 		if ((buttons & B_TERTIARY_MOUSE_BUTTON) != 0) {
+#if 0
 			// Middle click outside tabs should always open a new tab.
 			fController->DoubleClickOutsideTabs();
+#endif
 		} else if (clicks > 1)
 			fClickCount++;
 		else
@@ -142,7 +144,9 @@ TabContainerView::MouseUp(BPoint where)
 		// any tab. So even if fLastMouseEventTab has been reset to NULL
 		// because this tab was removed during mouse down, we wouldn't
 		// run the "outside tabs" code below.
+#if 0
 		fController->DoubleClickOutsideTabs();
+#endif
 		fClickCount = 0;
 	}
 	// Always check the tab under the mouse again, since we don't update
@@ -212,8 +216,9 @@ TabContainerView::AddTab(TabView* tab, int32 index)
 
 
 TabView*
-TabContainerView::RemoveTab(int32 index)
+TabContainerView::RemoveTab(int32 index, int32 currentSelection, bool isLast)
 {
+fprintf(stderr, "Enter RemoveTab - index: %d sel: %d\n", index, currentSelection);
 	TabLayoutItem* item
 		= dynamic_cast<TabLayoutItem*>(GroupLayout()->RemoveItem(index));
 
@@ -230,6 +235,8 @@ TabContainerView::RemoveTab(int32 index)
 
 	// Update tabs after or before the removed tab.
 	bool hasFrames = fController != NULL && fController->HasFrames();
+
+#if 0
 	item = dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index));
 	if (item) {
 		// This tab is behind the removed tab.
@@ -256,6 +263,38 @@ TabContainerView::RemoveTab(int32 index)
 			}
 		}
 	}
+#endif
+
+	// Index changed if last tab was closed
+	if (isLast)
+		item = dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index - 1));
+	else
+		item = dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index));
+	
+	if (item) {
+		TabView* tab = item->Parent();
+
+		tab->Update(index == 0 && hasFrames,
+			index == GroupLayout()->CountItems() - 2 && hasFrames,
+			tab == fSelectedTab);
+
+		// Manage selection (unselected tab removal too)
+		// Index is lower than ex-selection -1 (currentSelection is up-to-date)
+		if (index < currentSelection)
+			fController->TabSelected(currentSelection);
+		// Index is ex-selection - 1
+		else if (index == currentSelection)
+			fController->TabSelected(index);
+		// Index is selected tab
+		else if (removedTab == fSelectedTab) {
+			fSelectedTab = NULL;
+			SelectTab(tab);
+		}
+		// Index is higher than ex-selection, no reselect needed	
+	}
+	// To enable reopen if last tab was closed
+	if (index == 0 && isLast)
+		fSelectedTab = NULL;
 
 	Invalidate(dirty);
 	_ValidateTabVisibility();
@@ -452,8 +491,10 @@ TabContainerView::_MouseMoved(BPoint where, uint32 _transit,
 		if (fLastMouseEventTab)
 			fLastMouseEventTab->MouseMoved(where, B_ENTERED_VIEW, dragMessage);
 		else {
-			fController->SetToolTip(
-				B_TRANSLATE("Double-click or middle-click to open new tab."));
+			#if 0
+			fController->SetToolTip(B_TRANSLATE("middle-click to close tab."));
+			#endif
+			;
 		}
 	}
 }
