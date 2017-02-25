@@ -181,12 +181,13 @@ TabView::SetIsLast(bool isLast)
 void
 TabView::Update(bool isFirst, bool isLast, bool isFront)
 {
+
 	if (fIsFirst == isFirst && fIsLast == isLast && fIsFront == isFront)
 		return;
 	fIsFirst = isFirst;
 	fIsLast = isLast;
 	fIsFront = isFront;
-	
+
 	fLayoutItem->InvalidateContainer();
 }
 

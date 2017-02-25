@@ -726,7 +726,10 @@ TabManager::TabManager(const BMessenger& target)
 
 	fTabContainerView = new TabContainerView(fController);
 	fTabContainerGroup = new TabContainerGroup(fTabContainerView);
+#if 0
 	fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
+#endif
+	fTabContainerGroup->GroupLayout()->SetInsets(0, 0, 0, 0);
 
 	fController->SetTabContainerGroup(fTabContainerGroup);
 
@@ -833,12 +836,20 @@ TabManager::HasView(const BView* containedView) const
 	return TabForView(containedView) >= 0;
 }
 
+// Temporary hack to fix scintilla spoiling split
+// scintilla + BTabView has the same behaviour
+// BTextView + tabview is ok
+extern BRect dirtyFrameHack;
+
+
 /*
  * Need to know if it is a new tab, so to load caret position
  */
 void
 TabManager::SelectTab(int32 tabIndex, bool isNewTab)
 {
+	fCardLayout->SetFrame(dirtyFrameHack);
+
 	fCardLayout->SetVisibleItem(tabIndex);
 	fTabContainerView->SelectTab(tabIndex);
 
@@ -885,9 +896,9 @@ void
 TabManager::AddTab(BView* view, const char* label, int32 index)
 {
 	fTabContainerView->AddTab(label, index);
-fCardLayout->Relayout(true);
+	// 
+	fCardLayout->SetFrame(dirtyFrameHack);
 	fCardLayout->AddView(index, view);
-
 }
 
 

@@ -23,6 +23,7 @@ static float kProjectsWeight = 1.0f;
 static float kEditorWeight  = 3.0f;
 static float kOutputWeight  = 0.4f;
 
+BRect dirtyFrameHack;
 
 enum {
 	// File menu
@@ -84,6 +85,8 @@ IdeamWindow::IdeamWindow(BRect frame)
 	fTabManager = new TabManager(BMessenger(this));
 	fTabManager->TabGroup()->SetExplicitMaxSize(BSize(B_SIZE_UNSET, 30.0));
 
+	dirtyFrameHack = fTabManager->TabGroup()->Frame();
+
 	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
 		.SetInsets(0, 0, 0, 0)
 		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
@@ -91,6 +94,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 			.Add(fTabManager->ContainerView())
 		)
 	;
+
 
 	// Output
 	fOutputTabView = new BTabView("OutputTabview");
@@ -152,7 +156,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 
 			fTabManager->AddTab(fEditor, ref.name);
 			fEditorObjectList->AddItem(fEditor);
-			fTabManager->SelectTab(fTabManager->CountTabs() - 1);
+			fTabManager->SelectTab(fTabManager->CountTabs() - 1, true);
 
 			break;
 		}
