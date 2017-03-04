@@ -24,6 +24,7 @@ Compiling
 * Execute `make` in Ideam's top directory
 
 The executable is created in app subdirectory.
+(as of version 0.5.0 a slightly modified version of scintilla might be needed)
 
 License
 ----------------

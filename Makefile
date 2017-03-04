@@ -27,7 +27,7 @@ SRCS +=  src/helpers/tabview/TabView.cpp
 RDEFS := Ideam.rdef
 
 LIBS = be shared translation localestub $(STDCPPLIBS)
-LIBS += scintilla columnlistview
+LIBS += scintilla columnlistview tracker
 
 # Include libraries based on arch
 #ifeq ($(arch), x86_gcc2)
@@ -47,7 +47,7 @@ SYSTEM_INCLUDE_PATHS = \
 
 OPTIMIZE := FULL
 
-CFLAGS := -Wall #-Werror
+CFLAGS := -Wall -Werror
 
 CXXFLAGS := -std=c++11
 

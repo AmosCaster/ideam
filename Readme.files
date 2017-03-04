@@ -7,7 +7,7 @@ Ideam files
 |  --Makefile............................Makefile
 |  --Readme.files........................This file
 |  --Readme.md...........................Readme file
-|  --Roadmap.............................Rough roadmap
+|  --Roadmap.............................Rough roadmap + features + bugs
 |
 |  --app.................................Application binary storage
 |	+

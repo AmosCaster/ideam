@@ -51,7 +51,7 @@ public:
 			int32				TabForView(const BView* containedView) const;
 			bool				HasView(const BView* containedView) const;
 
-			void				SelectTab(int32 tabIndex, bool isNewTab = false);
+			void				SelectTab(int32 tabIndex);
 			void				SelectTab(const BView* containedView);
 			int32				SelectedTabIndex() const;
 			void				CloseTab(int32 tabIndex);

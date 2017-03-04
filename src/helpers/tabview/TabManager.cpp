@@ -10,8 +10,6 @@
 
 #include "TabManager.h"
 
-#include <stdio.h>
-
 #include <Application.h>
 #include <AbstractLayoutItem.h>
 #include <Bitmap.h>
@@ -26,6 +24,8 @@
 #include <Rect.h>
 #include <SpaceLayoutItem.h>
 #include <Window.h>
+
+#include <iostream>
 
 #include "TabContainerView.h"
 #include "TabView.h"
@@ -128,7 +128,6 @@ public:
 	}
 };
 
-#if 0
 class NewTabButton : public TabButton {
 public:
 	NewTabButton(BMessage* message)
@@ -156,7 +155,6 @@ public:
 			frame.right - inset, frame.bottom), 1, 1);
 	}
 };
-#endif
 
 class TabMenuTabButton : public TabButton {
 public:
@@ -362,6 +360,7 @@ public:
 
 	virtual void TabSelected(int32 index)
 	{
+std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 		fManager->SelectTab(index);
 	}
 
@@ -726,10 +725,9 @@ TabManager::TabManager(const BMessenger& target)
 
 	fTabContainerView = new TabContainerView(fController);
 	fTabContainerGroup = new TabContainerGroup(fTabContainerView);
-#if 0
+
 	fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
-#endif
-	fTabContainerGroup->GroupLayout()->SetInsets(0, 0, 0, 0);
+
 
 	fController->SetTabContainerGroup(fTabContainerGroup);
 
@@ -754,6 +752,7 @@ TabManager::TabManager(const BMessenger& target)
 #endif
 	fTabContainerGroup->AddTabMenuButton(new TabMenuTabButton(
 		new BMessage(MSG_OPEN_TAB_MENU)));
+
 }
 
 
@@ -840,30 +839,28 @@ TabManager::HasView(const BView* containedView) const
 // scintilla + BTabView has the same behaviour
 // BTextView + tabview is ok
 extern BRect dirtyFrameHack;
-
+#define DIRTY_HACK
 
 /*
  * Need to know if it is a new tab, so to load caret position
  */
 void
-TabManager::SelectTab(int32 tabIndex, bool isNewTab)
+TabManager::SelectTab(int32 tabIndex)
 {
+	if (tabIndex == SelectedTabIndex())
+		return;
+
+#if defined DIRTY_HACK
 	fCardLayout->SetFrame(dirtyFrameHack);
-
+#endif
 	fCardLayout->SetVisibleItem(tabIndex);
+	
 	fTabContainerView->SelectTab(tabIndex);
+std::cerr << __PRETTY_FUNCTION__ << " index: " << tabIndex << std::endl;	
 
-	if (isNewTab == true) {
-		BMessage message(TABMANAGER_TAB_NEW_OPENED);
-		message.AddInt32("index", tabIndex);
-		fTarget.SendMessage(&message);
-		
-	}
-	else {
-		BMessage message(TABMANAGER_TAB_CHANGED);
-		message.AddInt32("index", tabIndex);
-		fTarget.SendMessage(&message);
-    }
+	BMessage message(TABMANAGER_TAB_CHANGED);
+	message.AddInt32("index", tabIndex);
+	fTarget.SendMessage(&message);
 }
 
 
@@ -896,9 +893,15 @@ void
 TabManager::AddTab(BView* view, const char* label, int32 index)
 {
 	fTabContainerView->AddTab(label, index);
-	// 
+#if defined DIRTY_HACK
 	fCardLayout->SetFrame(dirtyFrameHack);
+#endif
 	fCardLayout->AddView(index, view);
+
+	// Assuming nothing went wrong ...
+	BMessage message(TABMANAGER_TAB_NEW_OPENED);
+	message.AddInt32("index", index);
+	fTarget.SendMessage(&message);
 }
 
 

@@ -10,8 +10,6 @@
 
 #include "TabView.h"
 
-#include <stdio.h>
-
 #include <Application.h>
 #include <Bitmap.h>
 #include <Button.h>
@@ -181,9 +179,10 @@ TabView::SetIsLast(bool isLast)
 void
 TabView::Update(bool isFirst, bool isLast, bool isFront)
 {
-
+#if 1
 	if (fIsFirst == isFirst && fIsLast == isLast && fIsFront == isFront)
 		return;
+#endif
 	fIsFirst = isFirst;
 	fIsLast = isLast;
 	fIsFront = isFront;

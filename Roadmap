@@ -1,38 +1,65 @@
 Ideam Roadmap
 ================================================================================
+legenda:
+) = Feature
+] = Bug/Enhancement
+  = To be done
+- = Partially done
++ = Done
+
 
 0.0.1) Graphical window with menu
 =================================
 
-done) Basic window application
-done) Compilation tested in g++/clang++
-done) About window
++) Basic window application
++) Compilation tested in g++/clang++
++) About window
 
-] makefile-engine lacks $(CXXFLAGS) in .cpp pattern rules
-] g++ include path in clang++ compilation
+-] makefile-engine lacks $(CXXFLAGS) in .cpp pattern rules
+-] g++ include path in clang++ compilation
 --------------------------------------------------------------------------------
 
 0.0.2) Storing window placement
 ===============================
 
-done) Ui settings file
++) Ui settings file
 --------------------------------------------------------------------------------
 
 0.0.3) Added ui elements
 
-done) Added toolbar & icons
++) Added toolbar & icons
 
 ] BIconButton->SetIcon(int32) could let user set frame/size
 ] ToolTips seems to leak, disable them for now
+] BTabView seems to leak
 
-done) Added Projects view
-done) Added Notifications view
++) Added Projects view
++) Added Notifications view
 --------------------------------------------------------------------------------
 
 0.0.4) Tab Interface
 
-] Scintilla multitab has bad behaviour with layout
-] Tabview messes up menubar on resizing
+-] Scintilla multitab has bad behaviour with layout
+] Menubar messed up on resizing
+--------------------------------------------------------------------------------
+
+0.0.5) File interface
+
++) Open file/s
++) Save file/s
++) Close file/s
++) Select file
++) Notifications
++) File Save,List,Close,Select in toolbar
++) Don't reopen same file or symlink
+-) On multifile open select first file (needs modified scintilla)
+
+] BFilePanel seems to leak
+] SetTabLabel seems to leak
+-] Scintilla automatically takes focus
+-] Scintilla may crash on leak detection
+] Tabs & Projects split interaction should be reworked
+
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

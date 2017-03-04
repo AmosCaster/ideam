@@ -20,7 +20,7 @@
 #include <NodeInfo.h>
 
 #include "TPreferences.h"
-#include <stdio.h>
+
 //
 // TPreferences::TPreferences
 //

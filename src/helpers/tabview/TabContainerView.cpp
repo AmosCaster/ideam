@@ -7,8 +7,6 @@
 
 #include "TabContainerView.h"
 
-#include <stdio.h>
-
 #include <Application.h>
 #include <AbstractLayoutItem.h>
 #include <Bitmap.h>
@@ -19,6 +17,8 @@
 #include <GroupView.h>
 #include <SpaceLayoutItem.h>
 #include <Window.h>
+
+#include <iostream>
 
 #include "TabView.h"
 
@@ -66,6 +66,37 @@ void
 TabContainerView::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
+			case B_MOUSE_WHEEL_CHANGED:
+			{
+				// No tabs, exit
+				if (fSelectedTab == nullptr)
+					break;
+
+				float deltaX = 0.0f;
+				float deltaY = 0.0f;
+				message->FindFloat("be:wheel_delta_x", &deltaX);
+				message->FindFloat("be:wheel_delta_y", &deltaY);
+
+				if (deltaX == 0.0f && deltaY == 0.0f)
+					return;
+
+				if (deltaY == 0.0f)
+					deltaY = deltaX;
+
+				int32 selection = IndexOf(fSelectedTab);
+				int32 numTabs = GroupLayout()->CountItems() - 1;
+
+				if (deltaY > 0  && selection < numTabs - 1) {
+					// move to the right tab.
+					SelectTab(selection + 1);
+
+				} else if (deltaY < 0 && selection > 0 && numTabs > 1) {
+					// move to the left tab.
+					SelectTab(selection - 1);
+
+				}
+				break;
+			}
 		default:
 			BGroupView::MessageReceived(message);
 	}
@@ -196,13 +227,16 @@ TabContainerView::AddTab(TabView* tab, int32 index)
 	bool hasFrames = fController != NULL && fController->HasFrames();
 	bool isFirst = index == 0 && hasFrames;
 	bool isLast = index == GroupLayout()->CountItems() - 1 && hasFrames;
+
 	bool isFront = fSelectedTab == NULL;
+
 	tab->Update(isFirst, isLast, isFront);
 
 	GroupLayout()->AddItem(index, tab->LayoutItem());
-
+#if 1
 	if (isFront)
 		SelectTab(tab);
+#endif
 	if (isLast) {
 		TabLayoutItem* item
 			= dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index - 1));
@@ -211,6 +245,7 @@ TabContainerView::AddTab(TabView* tab, int32 index)
 	}
 
 	SetFirstVisibleTabIndex(MaxFirstVisibleTabIndex());
+
 	_ValidateTabVisibility();
 }
 
@@ -218,7 +253,6 @@ TabContainerView::AddTab(TabView* tab, int32 index)
 TabView*
 TabContainerView::RemoveTab(int32 index, int32 currentSelection, bool isLast)
 {
-fprintf(stderr, "Enter RemoveTab - index: %d sel: %d\n", index, currentSelection);
 	TabLayoutItem* item
 		= dynamic_cast<TabLayoutItem*>(GroupLayout()->RemoveItem(index));
 
@@ -263,8 +297,7 @@ fprintf(stderr, "Enter RemoveTab - index: %d sel: %d\n", index, currentSelection
 			}
 		}
 	}
-#endif
-
+#else
 	// Index changed if last tab was closed
 	if (isLast)
 		item = dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index - 1));
@@ -292,6 +325,8 @@ fprintf(stderr, "Enter RemoveTab - index: %d sel: %d\n", index, currentSelection
 		}
 		// Index is higher than ex-selection, no reselect needed	
 	}
+#endif
+
 	// To enable reopen if last tab was closed
 	if (index == 0 && isLast)
 		fSelectedTab = NULL;
@@ -350,9 +385,11 @@ TabContainerView::SelectTab(TabView* tab)
 
 	if (fController != NULL) {
 		int32 index = -1;
+
 		if (fSelectedTab != NULL)
 			index = GroupLayout()->IndexOfItem(tab->LayoutItem());
 
+		// scan-build assumes 'Called C++ object pointer is null'
 		if (!tab->LayoutItem()->IsVisible())
 			SetFirstVisibleTabIndex(index);
 
@@ -380,6 +417,7 @@ TabContainerView::SetFirstVisibleTabIndex(int32 index)
 		index = 0;
 	if (index > MaxFirstVisibleTabIndex())
 		index = MaxFirstVisibleTabIndex();
+
 	if (fFirstVisibleTabIndex == index)
 		return;
 
@@ -490,12 +528,12 @@ TabContainerView::_MouseMoved(BPoint where, uint32 _transit,
 		fLastMouseEventTab = tab;
 		if (fLastMouseEventTab)
 			fLastMouseEventTab->MouseMoved(where, B_ENTERED_VIEW, dragMessage);
+#if 0
 		else {
-			#if 0
-			fController->SetToolTip(B_TRANSLATE("middle-click to close tab."));
-			#endif
-			;
+			fController->SetToolTip(
+				B_TRANSLATE("Double-click or middle-click to open new tab."));
 		}
+#endif
 	}
 }
 

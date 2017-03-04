@@ -1,18 +1,49 @@
-1	English	application/x-vnd.Ideam-Ideam	1462189784
+1	English	application/x-vnd.Ideam-Ideam	1177829999
+opened with index	IdeamWindow		aperto con indice
+Index 	IdeamWindow		Indice
+: NULL editor pointer	IdeamWindow		: NULL editor pointer
+length: 	IdeamWindow		lunghezza: 
 Help	IdeamWindow		Aiuto
 About…	IdeamWindow		About…
-Double-click or middle-click to open new tab.	Tab Manager		Double-click or middle-click to open new tab.
 Show/Hide Output split	IdeamWindow		Mostra/Nascondi split di Output
+Save current File	IdeamWindow		Salva il File corrente
+File not modified	IdeamWindow		File non modificato
 Project	IdeamWindow		Progetto
+Save changes to file \"%file%\"	IdeamWindow		Salva cambiamenti al file \"%file%\"
 Type	IdeamWindow		Tipo
 Notifications	IdeamWindow		Notifiche
+Don't save	Editor		Non salvare
 Time	IdeamWindow		Data
+Select previous File	IdeamWindow		Seleziona il File precedente
 New	IdeamWindow		Nuovo
+Close and save dialog	IdeamWindow		Chiudi e salva dialog
 uses	IdeamApp		utilizza
+ saved.	IdeamWindow		salvato.
+Select next File	IdeamWindow		Seleziona il File seguente
 Message	IdeamWindow		Messaggio
+ bytes -> 	IdeamWindow		 bytes -> 
+Save	IdeamWindow		Salva
 Quit	IdeamWindow		Esci
+File is Read-only	IdeamWindow		File di sola lettura
+Save	Editor		Salva
 Show/Hide Projects split	IdeamWindow		Mostra/Nascondi split dei Progetti
 Open	IdeamWindow		Apri
 File	IdeamWindow		File
+No file selected	IdeamWindow		Nessun file selezionato
 Ideam	System name		Ideam
+closed	IdeamWindow		chiuso
+Indexed File list	IdeamWindow		Lista dei File indicizzata
+Save all	IdeamWindow		Salva tutti
+Cancel	Editor		Cancella
+Don't save	IdeamWindow		Non salvare
+Save dialog	Editor		Salva dialog
+Save all Files	IdeamWindow		Salva tutti i File
+Close all	IdeamWindow		Chiudi tutti
+Close	IdeamWindow		Chiudi
+Save as…	IdeamWindow		Salva con nome…
+NULL editor pointer	IdeamWindow		NULL editor pointer
+Save changes to file	Editor		Salva i cambiamenti su file
+Cancel	IdeamWindow		Cancella
 Projects	IdeamWindow		Progetti
+ bytes written	IdeamWindow		 byte scritti
+Close File	IdeamWindow		Chiudi il File
