@@ -13,6 +13,12 @@ Ideam files
 |	+
 |	|  -- ...............................Empty until compilation
 |
+|  --data
+|	+ 
+|	|  --screenshot......................Screenshot images
+|	|	+
+|	|	|  --screenshot-0.0.6-ita.png....
+|
 |  --locales.............................Localization files
 |	+
 |	|  --en.catkeys......................English locales

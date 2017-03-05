@@ -1,6 +1,6 @@
 Ideam
 ================
-
+![Screenshot](https://github.com/AmosCaster/ideam/data/screenshot/screenshot-0.0.6-ita.png)
 
 Introducing
 ----------------
