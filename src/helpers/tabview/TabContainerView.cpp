@@ -19,6 +19,7 @@
 #include <Window.h>
 
 #include <iostream>
+#include <cassert>
 
 #include "TabView.h"
 
@@ -390,6 +391,7 @@ TabContainerView::SelectTab(TabView* tab)
 			index = GroupLayout()->IndexOfItem(tab->LayoutItem());
 
 		// scan-build assumes 'Called C++ object pointer is null'
+		assert(tab != nullptr);
 		if (!tab->LayoutItem()->IsVisible())
 			SetFirstVisibleTabIndex(index);
 

@@ -43,16 +43,65 @@ Editor::MessageReceived(BMessage* message)
 	}
 }
 
+bool
+Editor::CanClear()
+{
+	return ((SendMessage(SCI_GETSELECTIONEMPTY, UNSET, UNSET) == 0) &&
+				!IsReadOnly());
+}
+
+bool
+Editor::CanCopy()
+{
+	return (SendMessage(SCI_GETSELECTIONEMPTY, UNSET, UNSET) == 0);
+}
+bool
+Editor::CanCut()
+{
+	return ((SendMessage(SCI_GETSELECTIONEMPTY, UNSET, UNSET) == 0) &&
+				!IsReadOnly());
+}
+
+bool
+Editor::CanPaste()
+{
+	return SendMessage(SCI_CANPASTE, UNSET, UNSET);
+}
+
+bool
+Editor::CanRedo()
+{
+	return SendMessage(SCI_CANREDO, UNSET, UNSET);
+}
+
+bool
+Editor::CanUndo()
+{
+	return SendMessage(SCI_CANUNDO, UNSET, UNSET);
+}
+
+void
+Editor::Clear()
+{
+	SendMessage(SCI_CLEAR, UNSET, UNSET);
+}
+
+void
+Editor::Copy()
+{
+	SendMessage(SCI_COPY, UNSET, UNSET);
+}
+
+void
+Editor::Cut()
+{
+	SendMessage(SCI_CUT, UNSET, UNSET);
+}
+
 void
 Editor::GrabFocus()
 {
 	SendMessage(SCI_GRABFOCUS, UNSET, UNSET);
-}
-
-void
-Editor::SetTarget(const BMessenger& target)
-{
-    fTarget = target;
 }
 
 bool
@@ -133,7 +182,30 @@ Editor::NotificationReceived(SCNotification* notification)
 			fTarget.SendMessage(&message);	
 			break;
 		}
+		case SCN_UPDATEUI: {
+			// Selection has changed
+			if (notification->updated & SC_UPDATE_SELECTION) {
+				BMessage message(EDITOR_SELECTION_CHANGED);
+				message.AddRef("ref", &fFileRef);
+				fTarget.SendMessage(&message);
+			}
+			break;
+		}
 	}
+}
+
+void
+Editor::Paste()
+{
+	if (SendMessage(SCI_CANPASTE, UNSET, UNSET))
+		SendMessage(SCI_PASTE, UNSET, UNSET);
+}
+
+void
+Editor::Redo()
+{
+//	if (SendMessage(SCI_CANREDO, UNSET, UNSET))
+	SendMessage(SCI_REDO, UNSET, UNSET);
 }
 
 //TODO lock
@@ -172,6 +244,24 @@ Editor::SaveToFile()
 }
 
 void
+Editor::SelectAll()
+{
+	SendMessage(SCI_SELECTALL, UNSET, UNSET);
+}
+
+status_t
+Editor::SetFileRef(entry_ref* ref)
+{
+	if (ref == nullptr)
+		return B_ERROR;
+
+	fFileRef = *ref;
+	fName = BString(fFileRef.name);
+
+	return B_OK;
+}
+
+void
 Editor::SetReadOnly()
 {
 	if (IsModified()) {
@@ -196,5 +286,18 @@ Editor::SetReadOnly()
 	fModified = false;
 
 	SendMessage(SCI_SETREADONLY, 1, UNSET);
+}
+
+void
+Editor::SetTarget(const BMessenger& target)
+{
+    fTarget = target;
+}
+
+void
+Editor::Undo()
+{
+//	if (SendMessage(SCI_CANUNDO, UNSET, UNSET))
+	SendMessage(SCI_UNDO, UNSET, UNSET);
 }
 

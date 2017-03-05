@@ -845,7 +845,7 @@ extern BRect dirtyFrameHack;
  * Need to know if it is a new tab, so to load caret position
  */
 void
-TabManager::SelectTab(int32 tabIndex)
+TabManager::SelectTab(int32 tabIndex, bool isNew /*= false */)
 {
 	if (tabIndex == SelectedTabIndex())
 		return;
@@ -858,9 +858,11 @@ TabManager::SelectTab(int32 tabIndex)
 	fTabContainerView->SelectTab(tabIndex);
 std::cerr << __PRETTY_FUNCTION__ << " index: " << tabIndex << std::endl;	
 
-	BMessage message(TABMANAGER_TAB_CHANGED);
-	message.AddInt32("index", tabIndex);
-	fTarget.SendMessage(&message);
+	if (isNew == false) {
+		BMessage message(TABMANAGER_TAB_CHANGED);
+		message.AddInt32("index", tabIndex);
+		fTarget.SendMessage(&message);
+	}
 }
 
 

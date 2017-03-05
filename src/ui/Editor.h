@@ -14,6 +14,7 @@
 enum {
 	EDITOR_SAVEPOINT_REACHED	= 'Esre',
 	EDITOR_SAVEPOINT_LEFT		= 'Esle',
+	EDITOR_SELECTION_CHANGED	= 'Esch',
 };
 
 class Editor : public BScintillaView {
@@ -22,6 +23,15 @@ public:
 								~Editor();
 	virtual	void 				MessageReceived(BMessage* message);
 
+			bool				CanClear();
+			bool				CanCopy();
+			bool				CanCut();
+			bool				CanPaste();
+			bool				CanRedo();
+			bool				CanUndo();
+			void				Clear();
+			void				Copy();
+			void				Cut();
 			entry_ref*			FileRef() { return &fFileRef; }
 			void				GrabFocus();
 			bool				IsModified() { return fModified; }
@@ -29,9 +39,14 @@ public:
 			status_t			LoadFromFile();
 			BString				Name() const { return fName; }
 			void				NotificationReceived(SCNotification* n);
+			void				Paste();
+			void				Redo();
 			ssize_t				SaveToFile();
-			void				SetTarget(const BMessenger& target);
+			void				SelectAll();
+			status_t			SetFileRef(entry_ref* ref);
 			void				SetReadOnly();
+			void				SetTarget(const BMessenger& target);
+			void				Undo();
 //	virtual void				WindowActivated(bool active);
 private:
 

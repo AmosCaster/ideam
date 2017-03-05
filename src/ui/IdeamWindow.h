@@ -44,6 +44,7 @@ private:
 			status_t			_FileOpen(BMessage* msg);
 			status_t			_FileSave(int32	index);
 			void				_FileSaveAll();
+			status_t			_FileSaveAs(int32 selection, BMessage* message);
 			bool				_FilesNeedSave();
 			int32				_GetEditorIndex(entry_ref* ref);
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
@@ -53,13 +54,31 @@ private:
 			status_t			_UpdateLabel(int32 index, bool isModified);
 			void				_UpdateSelectionChange(int32 index);
 private:
+
+			BMenuItem*			fFileNewMenuItem;
+			BMenuItem*			fSaveMenuItem;
+			BMenuItem*			fSaveAsMenuItem;
+			BMenuItem*			fSaveAllMenuItem;
+			BMenuItem*			fCloseMenuItem;
+			BMenuItem*			fCloseAllMenuItem;
+			BMenuItem*			fUndoMenuItem;
+			BMenuItem*			fRedoMenuItem;
+			BMenuItem*			fCutMenuItem;
+			BMenuItem*			fCopyMenuItem;
+			BMenuItem*			fPasteMenuItem;
+			BMenuItem*			fDeleteMenuItem;
+			BMenuItem*			fSelectAllMenuItem;
+
 			BGroupLayout*		fRootLayout;
 			BGroupLayout*		fEditorTabsGroup;
 
 			BIconButton*		fProjectsButton;
 			BIconButton*		fOutputButton;
+			BIconButton*		fUndoButton;
+			BIconButton*		fRedoButton;
 			BIconButton*		fFileSaveButton;
 			BIconButton*		fFileSaveAllButton;
+			BIconButton*		fFileUnlockedButton;
 			BIconButton*		fFilePreviousButton;
 			BIconButton*		fFileNextButton;
 			BIconButton*		fFileCloseButton;
@@ -76,6 +95,7 @@ private:
 
 			BStatusBar*			fStatusBar;
 			BFilePanel*			fOpenPanel;
+			BFilePanel*			fSavePanel;
 
 			BTabView*			fOutputTabView;
 			BColumnListView*	fNotificationsListView;

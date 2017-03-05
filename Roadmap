@@ -59,7 +59,17 @@ legenda:
 -] Scintilla automatically takes focus
 -] Scintilla may crash on leak detection
 ] Tabs & Projects split interaction should be reworked
+--------------------------------------------------------------------------------
 
+0.0.6) File Interface
+
++) Edit menu
++) Read-only buffer
++) Recent file list
++) Save As
+
+] Scintilla context menu is untranslated
+] RecentFilesList seems to leak
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

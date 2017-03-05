@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	1177829999
+1	English	application/x-vnd.Ideam-Ideam	37680334
 opened with index	IdeamWindow		opened with index
 Index 	IdeamWindow		Index 
 : NULL editor pointer	IdeamWindow		: NULL editor pointer
@@ -7,17 +7,23 @@ Help	IdeamWindow		Help
 About…	IdeamWindow		About…
 Show/Hide Output split	IdeamWindow		Show/Hide Output split
 Save current File	IdeamWindow		Save current File
-File not modified	IdeamWindow		File not modified
 Project	IdeamWindow		Project
 Save changes to file \"%file%\"	IdeamWindow		Save changes to file \"%file%\"
+Cut	IdeamWindow		Cut
+Select all	IdeamWindow		Select all
+Delete	IdeamWindow		Delete
+Undo	IdeamWindow		Undo
 Type	IdeamWindow		Type
 Notifications	IdeamWindow		Notifications
 Don't save	Editor		Don't save
 Time	IdeamWindow		Time
 Select previous File	IdeamWindow		Select previous File
 New	IdeamWindow		New
+Redo	IdeamWindow		Redo
+Paste	IdeamWindow		Paste
 Close and save dialog	IdeamWindow		Close and save dialog
 uses	IdeamApp		uses
+Set buffer read-only	IdeamWindow		Set buffer read-only
  saved.	IdeamWindow		 saved.
 Select next File	IdeamWindow		Select next File
 Message	IdeamWindow		Message
@@ -30,9 +36,11 @@ Show/Hide Projects split	IdeamWindow		Show/Hide Projects split
 Open	IdeamWindow		Open
 File	IdeamWindow		File
 No file selected	IdeamWindow		No file selected
+Open recent…	IdeamWindow		Open recent…
 Ideam	System name		Ideam
 closed	IdeamWindow		closed
 Indexed File list	IdeamWindow		Indexed File list
+Copy	IdeamWindow		Copy
 Save all	IdeamWindow		Save all
 Cancel	Editor		Cancel
 Don't save	IdeamWindow		Don't save
@@ -41,6 +49,7 @@ Save all Files	IdeamWindow		Save all Files
 Close all	IdeamWindow		Close all
 Close	IdeamWindow		Close
 Save as…	IdeamWindow		Save as…
+Edit	IdeamWindow		Edit
 NULL editor pointer	IdeamWindow		NULL editor pointer
 Save changes to file	Editor		Save changes to file
 Cancel	IdeamWindow		Cancel

@@ -11,7 +11,9 @@
 #include <IconUtils.h>
 #include <LayoutBuilder.h>
 #include <MenuBar.h>
+#include <Path.h>
 #include <PopUpMenu.h>
+#include <RecentItems.h>
 #include <Resources.h>
 #include <SeparatorView.h>
 
@@ -21,7 +23,11 @@
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "IdeamWindow"
 
-//#define MULTIFILE_OPEN_SELECT_FIRST_FILE
+#define MULTIFILE_OPEN_SELECT_FIRST_FILE
+
+extern const char* kApplicationSignature;
+extern const char* kApplicationName;
+const auto kRecentFilesNumber = 14 + 1;
 
 // If enabled check menu open point
 //static const auto kToolBarSize = 29;
@@ -36,20 +42,26 @@ BRect dirtyFrameHack;
 
 enum {
 	// File menu
-	MSG_FILE_NEW				= 'fnew',
-	MSG_FILE_OPEN				= 'fope',
-	MSG_FILE_SAVE				= 'fsav',
+	MSG_FILE_NEW				= 'fine',
+	MSG_FILE_OPEN				= 'fiop',
+	MSG_FILE_SAVE				= 'fisa',
 	MSG_FILE_SAVE_AS			= 'fsas',
 	MSG_FILE_SAVE_ALL			= 'fsal',
-	MSG_FILE_CLOSE				= 'fclo',
+	MSG_FILE_CLOSE				= 'ficl',
 	MSG_FILE_CLOSE_ALL			= 'fcal',
 
+	// Edit menu
+	MSG_TEXT_DELETE				= 'tede',
+
 	// Toolbar
+	MSG_BUFFER_LOCK				= 'bulo',
 	MSG_FILE_MENU_SHOW			= 'fmsh',
 	MSG_FILE_NEXT_SELECTED		= 'fnse',
 	MSG_FILE_PREVIOUS_SELECTED	= 'fpse',
 	MSG_SHOW_HIDE_PROJECTS		= 'shpr',
 	MSG_SHOW_HIDE_OUTPUT		= 'shou',
+
+	MSG_SELECT_TAB				= 'seta'
 };
 
 IdeamWindow::IdeamWindow(BRect frame)
@@ -59,36 +71,93 @@ IdeamWindow::IdeamWindow(BRect frame)
 {
 	// Menu
 	BMenuBar* menuBar = new BMenuBar("menubar");
-	BLayoutBuilder::Menu<>(menuBar)
-		.AddMenu(B_TRANSLATE("Project"))
-			.AddItem(B_TRANSLATE("Quit"), B_QUIT_REQUESTED, 'Q')
-		.End()
-		.AddMenu(B_TRANSLATE("File"))
-			.AddItem(B_TRANSLATE("New"), MSG_FILE_NEW).SetEnabled(false)
-			.AddItem(B_TRANSLATE("Open"), MSG_FILE_OPEN, 'O')
-			.AddSeparator()
-			.AddItem(B_TRANSLATE("Save"), MSG_FILE_SAVE, 'S')
-			.AddItem(B_TRANSLATE("Save as" B_UTF8_ELLIPSIS), MSG_FILE_SAVE_AS)
-			.AddItem(B_TRANSLATE("Save all"), MSG_FILE_SAVE_ALL, 'S', B_SHIFT_KEY)
-			.AddSeparator()
-			.AddItem(B_TRANSLATE("Close"), MSG_FILE_CLOSE, 'W')
-			.AddItem(B_TRANSLATE("Close all"), MSG_FILE_CLOSE_ALL, 'W', B_SHIFT_KEY)
-		.End()
-		.AddMenu(B_TRANSLATE("Help"))
-			.AddItem(B_TRANSLATE("About" B_UTF8_ELLIPSIS), B_ABOUT_REQUESTED)
-		.End()
-	.End();
+
+	BMenu* menu = new BMenu(B_TRANSLATE("Project"));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("Quit"),
+		new BMessage(B_QUIT_REQUESTED), 'Q'));
+	menuBar->AddItem(menu);
+
+	menu = new BMenu(B_TRANSLATE("File"));
+	menu->AddItem(fFileNewMenuItem = new BMenuItem(B_TRANSLATE("New"),
+		new BMessage(MSG_FILE_NEW)));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("Open"),
+		new BMessage(MSG_FILE_OPEN), 'O'));
+	menu->AddItem(new BMenuItem(BRecentFilesList::NewFileListMenu(
+			B_TRANSLATE("Open recent" B_UTF8_ELLIPSIS), nullptr, nullptr, this,
+			kRecentFilesNumber, true, nullptr, kApplicationSignature), nullptr));
+	menu->AddSeparatorItem();
+	menu->AddItem(fSaveMenuItem = new BMenuItem(B_TRANSLATE("Save"),
+		new BMessage(MSG_FILE_SAVE), 'S'));
+	menu->AddItem(fSaveAsMenuItem = new BMenuItem(B_TRANSLATE("Save as" B_UTF8_ELLIPSIS),
+		new BMessage(MSG_FILE_SAVE_AS)));
+	menu->AddItem(fSaveAllMenuItem = new BMenuItem(B_TRANSLATE("Save all"),
+		new BMessage(MSG_FILE_SAVE_ALL), 'S', B_SHIFT_KEY));
+	menu->AddSeparatorItem();
+	menu->AddItem(fCloseMenuItem = new BMenuItem(B_TRANSLATE("Close"),
+		new BMessage(MSG_FILE_CLOSE), 'W'));
+	menu->AddItem(fCloseAllMenuItem = new BMenuItem(B_TRANSLATE("Close all"),
+		new BMessage(MSG_FILE_CLOSE_ALL), 'W', B_SHIFT_KEY));
+	fFileNewMenuItem->SetEnabled(false);
+
+	fSaveMenuItem->SetEnabled(false);
+	fSaveAsMenuItem->SetEnabled(false);
+	fSaveAllMenuItem->SetEnabled(false);
+	fCloseMenuItem->SetEnabled(false);
+	fCloseAllMenuItem->SetEnabled(false);
+
+	menuBar->AddItem(menu);
+
+	menu = new BMenu(B_TRANSLATE("Edit"));
+	menu->AddItem(fUndoMenuItem = new BMenuItem(B_TRANSLATE("Undo"),
+		new BMessage(B_UNDO), 'Z'));
+	menu->AddItem(fRedoMenuItem = new BMenuItem(B_TRANSLATE("Redo"),
+		new BMessage(B_REDO), 'Z', B_SHIFT_KEY));
+	menu->AddSeparatorItem();
+	menu->AddItem(fCutMenuItem = new BMenuItem(B_TRANSLATE("Cut"),
+		new BMessage(B_CUT), 'X'));
+	menu->AddItem(fCopyMenuItem = new BMenuItem(B_TRANSLATE("Copy"),
+		new BMessage(B_COPY), 'C'));
+	menu->AddItem(fPasteMenuItem = new BMenuItem(B_TRANSLATE("Paste"),
+		new BMessage(B_PASTE), 'V'));
+	menu->AddItem(fDeleteMenuItem = new BMenuItem(B_TRANSLATE("Delete"),
+		new BMessage(MSG_TEXT_DELETE), 'D'));
+	menu->AddSeparatorItem();
+	menu->AddItem(fSelectAllMenuItem = new BMenuItem(B_TRANSLATE("Select all"),
+		new BMessage(B_SELECT_ALL), 'A'));
+
+	fUndoMenuItem->SetEnabled(false);
+	fRedoMenuItem->SetEnabled(false);
+	fCutMenuItem->SetEnabled(false);
+	fCopyMenuItem->SetEnabled(false);
+	fPasteMenuItem->SetEnabled(false);
+	fDeleteMenuItem->SetEnabled(false);
+	fSelectAllMenuItem->SetEnabled(false);
+
+	menuBar->AddItem(menu);
+
+	menu = new BMenu(B_TRANSLATE("Help"));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("About" B_UTF8_ELLIPSIS),
+		new BMessage(B_ABOUT_REQUESTED)));
+
+	menuBar->AddItem(menu);
 
 	// toolbar group
 	fProjectsButton = _LoadIconButton("ProjectsButton", MSG_SHOW_HIDE_PROJECTS,
 						111, true, B_TRANSLATE("Show/Hide Projects split"));
 	fOutputButton = _LoadIconButton("OutputButton", MSG_SHOW_HIDE_OUTPUT,
 						115, true, B_TRANSLATE("Show/Hide Output split"));
+
+	fUndoButton = _LoadIconButton("UndoButton", B_UNDO, 204, false,
+						B_TRANSLATE("Undo"));
+	fRedoButton = _LoadIconButton("RedoButton", B_REDO, 205, false,
+						B_TRANSLATE("Redo"));
 	fFileSaveButton = _LoadIconButton("FileSaveButton", MSG_FILE_SAVE,
 						206, false, B_TRANSLATE("Save current File"));
 	fFileSaveAllButton = _LoadIconButton("FileSaveAllButton", MSG_FILE_SAVE_ALL,
 						207, false, B_TRANSLATE("Save all Files"));
 
+	fFileUnlockedButton = _LoadIconButton("FileUnlockedButton", MSG_BUFFER_LOCK,
+						212, false, B_TRANSLATE("Set buffer read-only"));
 	fFilePreviousButton = _LoadIconButton("FilePreviousButton", MSG_FILE_PREVIOUS_SELECTED,
 						208, false, B_TRANSLATE("Select previous File"));
 	fFileNextButton = _LoadIconButton("FileNextButton", MSG_FILE_NEXT_SELECTED,
@@ -97,9 +166,6 @@ IdeamWindow::IdeamWindow(BRect frame)
 						210, false, B_TRANSLATE("Close File"));
 	fFileMenuButton = _LoadIconButton("FileMenuButton", MSG_FILE_MENU_SHOW,
 						211, false, B_TRANSLATE("Indexed File list"));
-	AddShortcut(B_LEFT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_PREVIOUS_SELECTED));
-	AddShortcut(B_RIGHT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_NEXT_SELECTED));
-
 
 	BGroupLayout* toolBar = BLayoutBuilder::Group<>(B_VERTICAL, 0)
 		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, 1)
@@ -107,10 +173,13 @@ IdeamWindow::IdeamWindow(BRect frame)
 			.Add(fProjectsButton)
 			.Add(fOutputButton)
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
+			.Add(fUndoButton)
+			.Add(fRedoButton)
 			.Add(fFileSaveButton)
 			.Add(fFileSaveAllButton)
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
 			.AddGlue()
+			.Add(fFileUnlockedButton)
 			.Add(fFilePreviousButton)
 			.Add(fFileNextButton)
 			.Add(fFileCloseButton)
@@ -150,7 +219,8 @@ IdeamWindow::IdeamWindow(BRect frame)
 	;
 
 	// Panels
-	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), NULL, B_FILE_NODE, true);
+	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), nullptr, B_FILE_NODE, true);
+	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), nullptr, B_FILE_NODE, false);
 
 	// Output
 	fOutputTabView = new BTabView("OutputTabview");
@@ -182,13 +252,24 @@ IdeamWindow::IdeamWindow(BRect frame)
 			.End() //  output split
 	;
 
+	// Shortcuts
+	for (int32 index = 1; index < 10; index++) {
+		const auto kAsciiPos = 48;
+		BMessage* selectTab = new BMessage(MSG_SELECT_TAB);
+		selectTab->AddInt32("index", index - 1);
+		AddShortcut(index + kAsciiPos, B_COMMAND_KEY, selectTab);
+	}
+	AddShortcut(B_LEFT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_PREVIOUS_SELECTED));
+	AddShortcut(B_RIGHT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_NEXT_SELECTED));
 }
 
 IdeamWindow::~IdeamWindow()
 {
 	delete fEditorObjectList;
 	delete fTabManager;
+
 	delete fOpenPanel;
+	delete fSavePanel;
 }
 
 void
@@ -198,17 +279,90 @@ IdeamWindow::MessageReceived(BMessage* message)
 		case B_ABOUT_REQUESTED:
 			be_app->PostMessage(B_ABOUT_REQUESTED);
 			break;
+		case B_COPY: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->Copy();
+			}
+			break;
+		}
+		case B_CUT: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->Cut();
+			}
+			break;
+		}
+		case B_NODE_MONITOR:
+
+			break;
+		case B_PASTE: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->Paste();
+			}
+			break;
+		}
+		case B_REDO: {
+			int32 index =  fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				if (fEditor->CanRedo())
+					fEditor->Redo();
+				_UpdateSelectionChange(index);
+			}
+			break;
+		}
 		case B_REFS_RECEIVED:
+			Activate();
 			_FileOpen(message);
 			break;
 		case B_SAVE_REQUESTED:
-
+			_FileSaveAs(fTabManager->SelectedTabIndex(), message);
 			break;
+		case B_SELECT_ALL: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->SelectAll();
+			}
+			break;
+		}
+		case B_UNDO: {
+			int32 index =  fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				if (fEditor->CanUndo())
+					fEditor->Undo();
+				_UpdateSelectionChange(index);
+			}
+			break;
+		}
+		case MSG_BUFFER_LOCK: {
+			int32 index =  fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->SetReadOnly();
+				_UpdateSelectionChange(index);
+			}
+			break;
+		}
 		case EDITOR_SAVEPOINT_REACHED: {
 			entry_ref ref;
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index = _GetEditorIndex(&ref);
 				_UpdateLabel(index, false);
+std::cerr << "EDITOR_SAVEPOINT_REACHED " << "index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 			}
 #if defined MULTIFILE_OPEN_SELECT_FIRST_FILE
@@ -219,6 +373,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 				 */
 				int32 index = fTabManager->SelectedTabIndex();
 				fEditor = fEditorObjectList->ItemAt(index);
+std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 #endif
 			break;
@@ -228,9 +383,19 @@ IdeamWindow::MessageReceived(BMessage* message)
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index = _GetEditorIndex(&ref);
 				_UpdateLabel(index, true);
+std::cerr << "EDITOR_SAVEPOINT_LEFT " << "index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 			}
 
+			break;
+		}
+		case EDITOR_SELECTION_CHANGED: {
+			entry_ref ref;
+			if (message->FindRef("ref", &ref) == B_OK) {
+				int32 index = _GetEditorIndex(&ref);
+std::cerr << "EDITOR_SELECTION_CHANGED " << "index: " << index << std::endl;
+				_UpdateSelectionChange(index);
+			}
 			break;
 		}
 		case MSG_FILE_CLOSE:
@@ -239,15 +404,14 @@ IdeamWindow::MessageReceived(BMessage* message)
 		case MSG_FILE_CLOSE_ALL:
 			_FileCloseAll();
 			break;
-		case MSG_FILE_MENU_SHOW:
-		{
+		case MSG_FILE_MENU_SHOW: {
 			/* Adapted from tabview */
 				BPopUpMenu* tabMenu = new BPopUpMenu("filetabmenu", true, false);
 				int tabCount = fTabManager->CountTabs();
 				for (int index = 0; index < tabCount; index++) {
 						BString label;
 						label << index + 1 << ". " << fTabManager->TabLabel(index);
-						BMenuItem* item = new BMenuItem(label.String(), NULL);
+						BMenuItem* item = new BMenuItem(label.String(), nullptr);
 						tabMenu->AddItem(item);
 						if (index == fTabManager->SelectedTabIndex())
 							item->SetMarked(true);
@@ -275,13 +439,11 @@ IdeamWindow::MessageReceived(BMessage* message)
 				delete tabMenu;
 			break;
 		}
-		case MSG_FILE_NEW:
-		{
+		case MSG_FILE_NEW: {
 			//TODO
 			break;
 		}
-		case MSG_FILE_NEXT_SELECTED:
-		{
+		case MSG_FILE_NEXT_SELECTED: {
 			int32 index = fTabManager->SelectedTabIndex();
 			if (index < fTabManager->CountTabs() - 1)
 				fTabManager->SelectTab(index + 1);
@@ -290,30 +452,35 @@ IdeamWindow::MessageReceived(BMessage* message)
 		case MSG_FILE_OPEN:
 			fOpenPanel->Show();
 			break;
-		case MSG_FILE_PREVIOUS_SELECTED:
-		{
+		case MSG_FILE_PREVIOUS_SELECTED: {
 			int32 index = fTabManager->SelectedTabIndex();
 			if (index > 0)
 				fTabManager->SelectTab(index - 1);
 			break;
 		}	
 		case MSG_FILE_SAVE:
-		{
 			_FileSave(fTabManager->SelectedTabIndex());
 			break;
-		}
-		case MSG_FILE_SAVE_AS:
-		{
-			//TODO
+		case MSG_FILE_SAVE_AS: {
+			// fEditor should be already set
+			// fEditor = fEditorObjectList->ItemAt(fTabManager->SelectedTabIndex());
+			BEntry entry(fEditor->FileRef());
+			entry.GetParent(&entry);
+			fSavePanel->SetPanelDirectory(&entry);
+			fSavePanel->Show();
 			break;
 		}
 		case MSG_FILE_SAVE_ALL:
-		{
 			_FileSaveAll();
 			break;
-		}
-		case MSG_SHOW_HIDE_PROJECTS:
-		{
+		case MSG_SELECT_TAB: {
+			int32 index;
+			if (message->FindInt32("index", &index) == B_OK) {
+				fTabManager->SelectTab(index);
+			}
+			break;
+		}	
+		case MSG_SHOW_HIDE_PROJECTS: {
 			if (fProjectsTabView->IsHidden()) {
 				fProjectsTabView->Show();
 			} else {
@@ -321,8 +488,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
-		case MSG_SHOW_HIDE_OUTPUT:
-		{
+		case MSG_SHOW_HIDE_OUTPUT: {
 			if (fOutputTabView->IsHidden()) {
 				fOutputTabView->Show();
 			} else {
@@ -330,27 +496,33 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
-		case TABMANAGER_TAB_CHANGED:
-		{
+		case MSG_TEXT_DELETE: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->Clear();
+			}
+			break;
+		}
+		case TABMANAGER_TAB_CHANGED: {
 			int32 index;
 			if (message->FindInt32("index", &index) == B_OK) {
 					fEditor = fEditorObjectList->ItemAt(index);
 					fEditor->GrabFocus();
-std::cerr << "TABMANAGER_TAB_CHANGED" << " index: " << index << std::endl;
+std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 			}
 			break;
 		}
-		case TABMANAGER_TAB_CLOSE:
-		{
+		case TABMANAGER_TAB_CLOSE: {
 			int32 index;
 			if (message->FindInt32("index", &index) == B_OK)
 				_FileClose(index);
 
 			break;
 		}
-		case TABMANAGER_TAB_NEW_OPENED:
-		{
+		case TABMANAGER_TAB_NEW_OPENED: {
 			int32 index;
 			if (message->FindInt32("index", &index) == B_OK) {
 std::cerr << "TABMANAGER_TAB_NEW_OPENED" << " index: " << index << std::endl;
@@ -393,9 +565,10 @@ IdeamWindow::_FileClose(int32 index)
 {
 	BString notification;
 
+	// Should not happen
 	if (index < 0) {
 		notification << (B_TRANSLATE("No file selected"));
-		_SendNotification(notification.String(), "FILE_INFO");
+		_SendNotification(notification.String(), "FILE_ERR");
 		return B_ERROR;
 	}
 #ifdef DEBUG
@@ -511,7 +684,7 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 		}
 		// First tab gets selected by tabview
 		if (index > 0)
-			fTabManager->SelectTab(index);
+			fTabManager->SelectTab(index, true);
 
 		notification << fEditor->Name() << " " << B_TRANSLATE("opened with index")
 			<< " " << fTabManager->CountTabs() - 1;
@@ -531,8 +704,10 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 	// it grabs keyboard focus anyway so fix that if you want to change
 	//  selection management on multi-open.
 	int32 tabs = fTabManager->CountTabs();
-	if (nextIndex < tabs)
+	if (nextIndex < tabs) {
 		fTabManager->SelectTab(tabs - 1);
+		fEditor->GrabFocus();
+	}
 #endif
 
 	return status;
@@ -544,9 +719,10 @@ IdeamWindow::_FileSave(int32 index)
 //	status_t status;
 	BString notification;
 
+	// Should not happen
 	if (index < 0) {
 		notification << (B_TRANSLATE("No file selected"));
-		_SendNotification(notification.String(), "FILE_INFO");
+		_SendNotification(notification.String(), "FILE_ERR");
 		return B_ERROR;
 	}
 
@@ -558,20 +734,20 @@ IdeamWindow::_FileSave(int32 index)
 		return B_ERROR;
 	}
 
-	// If readonly file warn and exit
+	// Readonly file, should not happen
 	if (fEditor->IsReadOnly()) {
 		notification << (B_TRANSLATE("File is Read-only"));
-		_SendNotification(notification.String(), "FILE_INFO");
+		_SendNotification(notification.String(), "FILE_ERR");
 		return B_ERROR;
 	}
 
-	// If file not modified warn and exit
-	if (!fEditor->IsModified()) {
+	// File not modified, happens at file save as
+/*	if (!fEditor->IsModified()) {
 		notification << (B_TRANSLATE("File not modified"));
-		_SendNotification(notification.String(), "FILE_INFO");
+		_SendNotification(notification.String(), "FILE_ERR");
 		return B_ERROR;
 	}
-
+*/
 	ssize_t written = fEditor->SaveToFile();
 	ssize_t length = fEditor->SendMessage(SCI_GETLENGTH, 0, 0);
 
@@ -604,6 +780,44 @@ IdeamWindow::_FileSaveAll()
 		if (fEditor->IsModified())
 			_FileSave(index);
 	}
+}
+
+status_t
+IdeamWindow::_FileSaveAs(int32 selection, BMessage* message)
+{
+	entry_ref ref;
+	BString name;
+	status_t status;
+
+	if ((status = message->FindRef("directory", &ref)) != B_OK)
+		return status;
+	if ((status = message->FindString("name", &name)) != B_OK)
+		return status;
+
+	BPath path(&ref);
+	path.Append(name);
+	BEntry entry(path.Path(), true);
+	entry_ref newRef;
+
+	if ((status = entry.GetRef(&newRef)) != B_OK)
+		return status;
+
+	fEditor = fEditorObjectList->ItemAt(selection);
+
+	if (fEditor == nullptr) {
+		BString notification;
+		notification << B_TRANSLATE("Index ") << selection
+			<< (B_TRANSLATE(": NULL editor pointer"));
+		_SendNotification(notification.String(), "FILE_ERR");
+		return B_ERROR;
+	}
+
+	fEditor->SetFileRef(&newRef);
+	fTabManager->SetTabLabel(selection, fEditor->Name().String());
+
+	_FileSave(selection);
+
+	return B_OK;
 }
 
 bool
@@ -649,7 +863,7 @@ BIconButton*
 IdeamWindow::_LoadIconButton(const char* name, int32 msg,
 								int32 resIndex, bool enabled, const char* tooltip)
 {
-	BIconButton* button = new BIconButton(name, NULL, new BMessage(msg));
+	BIconButton* button = new BIconButton(name, nullptr, new BMessage(msg));
 //	button->SetIcon(_LoadSizedVectorIcon(resIndex, kToolBarSize));
 	button->SetIcon(resIndex);
 	button->SetEnabled(enabled);
@@ -665,7 +879,7 @@ IdeamWindow::_LoadSizedVectorIcon(int32 resourceID, int32 size)
 	size_t iconSize;
 	const void* data = res->LoadResource(B_VECTOR_ICON_TYPE, resourceID, &iconSize);
 
-	assert(data != NULL);
+	assert(data != nullptr);
 
 	BBitmap* bitmap = new BBitmap(BRect(0, 0, size, size), B_RGBA32);
 
@@ -716,28 +930,44 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 BString text;
 text << "index: " << index << " sti: " << fTabManager->SelectedTabIndex();
 fStatusBar->SetTrailingText(text.String());
-
+	// Should not happen
 	if (index < -1)
 		return;
 
 	// All files are closed
 	if (index == -1) {
+		// ToolBar Items
+		fUndoButton->SetEnabled(false);
+		fRedoButton->SetEnabled(false);
 		fFileSaveButton->SetEnabled(false);
 		fFileSaveAllButton->SetEnabled(false);
+		fFileUnlockedButton->SetEnabled(false);
 		fFilePreviousButton->SetEnabled(false);
 		fFileNextButton->SetEnabled(false);
 		fFileCloseButton->SetEnabled(false);
 		fFileMenuButton->SetEnabled(false);
+
+		// Menu Items
+		fSaveMenuItem->SetEnabled(false);
+		fSaveAsMenuItem->SetEnabled(false);
+		fSaveAllMenuItem->SetEnabled(false);
+		fCloseMenuItem->SetEnabled(false);
+		fCloseAllMenuItem->SetEnabled(false);
+		fUndoMenuItem->SetEnabled(false);
+		fRedoMenuItem->SetEnabled(false);
+		fCutMenuItem->SetEnabled(false);
+		fCopyMenuItem->SetEnabled(false);
+		fPasteMenuItem->SetEnabled(false);
+		fDeleteMenuItem->SetEnabled(false);
+		fSelectAllMenuItem->SetEnabled(false);
 		return;
 	}
 
-/*	// fEditor should be already set before the call
-	fEditor = fEditorObjectList->ItemAt(index);
-	// This could be checked too
-	if (fTabManager->SelectedTabIndex() != index);
-*/
+	// ToolBar Items
+	fUndoButton->SetEnabled(fEditor->CanUndo());
+	fRedoButton->SetEnabled(fEditor->CanRedo());
 	fFileSaveButton->SetEnabled(fEditor->IsModified());
-	fFileSaveAllButton->SetEnabled(_FilesNeedSave());
+	fFileUnlockedButton->SetEnabled(!fEditor->IsReadOnly());
 	fFileCloseButton->SetEnabled(true);
 	fFileMenuButton->SetEnabled(true);
 
@@ -754,4 +984,28 @@ fStatusBar->SetTrailingText(text.String());
 			fFilePreviousButton->SetEnabled(true);
 			fFileNextButton->SetEnabled(true);
 	}
+
+	// Menu Items
+	fSaveMenuItem->SetEnabled(fEditor->IsModified());
+	fSaveAsMenuItem->SetEnabled(true);
+	fCloseMenuItem->SetEnabled(true);
+	fCloseAllMenuItem->SetEnabled(true);
+	fUndoMenuItem->SetEnabled(fEditor->CanUndo());
+	fRedoMenuItem->SetEnabled(fEditor->CanRedo());
+	fCutMenuItem->SetEnabled(fEditor->CanCut());
+	fCopyMenuItem->SetEnabled(fEditor->CanCopy());
+	fPasteMenuItem->SetEnabled(fEditor->CanPaste());
+	fDeleteMenuItem->SetEnabled(fEditor->CanClear());
+	fSelectAllMenuItem->SetEnabled(true);
+
+	// fEditor is modified by _FilesNeedSave so it should be the last
+	// or reload editor pointer
+	bool filesNeedSave = _FilesNeedSave();
+	fFileSaveAllButton->SetEnabled(filesNeedSave);
+	fSaveAllMenuItem->SetEnabled(filesNeedSave);
+/*	fEditor = fEditorObjectList->ItemAt(index);
+	// This could be checked too
+	if (fTabManager->SelectedTabIndex() != index);
+*/
+
 }
