@@ -1,6 +1,7 @@
 Ideam
 ================
 ![Screenshot](https://raw.github.com/AmosCaster/ideam/master/data/screenshot/screenshot-0.0.6-ita.png)
+	screenshot-0.0.6-ita
 
 Introducing
 ----------------
@@ -19,7 +20,7 @@ Compiling
 * Place libscintilla.a in:
   `/boot/home/config/non-packaged/develop/lib`
 * Place Sci_Position.h, SciLexer.h, Scintilla.h, ScintillaView.h in:
-  `/boot/home/config/non-packaged/develop/headers`
+  `/boot/home/config/non-packaged/develop/headers/scintilla`
 * Download Ideam sources
 * Execute `make` in Ideam's top directory
 

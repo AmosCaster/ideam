@@ -66,6 +66,24 @@ IdeamApp::AboutRequested()
 	window->Show();
 }
 
+
+void
+IdeamApp::ArgvReceived(int32 agrc, char** argv)
+{
+}
+
+void
+IdeamApp::MessageReceived(BMessage* message)
+{
+	switch (message->what) {
+
+		default:
+			BApplication::MessageReceived(message);
+			break;
+	}
+	
+}
+
 bool
 IdeamApp::QuitRequested()
 {	
@@ -95,6 +113,17 @@ IdeamApp::QuitRequested()
 	be_app->PostMessage(B_QUIT_REQUESTED);
 	
 	return true;
+}
+
+void
+IdeamApp::RefsReceived(BMessage* message)
+{
+	fIdeamWindow->PostMessage(message);
+}
+
+void
+IdeamApp::ReadyToRun()
+{
 }
 
 int

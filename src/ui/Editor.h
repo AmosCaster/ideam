@@ -38,14 +38,18 @@ public:
 			bool				IsReadOnly();
 			status_t			LoadFromFile();
 			BString				Name() const { return fName; }
+			node_ref*			NodeRef() { return &fNodeRef; }
 			void				NotificationReceived(SCNotification* n);
 			void				Paste();
 			void				Redo();
+			status_t			Reload();
 			ssize_t				SaveToFile();
 			void				SelectAll();
 			status_t			SetFileRef(entry_ref* ref);
 			void				SetReadOnly();
 			void				SetTarget(const BMessenger& target);
+			status_t			StartMonitoring();
+			status_t			StopMonitoring();
 			void				Undo();
 //	virtual void				WindowActivated(bool active);
 private:
@@ -53,6 +57,7 @@ private:
 			entry_ref			fFileRef;
 			bool				fModified;
 			BString				fName;
+			node_ref			fNodeRef;
 			BMessenger			fTarget;
 
 };

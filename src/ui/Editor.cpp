@@ -8,6 +8,7 @@
 #include <Alert.h>
 #include <Application.h>
 #include <Catalog.h>
+#include <NodeMonitor.h>
 #include <Volume.h>
 
 
@@ -30,6 +31,8 @@ Editor::Editor(entry_ref* ref, const BMessenger& target)
 
 Editor::~Editor()
 {
+	// Stop monitoring
+	StopMonitoring();
 }
 
 void
@@ -159,6 +162,9 @@ Editor::LoadFromFile()
 	if (editable == false)
 		SetReadOnly();
 
+	// Monitor node
+	StartMonitoring();
+
 	return B_OK;
 }
 
@@ -204,11 +210,55 @@ Editor::Paste()
 void
 Editor::Redo()
 {
-//	if (SendMessage(SCI_CANREDO, UNSET, UNSET))
 	SendMessage(SCI_REDO, UNSET, UNSET);
 }
 
-//TODO lock
+status_t
+Editor::Reload()
+{
+	status_t status;
+	BFile file;
+
+	//TODO errors should be notified
+	if ((status = file.SetTo(&fFileRef, B_READ_ONLY)) != B_OK)
+		return status;
+	if ((status = file.InitCheck()) != B_OK)
+		return status;
+
+	if ((status = file.Lock()) != B_OK)
+		return status;
+
+	// Enable external modifications of readonly file/buffer
+	bool readOnly = IsReadOnly();
+
+	if (readOnly == true)
+		SendMessage(SCI_SETREADONLY, 0, UNSET);
+
+	off_t size;
+	file.GetSize(&size);
+
+	char* buffer = new char[size + 1];
+	off_t len = file.Read(buffer, size);
+	buffer[size] = '\0';
+	SendMessage(SCI_CLEARALL, UNSET, UNSET);
+	SendMessage(SCI_SETTEXT, 0, (sptr_t) buffer);
+	delete[] buffer;
+
+	if (readOnly == true)
+		SendMessage(SCI_SETREADONLY, 1, UNSET);
+
+	if (len != size)
+		return B_ERROR;
+
+	if ((status = file.Unlock()) != B_OK)
+		return status;
+
+	SendMessage(SCI_EMPTYUNDOBUFFER, UNSET, UNSET);
+	SendMessage(SCI_SETSAVEPOINT, UNSET, UNSET);
+
+	return B_OK;
+}
+
 ssize_t
 Editor::SaveToFile()
 {
@@ -294,10 +344,29 @@ Editor::SetTarget(const BMessenger& target)
     fTarget = target;
 }
 
+status_t
+Editor::StartMonitoring()
+{
+	status_t status;
+
+	// start monitoring this file for changes
+	BEntry entry(&fFileRef, true);
+
+	if ((status = entry.GetNodeRef(&fNodeRef)) != B_OK)
+		return status;
+
+	return	watch_node(&fNodeRef, B_WATCH_NAME | B_WATCH_STAT, fTarget);
+}
+
+status_t
+Editor::StopMonitoring()
+{
+	return watch_node(&fNodeRef, B_STOP_WATCHING, fTarget);
+}
+
 void
 Editor::Undo()
 {
-//	if (SendMessage(SCI_CANUNDO, UNSET, UNSET))
 	SendMessage(SCI_UNDO, UNSET, UNSET);
 }
 

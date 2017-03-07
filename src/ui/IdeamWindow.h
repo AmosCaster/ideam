@@ -35,11 +35,11 @@ public:
 	virtual						~IdeamWindow();
 
 	virtual void				MessageReceived(BMessage* message);
-
+	virtual bool				QuitRequested();
 private:
 
 			status_t			_AddEditorTab(entry_ref* ref, int32 index);
-			status_t			_FileClose(int32 index);
+			status_t			_FileClose(int32 index, bool ignoreModifications = false);
 			void				_FileCloseAll();
 			status_t			_FileOpen(BMessage* msg);
 			status_t			_FileSave(int32	index);
@@ -47,6 +47,11 @@ private:
 			status_t			_FileSaveAs(int32 selection, BMessage* message);
 			bool				_FilesNeedSave();
 			int32				_GetEditorIndex(entry_ref* ref);
+			int32				_GetEditorIndex(node_ref* nref);
+			void				_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRef);
+			void				_HandleExternalRemoveModification(int32 index);
+			void				_HandleExternalStatModification(int32 index);
+			void				_HandleNodeMonitorMsg(BMessage* msg);
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
 									int32 resIndex, bool enabled, const char* tooltip);
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);

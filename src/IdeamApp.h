@@ -16,7 +16,11 @@ public:
 	virtual						~IdeamApp();
 
 	virtual	void				AboutRequested();
+	virtual	void				ArgvReceived(int32 agrc, char** argv);
+	virtual	void				MessageReceived(BMessage* message);
 	virtual	bool				QuitRequested();
+	virtual	void				ReadyToRun();
+	virtual	void				RefsReceived(BMessage* message);
 private:
 		IdeamWindow*			fIdeamWindow;
 		TPreferences*			fUISettingsFile;

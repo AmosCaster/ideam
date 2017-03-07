@@ -71,6 +71,19 @@ legenda:
 ] Scintilla context menu is untranslated
 ] RecentFilesList seems to leak
 --------------------------------------------------------------------------------
+
+0.0.7) File Interface
+
++) Node monitoring
++) Open with
++) Warn on modified Files on exit
+
+) Tabs should be swappable
+) Recheck permissions on a monitored file with mode/uid/gid changed
+
+] Pe and StyledEdit fire different messages of B_STAT_CHANGED fields
+  on modifying the same file
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
 

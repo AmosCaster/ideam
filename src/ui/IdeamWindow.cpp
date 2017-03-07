@@ -11,6 +11,7 @@
 #include <IconUtils.h>
 #include <LayoutBuilder.h>
 #include <MenuBar.h>
+#include <NodeMonitor.h>
 #include <Path.h>
 #include <PopUpMenu.h>
 #include <RecentItems.h>
@@ -298,7 +299,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 			break;
 		}
 		case B_NODE_MONITOR:
-
+			_HandleNodeMonitorMsg(message);
 			break;
 		case B_PASTE: {
 			int32 index = fTabManager->SelectedTabIndex();
@@ -321,8 +322,8 @@ IdeamWindow::MessageReceived(BMessage* message)
 			break;
 		}
 		case B_REFS_RECEIVED:
-			Activate();
 			_FileOpen(message);
+			Activate();
 			break;
 		case B_SAVE_REQUESTED:
 			_FileSaveAs(fTabManager->SelectedTabIndex(), message);
@@ -357,6 +358,17 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+		case EDITOR_SAVEPOINT_LEFT: {
+			entry_ref ref;
+			if (message->FindRef("ref", &ref) == B_OK) {
+				int32 index = _GetEditorIndex(&ref);
+				_UpdateLabel(index, true);
+std::cerr << "EDITOR_SAVEPOINT_LEFT " << "index: " << index << std::endl;
+				_UpdateSelectionChange(index);
+			}
+
+			break;
+		}
 		case EDITOR_SAVEPOINT_REACHED: {
 			entry_ref ref;
 			if (message->FindRef("ref", &ref) == B_OK) {
@@ -376,17 +388,6 @@ std::cerr << "EDITOR_SAVEPOINT_REACHED " << "index: " << index << std::endl;
 std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 #endif
-			break;
-		}
-		case EDITOR_SAVEPOINT_LEFT: {
-			entry_ref ref;
-			if (message->FindRef("ref", &ref) == B_OK) {
-				int32 index = _GetEditorIndex(&ref);
-				_UpdateLabel(index, true);
-std::cerr << "EDITOR_SAVEPOINT_LEFT " << "index: " << index << std::endl;
-				_UpdateSelectionChange(index);
-			}
-
 			break;
 		}
 		case EDITOR_SELECTION_CHANGED: {
@@ -537,6 +538,35 @@ std::cerr << "TABMANAGER_TAB_NEW_OPENED" << " index: " << index << std::endl;
 	}
 }
 
+
+bool
+IdeamWindow::QuitRequested()
+{
+	// Is any modified file?
+	if (_FilesNeedSave()) {
+		BAlert* alert = new BAlert("QuitAndSaveDialog",
+	 		B_TRANSLATE("There are modified files, do you want to save changes before quitting?"),
+ 			B_TRANSLATE("Cancel"), B_TRANSLATE("Don't save"), B_TRANSLATE("Save"),
+ 			B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+  
+		alert->SetShortcut(0, B_ESCAPE);
+		
+		int32 choice = alert->Go();
+
+		if (choice == 0)
+			return false;
+		else if (choice == 1) { 
+//			be_app->PostMessage(B_QUIT_REQUESTED);
+		} else if (choice == 2) {
+			_FileSaveAll();
+//			be_app->PostMessage(B_QUIT_REQUESTED);
+		}
+	}
+
+	be_app->PostMessage(B_QUIT_REQUESTED);
+	return true;
+}
+
 status_t
 IdeamWindow::_AddEditorTab(entry_ref* ref, int32 index)
 {
@@ -560,8 +590,12 @@ IdeamWindow::_AddEditorTab(entry_ref* ref, int32 index)
 	return B_OK;
 }
 
+/*
+ * ignoreModifications: the file is modified but has been removed
+ * 						externally and user choose to discard it.
+ */
 status_t
-IdeamWindow::_FileClose(int32 index)
+IdeamWindow::_FileClose(int32 index, bool ignoreModifications /* = false */)
 {
 	BString notification;
 
@@ -587,11 +621,11 @@ notification.SetTo("");
 		return B_ERROR;
 	}
 
-	if (fEditor->IsModified()) {
+	if (fEditor->IsModified() && ignoreModifications == false) {
 		BString text(B_TRANSLATE("Save changes to file \"%file%\""));
 		text.ReplaceAll("%file%", fEditor->Name());
 		
-		BAlert* alert = new BAlert(B_TRANSLATE("Close and save dialog"), text,
+		BAlert* alert = new BAlert("CloseAndSaveDialog", text,
  			B_TRANSLATE("Cancel"), B_TRANSLATE("Don't save"), B_TRANSLATE("Save"),
  			B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
    			 
@@ -677,9 +711,6 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 		status = fEditor->LoadFromFile();
 
 		if (status != B_OK) {
-			//TODO
-			// _FileClose(index, false);
-			// strerror(status)
 			continue;
 		}
 		// First tab gets selected by tabview
@@ -748,8 +779,14 @@ IdeamWindow::_FileSave(int32 index)
 		return B_ERROR;
 	}
 */
+	// Stop monitoring if needed
+	fEditor->StopMonitoring();
+
 	ssize_t written = fEditor->SaveToFile();
 	ssize_t length = fEditor->SendMessage(SCI_GETLENGTH, 0, 0);
+
+	// Restart monitoring
+	fEditor->StartMonitoring();
 
 	notification << fEditor->Name()<< B_TRANSLATE(" saved.")
 		<< "\t\t" << B_TRANSLATE("length: ") << length << B_TRANSLATE(" bytes -> ")
@@ -815,6 +852,13 @@ IdeamWindow::_FileSaveAs(int32 selection, BMessage* message)
 	fEditor->SetFileRef(&newRef);
 	fTabManager->SetTabLabel(selection, fEditor->Name().String());
 
+	/* Modified files 'Saved as' get saved to an unmodified state.
+	 * It should be cool to take the modified state to the new file and let
+	 * user choose to save or discard modifications. Left as a TODO.
+	 * In case do not forget to update label
+	 */
+	//_UpdateLabel(selection, fEditor->IsModified());
+
 	_FileSave(selection);
 
 	return B_OK;
@@ -857,6 +901,269 @@ IdeamWindow::_GetEditorIndex(entry_ref* ref)
 			return index;
 	}
 	return -1;
+}
+
+int32
+IdeamWindow::_GetEditorIndex(node_ref* nref)
+{
+	int32 filesCount = fEditorObjectList->CountItems();
+	
+	for (int32 index = 0; index < filesCount; index++) {
+
+		fEditor = fEditorObjectList->ItemAt(index);
+
+		if (fEditor == nullptr) {
+			BString notification;
+			notification << B_TRANSLATE("Index ") << index
+				<< (B_TRANSLATE(": NULL editor pointer"));
+			_SendNotification(notification.String(), "FILE_ERR");
+			continue;
+		}
+
+		if (*nref == *fEditor->NodeRef())
+			return index;
+	}
+	return -1;
+}
+
+void
+IdeamWindow::_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRef)
+{
+	BEntry oldEntry(oldRef, true), newEntry(newRef, true);
+	BPath oldPath, newPath;
+
+	oldEntry.GetPath(&oldPath);
+	newEntry.GetPath(&newPath);
+
+	BString text;
+	text << kApplicationName << ":\n";
+	text << (B_TRANSLATE("File \"%file%\" was moved externally,\n"
+							"do You want to ignore, close or reload it?"));
+	text.ReplaceAll("%file%", oldRef->name);
+
+	BAlert* alert = new BAlert("FileMoveDialog", text,
+ 		B_TRANSLATE("Ignore"), B_TRANSLATE("Close"), B_TRANSLATE("Reload"),
+ 		B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+
+ 	alert->SetShortcut(0, B_ESCAPE);
+
+	int32 index = _GetEditorIndex(oldRef);
+
+ 	int32 choice = alert->Go();
+ 
+ 	if (choice == 0)
+		return;
+	else if (choice == 1)
+		_FileClose(index);
+	else if (choice == 2) {
+		fEditor = fEditorObjectList->ItemAt(index);
+		fEditor->SetFileRef(newRef);
+		fTabManager->SetTabLabel(index, fEditor->Name().String());
+		_UpdateLabel(index, fEditor->IsModified());
+
+		BString notification;
+		notification << oldPath.Path() << B_TRANSLATE(" moved externally to ");
+		notification << newPath.Path();
+		_SendNotification(notification.String(), "FILE_INFO");
+	}
+}
+
+void
+IdeamWindow::_HandleExternalRemoveModification(int32 index)
+{
+	if (index < 0) {
+		return; //TODO notify
+	}
+
+	fEditor = fEditorObjectList->ItemAt(index);
+
+	BString text;
+	text << kApplicationName << ":\n";
+	text << (B_TRANSLATE("File \"%file%\" was removed externally,\n"
+							"do You want to keep the file or discard it?\n"
+							"If kept and modified save it or it will be lost"));
+	text.ReplaceAll("%file%", fEditor->Name());
+
+	BAlert* alert = new BAlert("FileRemoveDialog", text,
+ 		B_TRANSLATE("Keep"), B_TRANSLATE("Discard"), nullptr,
+ 		B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+
+ 	alert->SetShortcut(0, B_ESCAPE);
+
+ 	int32 choice = alert->Go();
+
+ 	if (choice == 0) {
+	 	// If not modified save it or it will be lost, if modified let
+	 	// the user decide
+	 	if (fEditor->IsModified() == false)
+			_FileSave(index);
+		return;
+	}	
+	else if (choice == 1) {
+
+		_FileClose(index, true);
+
+		BString notification;
+		notification << fEditor->Name() << B_TRANSLATE(" removed externally");
+		_SendNotification(notification.String(), "FILE_INFO");
+	}
+}
+
+void
+IdeamWindow::_HandleExternalStatModification(int32 index)
+{
+	if (index < 0) {
+		return; //TODO notify
+	}
+
+	fEditor = fEditorObjectList->ItemAt(index);
+
+	BString text;
+	text << kApplicationName << ":\n";
+	text << (B_TRANSLATE("File \"%file%\" was modified externally, reload it?"));
+	text.ReplaceAll("%file%", fEditor->Name());
+
+	BAlert* alert = new BAlert("FileReloadDialog", text,
+ 		B_TRANSLATE("Ignore"), B_TRANSLATE("Reload"), nullptr,
+ 		B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+
+ 	alert->SetShortcut(0, B_ESCAPE);
+
+ 	int32 choice = alert->Go();
+ 
+ 	if (choice == 0)
+		return;
+	else if (choice == 1) {
+		fEditor->Reload();
+
+		BString notification;
+		notification << fEditor->Name() << B_TRANSLATE(" modified externally");
+		_SendNotification(notification.String(), "FILE_INFO");
+	}
+}
+
+void
+IdeamWindow::_HandleNodeMonitorMsg(BMessage* msg)
+{
+	int32 opcode;
+	status_t status;
+
+	if ((status = msg->FindInt32("opcode", &opcode)) != B_OK) {
+		// TODO notify
+		return;
+	}	
+
+	switch (opcode) {
+		case B_ENTRY_MOVED: {
+			int32 device;
+			int64 srcDir;
+			int64 dstDir;
+			BString name;
+			const char* oldName;
+
+			if (msg->FindInt32("device", &device) != B_OK
+				|| msg->FindInt64("to directory", &dstDir) != B_OK
+				|| msg->FindInt64("from directory", &srcDir) != B_OK
+				|| msg->FindString("name", &name) != B_OK
+				|| msg->FindString("from name", &oldName) != B_OK)
+					break;
+
+			entry_ref oldRef(device, srcDir, oldName);
+			entry_ref newRef(device, dstDir, name);
+
+			_HandleExternalMoveModification(&oldRef, &newRef);
+
+			break;
+		}
+		case B_ENTRY_REMOVED: {
+			node_ref nref;
+			BString name;
+			int64 dir;
+
+			if (msg->FindInt32("device", &nref.device) != B_OK
+				|| msg->FindString("name", &name) != B_OK
+				|| msg->FindInt64("directory", &dir) != B_OK
+				|| msg->FindInt64("node", &nref.node) != B_OK)
+					break;
+
+			_HandleExternalRemoveModification(_GetEditorIndex(&nref));
+			//entry_ref ref(device, dir, name);
+			//_HandleExternalRemoveModification(_GetEditorIndex(&ref));
+			break;
+		}
+		case B_STAT_CHANGED: {
+			node_ref nref;
+			int32 fields;
+
+			if (msg->FindInt32("device", &nref.device) != B_OK
+				|| msg->FindInt64("node", &nref.node) != B_OK
+				|| msg->FindInt32("fields", &fields) != B_OK)
+					break;
+#if defined DEBUG
+switch (fields) {
+	case B_STAT_MODE:
+	case B_STAT_UID:
+	case B_STAT_GID:
+std::cerr << __PRETTY_FUNCTION__ << " MODES" << std::endl;
+		break;
+	case B_STAT_SIZE:
+std::cerr << __PRETTY_FUNCTION__ << " B_STAT_SIZE" << std::endl;
+		break;
+	case B_STAT_ACCESS_TIME:
+std::cerr << __PRETTY_FUNCTION__ << " B_STAT_ACCESS_TIME" << std::endl;
+		break;
+	case B_STAT_MODIFICATION_TIME:
+std::cerr << __PRETTY_FUNCTION__ << " B_STAT_MODIFICATION_TIME" << std::endl;
+		break;
+	case B_STAT_CREATION_TIME:
+std::cerr << __PRETTY_FUNCTION__ << " B_STAT_CREATION_TIME" << std::endl;
+		break;
+	case B_STAT_CHANGE_TIME:
+std::cerr << __PRETTY_FUNCTION__ << " B_STAT_CHANGE_TIME" << std::endl;
+		break;
+	case B_STAT_INTERIM_UPDATE:
+std::cerr << __PRETTY_FUNCTION__ << " B_STAT_INTERIM_UPDATE" << std::endl;
+		break;
+	default:
+std::cerr << __PRETTY_FUNCTION__ << "fields is: 0x" << std::hex << fields << std::endl;
+		break;
+}
+#endif
+			if ((fields & (B_STAT_MODE | B_STAT_UID | B_STAT_GID)) != 0)
+				; 			// TODO recheck permissions
+			/* 
+			 * Note: Pe and StyledEdit seems to cope differently on modifications,
+			 *       firing different messages on the same modification of the
+			 *       same file.
+			 *   E.g. on changing file size
+			 *				Pe fires				StyledEdit fires
+			 *			B_STAT_CHANGE_TIME			B_STAT_CHANGE_TIME
+			 *			B_STAT_CHANGE_TIME			fields is: 0x2008
+			 *			fields is: 0x28				B_STAT_CHANGE_TIME
+			 *										B_STAT_CHANGE_TIME
+			 *										B_STAT_CHANGE_TIME
+			 *										B_STAT_MODIFICATION_TIME
+			 *
+			 *   E.g. on changing file data but keeping the same file size
+			 *				Pe fires				StyledEdit fires
+			 *			B_STAT_CHANGE_TIME			B_STAT_CHANGE_TIME
+			 *			B_STAT_CHANGE_TIME			fields is: 0x2008
+			 *			B_STAT_MODIFICATION_TIME	B_STAT_CHANGE_TIME
+			 *										B_STAT_CHANGE_TIME
+			 *										B_STAT_CHANGE_TIME
+			 *										B_STAT_MODIFICATION_TIME
+			 */
+			if (((fields & B_STAT_MODIFICATION_TIME)  != 0)
+			// Do not reload if the file just got touched 
+				&& ((fields & B_STAT_ACCESS_TIME)  == 0)) {
+				_HandleExternalStatModification(_GetEditorIndex(&nref));
+			}
+
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 BIconButton*

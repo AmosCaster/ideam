@@ -1,13 +1,12 @@
-1	English	application/x-vnd.Ideam-Ideam	3883783447
+1	English	application/x-vnd.Ideam-Ideam	1812141048
 opened with index	IdeamWindow		aperto con indice
 Index 	IdeamWindow		Indice
-: NULL editor pointer	IdeamWindow		: NULL editor pointer
+: NULL editor pointer	IdeamWindow		: puntatore dell' editor NULL
 length: 	IdeamWindow		lunghezza: 
 Help	IdeamWindow		Aiuto
 About…	IdeamWindow		About…
 Show/Hide Output split	IdeamWindow		Mostra/Nascondi split di Output
 Save current File	IdeamWindow		Salva il File corrente
-File not modified	IdeamWindow		File non modificato
 Project	IdeamWindow		Progetto
 Save changes to file \"%file%\"	IdeamWindow		Salva cambiamenti al file \"%file%\"
 Cut	IdeamWindow		Taglia
@@ -20,15 +19,21 @@ Don't save	Editor		Non salvare
 Time	IdeamWindow		Data
 Select previous File	IdeamWindow		Seleziona il File precedente
 New	IdeamWindow		Nuovo
+There are modified files, do you want to save changes before quitting?	IdeamWindow		Ci sono file modificati, vuoi salvare le modifiche prima di uscire?
 Redo	IdeamWindow		Ripeti
 Paste	IdeamWindow		Incolla
-Close and save dialog	IdeamWindow		Chiudi e salva dialog
+Discard	IdeamWindow		Elimina
 uses	IdeamApp		utilizza
+ modified externally	IdeamWindow		 modificato da altra applicazione
 Set buffer read-only	IdeamWindow		Imposta il buffer a sola lettura
+File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost	IdeamWindow		Il File \"%file%\" è stato rimosso da un' altra applicazione,\nvuoi mantenere il file o eliminarlo?\nSe vuoi mantenerlo ma è modificato occorre salvarlo o sarà eliminato
+ removed externally	IdeamWindow		 eliminato da altra applicazione
  saved.	IdeamWindow		salvato.
 Select next File	IdeamWindow		Seleziona il File seguente
 Message	IdeamWindow		Messaggio
- bytes -> 	IdeamWindow		 bytes -> 
+ moved externally to 	IdeamWindow		 spostato da altra applicazione in
+File \"%file%\" was modified externally, reload it?	IdeamWindow		Il File \"%file%\" è stato modificato da un altra applicazione, lo ricarico?
+ bytes -> 	IdeamWindow		 byte -> 
 Save	IdeamWindow		Salva
 Quit	IdeamWindow		Esci
 File is Read-only	IdeamWindow		File di sola lettura
@@ -39,6 +44,7 @@ File	IdeamWindow		File
 No file selected	IdeamWindow		Nessun file selezionato
 Open recent…	IdeamWindow		File recenti…
 Ideam	System name		Ideam
+Ignore	IdeamWindow		Ignora
 closed	IdeamWindow		chiuso
 Indexed File list	IdeamWindow		Lista dei File indicizzata
 Copy	IdeamWindow		Copia
@@ -47,13 +53,16 @@ Cancel	Editor		Cancella
 Don't save	IdeamWindow		Non salvare
 Save dialog	Editor		Salva dialog
 Save all Files	IdeamWindow		Salva tutti i File
+File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?	IdeamWindow		Il File \"%file%\" è stato spostato da altra applicazione,\nvuoi ignorarlo, chiuderlo o ricaricarlo?
+Reload	IdeamWindow		Ricarica
 Close all	IdeamWindow		Chiudi tutti
 Close	IdeamWindow		Chiudi
 Save as…	IdeamWindow		Salva con nome…
 Edit	IdeamWindow		Modifica
-NULL editor pointer	IdeamWindow		NULL editor pointer
+NULL editor pointer	IdeamWindow		puntatore dell' editor NULL
 Save changes to file	Editor		Salva i cambiamenti su file
 Cancel	IdeamWindow		Cancella
 Projects	IdeamWindow		Progetti
  bytes written	IdeamWindow		 byte scritti
+Keep	IdeamWindow		Mantieni
 Close File	IdeamWindow		Chiudi il File
