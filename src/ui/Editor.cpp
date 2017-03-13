@@ -9,6 +9,7 @@
 #include <Application.h>
 #include <Catalog.h>
 #include <NodeMonitor.h>
+#include <Path.h>
 #include <Volume.h>
 
 
@@ -99,6 +100,14 @@ void
 Editor::Cut()
 {
 	SendMessage(SCI_CUT, UNSET, UNSET);
+}
+
+const BString
+Editor::FilePath() const
+{
+	BPath path(&fFileRef);
+
+	return path.Path();
 }
 
 void

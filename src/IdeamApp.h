@@ -21,6 +21,9 @@ public:
 	virtual	bool				QuitRequested();
 	virtual	void				ReadyToRun();
 	virtual	void				RefsReceived(BMessage* message);
+
+private:
+			void				_CheckSettingsVersion();
 private:
 		IdeamWindow*			fIdeamWindow;
 		TPreferences*			fUISettingsFile;

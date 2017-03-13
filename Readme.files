@@ -28,9 +28,12 @@ Ideam files
 |	+ 
 |	|  --IdeamApp.cpp....................Main Application class
 |	|  --IdeamApp.h......................Main Application header
+|	|  --IdeamNamespace.cpp..............Global namespace
+|	|  --IdeamNamespace.h................Global namespace header
 |	|
 |	|  --helpers.........................Helper classes
 |	|	+
+|	|	|  --TitleItem.h.................OutlineListView title class
 |	|	|  --TPreferences.cpp............Settings storage helper class
 |	|	|  --TPreferences.h..............Settings storage helper header
 |	|	|
@@ -45,12 +48,18 @@ Ideam files
 |	|
 |	|  --ui..............................Graphical user interface classes
 |	|	+
+|	|	|  --DefaultSettingsKeys.h.......Settings Keys default values
 |	|	|  --Editor.cpp..................Scintilla editor class
 |	|	|  --Editor.h....................Main window header
 |	|	|  --IdeamWindow.cpp.............Main window class
 |	|	|  --IdeamWindow.h...............Main window header
+|	|	|  --SettingsWindow.cpp..........General settings window class
+|	|	|  --SettingsWindow.h............General settings window header
 
 
-
-
+/boot/home/config/settings/Ideam
+--------------------------------
+files_to_reopen.settings	: Files to reopen at startup
+ideam.settings				: Ideam preferences
+ui.settings					: Window position at startup
 

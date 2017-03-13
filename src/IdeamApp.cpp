@@ -5,25 +5,28 @@
 
 #include "IdeamApp.h"
 
+#include <Alert.h>
 #include <AboutWindow.h>
 #include <Catalog.h>
 #include <String.h>
+#include <iostream>
+
+#include "IdeamNamespace.h"
+#include "SettingsWindow.h"
 
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "IdeamApp"
 
-const char* kApplicationSignature = "application/x-vnd.am-Ideam";
-const char* kApplicationName = B_TRANSLATE_SYSTEM_NAME("Ideam");
-static const char * kSettingsFileName = "ui.settings";
 
 IdeamApp::IdeamApp()
 	:
-	BApplication(kApplicationSignature)
+	BApplication(IdeamNames::kApplicationSignature)
 {
 	BRect frame;
 
 	// Load UI settings
-	fUISettingsFile = new TPreferences(kSettingsFileName, kApplicationName);
+	fUISettingsFile = new TPreferences(IdeamNames::kUISettingsFileName,
+										IdeamNames::kApplicationName, 'UISE');
 
 	// Load frame from settings if present or use default
 	if (fUISettingsFile->FindRect("ui_bounds", &frame) != B_OK)
@@ -41,8 +44,8 @@ IdeamApp::~IdeamApp()
 void
 IdeamApp::AboutRequested()
 {
-	BAboutWindow* window = new BAboutWindow(kApplicationName,
-		kApplicationSignature);
+	BAboutWindow* window = new BAboutWindow(IdeamNames::kApplicationName,
+											IdeamNames::kApplicationSignature);
 	
 	// create the about window
 	const char* authors[] = {
@@ -54,12 +57,14 @@ IdeamApp::AboutRequested()
 	window->AddAuthors(authors);
 
 	BString extraInfo;
-	extraInfo << kApplicationName << " " << B_TRANSLATE("uses") << ":\n";
-	extraInfo << "Scintilla lib";
+	extraInfo << B_TRANSLATE("available under the MIT license.\n\n");
+	extraInfo << IdeamNames::kApplicationName <<  B_TRANSLATE(" uses:");
+	extraInfo << "\nScintilla lib";
 	extraInfo << "\nCopyright 1998-2003 by Neil Hodgson <neilh@scintilla.org>";
 	extraInfo << "\n\nScintilla for Haiku";
 	extraInfo << "\nCopyright 2011 by Andrea Anzani <andrea.anzani@gmail.com>";
-	extraInfo << "\nCopyright 2014-2015 by Kacper Kasper <kacperkasper@gmail.com>";
+	extraInfo << "\nCopyright 2014-2015 by Kacper Kasper <kacperkasper@gmail.com>\n\n";
+	extraInfo << B_TRANSLATE("See Credits for a complete list.");
 
 	window->AddExtraInfo(extraInfo);
 
@@ -124,6 +129,75 @@ IdeamApp::RefsReceived(BMessage* message)
 void
 IdeamApp::ReadyToRun()
 {
+	// Window Settings file needs updating?
+	_CheckSettingsVersion();
+	std::cerr << IdeamNames::GetSignature() << std::endl;
+}
+
+void
+IdeamApp::_CheckSettingsVersion()
+{
+	BString fileVersion("");
+	int32 result;
+
+	TPreferences* settings = new TPreferences(IdeamNames::kSettingsFileName,
+												IdeamNames::kApplicationName, 'IDSE');
+	settings->FindString("app_version", &fileVersion);
+	delete settings;
+
+	// Settings file missing or corrupted
+	if (fileVersion.IsEmpty() || fileVersion == "0.0.0.0") {
+
+		BString text;
+		text << (B_TRANSLATE("Settings file is corrupted or deleted,\n"
+							"do You want to ignore, review or load to defaults?"));
+
+		BAlert* alert = new BAlert("SettingsDeletedDialog", text,
+			B_TRANSLATE("Ignore"), B_TRANSLATE("Review"), B_TRANSLATE("Load"),
+			B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+
+		alert->SetShortcut(0, B_ESCAPE);
+
+		int32 choice = alert->Go();
+	 
+		if (choice == 0)
+			return;
+		else if (choice == 1) {
+			IdeamNames::UpdateSettingsFile();
+			SettingsWindow* window = new SettingsWindow();
+			window->Show();
+		}
+		else if (choice == 2)
+			IdeamNames::UpdateSettingsFile();
+	}
+	else {
+
+		result = IdeamNames::CompareVersion(IdeamNames::GetVersionInfo(), fileVersion);
+		// App version > file version
+		if (result > 0) {
+
+			BString text;
+			text << (B_TRANSLATE("Settings file for a previous version detected,\n"
+								"do You want to ignore, review or load to defaults?"));
+
+			BAlert* alert = new BAlert("SettingsUpdateDialog", text,
+				B_TRANSLATE("Ignore"), B_TRANSLATE("Review"), B_TRANSLATE("Load"),
+				B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+
+			alert->SetShortcut(0, B_ESCAPE);
+
+			int32 choice = alert->Go();
+		 
+			if (choice == 0)
+				return;
+			else if (choice == 1) {
+				SettingsWindow* window = new SettingsWindow();
+				window->Show();
+			}
+			else if (choice == 2)
+				IdeamNames::UpdateSettingsFile();
+		}
+	}
 }
 
 int

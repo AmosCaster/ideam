@@ -22,7 +22,8 @@
 
 class TPreferences : public BMessage {
 public:
-					TPreferences(const char *filename, const char* directory);
+					TPreferences(const BString filename, const BString directory,
+						uint32 command);
 					~TPreferences();
 
 	status_t		InitCheck(void);

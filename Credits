@@ -1,6 +1,7 @@
 
 - Icons taken from Haiku artwork.
 - TPreferences class by Eric Shepherd
-- tabview interface taken from webpositive app
+- tabview interface taken from Haiku apps/webpositive app
 - Scintilla lib by Neil Hodgson
-- Scintilla for Haiku  by Andrea Anzani, Kacper Kasper 
+- Scintilla for Haiku  by Andrea Anzani, Kacper Kasper
+- TitleItem	class taken from Haiku preferences/network

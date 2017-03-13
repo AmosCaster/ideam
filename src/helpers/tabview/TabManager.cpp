@@ -847,8 +847,8 @@ extern BRect dirtyFrameHack;
 void
 TabManager::SelectTab(int32 tabIndex, bool isNew /*= false */)
 {
-	if (tabIndex == SelectedTabIndex())
-		return;
+//	if (tabIndex == SelectedTabIndex())
+//		return;
 
 #if defined DIRTY_HACK
 	fCardLayout->SetFrame(dirtyFrameHack);

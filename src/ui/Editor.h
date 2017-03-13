@@ -32,6 +32,7 @@ public:
 			void				Clear();
 			void				Copy();
 			void				Cut();
+		const BString			FilePath() const;
 			entry_ref*			FileRef() { return &fFileRef; }
 			void				GrabFocus();
 			bool				IsModified() { return fModified; }

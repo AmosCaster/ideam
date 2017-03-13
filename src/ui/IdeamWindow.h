@@ -36,6 +36,7 @@ public:
 
 	virtual void				MessageReceived(BMessage* message);
 	virtual bool				QuitRequested();
+
 private:
 
 			status_t			_AddEditorTab(entry_ref* ref, int32 index);
@@ -55,7 +56,7 @@ private:
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
 									int32 resIndex, bool enabled, const char* tooltip);
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);
-			void				_SendNotification(const char* message, const char* type);
+			void				_SendNotification(BString message, BString type);
 			status_t			_UpdateLabel(int32 index, bool isModified);
 			void				_UpdateSelectionChange(int32 index);
 private:
@@ -75,6 +76,7 @@ private:
 			BMenuItem*			fSelectAllMenuItem;
 
 			BGroupLayout*		fRootLayout;
+			BGroupLayout* 		fToolBar;
 			BGroupLayout*		fEditorTabsGroup;
 
 			BIconButton*		fProjectsButton;

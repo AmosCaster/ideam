@@ -4,7 +4,7 @@
 
 arch := $(shell getarch)
 
-#CXX	:= clang++
+CXX	:= clang++
 
 NAME := Ideam
 
@@ -15,8 +15,10 @@ TYPE := APP
 APP_MIME_SIG := "application/x-vnd.Ideam-Ideam"
 
 SRCS :=  src/IdeamApp.cpp
+SRCS +=  src/IdeamNamespace.cpp
 SRCS +=  src/ui/Editor.cpp
 SRCS +=  src/ui/IdeamWindow.cpp
+SRCS +=  src/ui/SettingsWindow.cpp
 SRCS +=  src/helpers/TPreferences.cpp
 SRCS +=  src/helpers/tabview/TabContainerView.cpp
 SRCS +=  src/helpers/tabview/TabManager.cpp

@@ -21,13 +21,16 @@
 #include <cassert>
 #include <iostream>
 
+#include "IdeamNamespace.h"
+#include "TPreferences.h"
+#include "SettingsWindow.h"
+
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "IdeamWindow"
 
 #define MULTIFILE_OPEN_SELECT_FIRST_FILE
 
-extern const char* kApplicationSignature;
-extern const char* kApplicationName;
+
 const auto kRecentFilesNumber = 14 + 1;
 
 // If enabled check menu open point
@@ -53,6 +56,10 @@ enum {
 
 	// Edit menu
 	MSG_TEXT_DELETE				= 'tede',
+
+	// Window menu
+	MSG_WINDOW_SETTINGS			= 'wise',
+	MSG_TOGGLE_TOOLBAR			= 'toto',
 
 	// Toolbar
 	MSG_BUFFER_LOCK				= 'bulo',
@@ -85,7 +92,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 		new BMessage(MSG_FILE_OPEN), 'O'));
 	menu->AddItem(new BMenuItem(BRecentFilesList::NewFileListMenu(
 			B_TRANSLATE("Open recent" B_UTF8_ELLIPSIS), nullptr, nullptr, this,
-			kRecentFilesNumber, true, nullptr, kApplicationSignature), nullptr));
+			kRecentFilesNumber, true, nullptr, IdeamNames::kApplicationSignature), nullptr));
 	menu->AddSeparatorItem();
 	menu->AddItem(fSaveMenuItem = new BMenuItem(B_TRANSLATE("Save"),
 		new BMessage(MSG_FILE_SAVE), 'S'));
@@ -136,6 +143,19 @@ IdeamWindow::IdeamWindow(BRect frame)
 
 	menuBar->AddItem(menu);
 
+	menu = new BMenu(B_TRANSLATE("Window"));		
+	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
+		new BMessage(MSG_WINDOW_SETTINGS), 'P', B_OPTION_KEY));
+	BMenu* submenu = new BMenu(B_TRANSLATE("Interface"));
+	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Projects panes"),
+		new BMessage(MSG_SHOW_HIDE_PROJECTS)));
+	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Output panes"),
+		new BMessage(MSG_SHOW_HIDE_OUTPUT)));
+	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle ToolBar"),
+		new BMessage(MSG_TOGGLE_TOOLBAR)));
+	menu->AddItem(submenu);
+	menuBar->AddItem(menu);
+
 	menu = new BMenu(B_TRANSLATE("Help"));
 	menu->AddItem(new BMenuItem(B_TRANSLATE("About" B_UTF8_ELLIPSIS),
 		new BMessage(B_ABOUT_REQUESTED)));
@@ -168,7 +188,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 	fFileMenuButton = _LoadIconButton("FileMenuButton", MSG_FILE_MENU_SHOW,
 						211, false, B_TRANSLATE("Indexed File list"));
 
-	BGroupLayout* toolBar = BLayoutBuilder::Group<>(B_VERTICAL, 0)
+	fToolBar = BLayoutBuilder::Group<>(B_VERTICAL, 0)
 		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, 1)
 			.AddGlue()
 			.Add(fProjectsButton)
@@ -206,7 +226,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 	dirtyFrameHack = fTabManager->TabGroup()->Frame();
 
 	// Status Bar
-	fStatusBar = new BStatusBar("Statusbar");
+	fStatusBar = new BStatusBar("StatusBar");
 	fStatusBar->SetBarHeight(1.0);
 
 	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
@@ -239,15 +259,17 @@ IdeamWindow::IdeamWindow(BRect frame)
 
 	// Layout
 	fRootLayout = BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
-		.SetInsets(0, 0, 0, 0)
+		.SetInsets(0.0f, 0.0f, 0.0f, 0.0f)
 		.Add(menuBar)
-		.Add(toolBar)
+		.Add(fToolBar)
+
 			.AddSplit(B_VERTICAL, 0.0f) // output split
 				.AddSplit(B_HORIZONTAL, 0.0f) // sidebar split
 					.Add(fProjectsTabView, kProjectsWeight)
-//					.AddGroup(B_VERTICAL, 0, kEditorWeight)  // Editor
-						.Add(fEditorTabsGroup, kEditorWeight)
-//					.End() // editor group
+					.AddGroup(B_VERTICAL, 0, kEditorWeight)  // Editor
+						.SetInsets(2.0f, 2.0f, 0.0f, 2.0f)
+						.Add(fEditorTabsGroup)
+					.End() // editor group
 				.End() // sidebar split
 				.Add(fOutputTabView, kOutputWeight)
 			.End() //  output split
@@ -262,6 +284,28 @@ IdeamWindow::IdeamWindow(BRect frame)
 	}
 	AddShortcut(B_LEFT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_PREVIOUS_SELECTED));
 	AddShortcut(B_RIGHT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_NEXT_SELECTED));
+
+	// Reopen files
+	if (true) {
+		TPreferences* files = new TPreferences(IdeamNames::kSettingsFilesToReopen,
+												IdeamNames::kApplicationName, 'FRSE');
+		if (!files->IsEmpty()) {
+			entry_ref ref;
+			int32 index = -1, count;
+			BMessage *message = new BMessage(B_REFS_RECEIVED);
+
+			if (files->FindInt32("opened_index", &index) == B_OK) {
+				message->AddInt32("opened_index", index);
+
+				for (count = 0; files->FindRef("file_to_reopen", count, &ref) == B_OK; count++)
+					message->AddRef("refs", &ref);
+				// Found an index and found some files, post message
+				if (index > -1 && count > 0)
+					PostMessage(message);
+			}
+		}
+		delete files;
+	}
 }
 
 IdeamWindow::~IdeamWindow()
@@ -476,8 +520,11 @@ std::cerr << "EDITOR_SELECTION_CHANGED " << "index: " << index << std::endl;
 			break;
 		case MSG_SELECT_TAB: {
 			int32 index;
+			// Shortcut selection, be careful
 			if (message->FindInt32("index", &index) == B_OK) {
-				fTabManager->SelectTab(index);
+				if (index < fTabManager->CountTabs() 
+					&& index != fTabManager->SelectedTabIndex())
+					fTabManager->SelectTab(index);
 			}
 			break;
 		}	
@@ -506,11 +553,30 @@ std::cerr << "EDITOR_SELECTION_CHANGED " << "index: " << index << std::endl;
 			}
 			break;
 		}
+		case MSG_TOGGLE_TOOLBAR: {
+			if (fToolBar->View()->IsHidden()) {
+				fToolBar->View()->Show();
+			} else {
+				fToolBar->View()->Hide();
+			}
+			break;
+		}
+		case MSG_WINDOW_SETTINGS: {
+			SettingsWindow *window = new SettingsWindow();
+			window->Show();
+
+			break;
+		}
 		case TABMANAGER_TAB_CHANGED: {
 			int32 index;
 			if (message->FindInt32("index", &index) == B_OK) {
 					fEditor = fEditorObjectList->ItemAt(index);
-					fEditor->GrabFocus();
+					// TODO notify and check index too
+/*					if (fEditor == nullptr) {
+std::cerr << "TABMANAGER_TAB_CHANGED " << "NULL on index: " << index << std::endl;
+						break;
+					}	
+*/					fEditor->GrabFocus();
 std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 			}
@@ -542,7 +608,7 @@ std::cerr << "TABMANAGER_TAB_NEW_OPENED" << " index: " << index << std::endl;
 bool
 IdeamWindow::QuitRequested()
 {
-	// Is any modified file?
+	// Is there any modified file?
 	if (_FilesNeedSave()) {
 		BAlert* alert = new BAlert("QuitAndSaveDialog",
 	 		B_TRANSLATE("There are modified files, do you want to save changes before quitting?"),
@@ -556,16 +622,36 @@ IdeamWindow::QuitRequested()
 		if (choice == 0)
 			return false;
 		else if (choice == 1) { 
-//			be_app->PostMessage(B_QUIT_REQUESTED);
+
 		} else if (choice == 2) {
 			_FileSaveAll();
-//			be_app->PostMessage(B_QUIT_REQUESTED);
 		}
+	}
+
+	// Files to reopen
+	if (true) {
+		TPreferences* files = new TPreferences(IdeamNames::kSettingsFilesToReopen,
+												IdeamNames::kApplicationName, 'FRSE');
+		// Just empty it for now TODO check if equal
+		files->MakeEmpty();
+			// Save if there is an opened file
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1) {
+				files->AddInt32("opened_index", index);
+
+				for (int32 index = 0; index < fTabManager->CountTabs(); index++) {
+					fEditor = fEditorObjectList->ItemAt(index);
+					files->AddRef("file_to_reopen", fEditor->FileRef());
+				}
+			}
+		delete files;
 	}
 
 	be_app->PostMessage(B_QUIT_REQUESTED);
 	return true;
 }
+
 
 status_t
 IdeamWindow::_AddEditorTab(entry_ref* ref, int32 index)
@@ -602,7 +688,7 @@ IdeamWindow::_FileClose(int32 index, bool ignoreModifications /* = false */)
 	// Should not happen
 	if (index < 0) {
 		notification << (B_TRANSLATE("No file selected"));
-		_SendNotification(notification.String(), "FILE_ERR");
+		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
 #ifdef DEBUG
@@ -610,14 +696,14 @@ BView* myview = dynamic_cast<BView*>(fTabManager->ViewForTab(index));
 notification << "Child name is: " << myview->ChildAt(0)->Name();
 //notification << "NextSibling name is: " << myview->NextSibling()->Name();
 notification << " View name is: " << myview->Name();
-_SendNotification(notification.String(), "FILE_ERR");
+_SendNotification(notification, "FILE_ERR");
 notification.SetTo("");
 #endif
 	fEditor = fEditorObjectList->ItemAt(index);
 
 	if (fEditor == nullptr) {
 		notification << (B_TRANSLATE("NULL editor pointer"));
-		_SendNotification(notification.String(), "FILE_ERR");
+		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
 
@@ -641,7 +727,7 @@ notification.SetTo("");
 	}
 
 	notification << fEditor->Name() << " " << B_TRANSLATE("closed");
-	_SendNotification(notification.String(), "FILE_CLOSE");
+	_SendNotification(notification, "FILE_CLOSE");
 
 	BView* view = fTabManager->RemoveTab(index);
 	Editor* editorView = dynamic_cast<Editor*>(view);
@@ -677,8 +763,13 @@ IdeamWindow::_FileOpen(BMessage* msg)
 	status_t status = B_OK;
 	int32 refsCount = 0;
 	int32 openedIndex;
-	int32 nextIndex = fTabManager->CountTabs();
+	int32 nextIndex;
 	BString notification;
+
+	// If user choose to reopen files reopen right index
+	// otherwise use default behaviour (see below)
+	if (msg->FindInt32("opened_index", &nextIndex) != B_OK)
+		nextIndex = fTabManager->CountTabs();
 
 	while (msg->FindRef("refs", refsCount, &ref) == B_OK) {
 
@@ -704,7 +795,7 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 		if (fEditor == nullptr) {
 			notification << ref.name << ": "
 						 << (B_TRANSLATE("NULL editor pointer"));
-			_SendNotification(notification.String(), "FILE_ERR");
+			_SendNotification(notification, "FILE_ERR");
 			return B_ERROR;
 		}
 
@@ -719,7 +810,7 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 
 		notification << fEditor->Name() << " " << B_TRANSLATE("opened with index")
 			<< " " << fTabManager->CountTabs() - 1;
-		_SendNotification(notification.String(), "FILE_OPEN");
+		_SendNotification(notification, "FILE_OPEN");
 		notification.SetTo("");
 	}
 
@@ -729,6 +820,7 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 	// of them. see below
 	if (nextIndex < fTabManager->CountTabs()) {
 		fTabManager->SelectTab(nextIndex);
+//		fEditor->GrabFocus();
 }
 #else
 	// If at least one item added, select last opened file:
@@ -753,7 +845,7 @@ IdeamWindow::_FileSave(int32 index)
 	// Should not happen
 	if (index < 0) {
 		notification << (B_TRANSLATE("No file selected"));
-		_SendNotification(notification.String(), "FILE_ERR");
+		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
 
@@ -761,21 +853,21 @@ IdeamWindow::_FileSave(int32 index)
 
 	if (fEditor == nullptr) {
 		notification << (B_TRANSLATE("NULL editor pointer"));
-		_SendNotification(notification.String(), "FILE_ERR");
+		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
 
 	// Readonly file, should not happen
 	if (fEditor->IsReadOnly()) {
 		notification << (B_TRANSLATE("File is Read-only"));
-		_SendNotification(notification.String(), "FILE_ERR");
+		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
 
 	// File not modified, happens at file save as
 /*	if (!fEditor->IsModified()) {
 		notification << (B_TRANSLATE("File not modified"));
-		_SendNotification(notification.String(), "FILE_ERR");
+		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
 */
@@ -792,7 +884,7 @@ IdeamWindow::_FileSave(int32 index)
 		<< "\t\t" << B_TRANSLATE("length: ") << length << B_TRANSLATE(" bytes -> ")
 		<< written<< B_TRANSLATE(" bytes written");
 
-	_SendNotification(notification.String(), length == written ? "FILE_SAVE" : "FILE_ERR");
+	_SendNotification(notification, length == written ? "FILE_SAVE" : "FILE_ERR");
 
 	return B_OK;
 }
@@ -810,7 +902,7 @@ IdeamWindow::_FileSaveAll()
 			BString notification;
 			notification << B_TRANSLATE("Index ") << index
 				<< (B_TRANSLATE(": NULL editor pointer"));
-			_SendNotification(notification.String(), "FILE_ERR");
+			_SendNotification(notification, "FILE_ERR");
 			continue;
 		}
 
@@ -845,7 +937,7 @@ IdeamWindow::_FileSaveAs(int32 selection, BMessage* message)
 		BString notification;
 		notification << B_TRANSLATE("Index ") << selection
 			<< (B_TRANSLATE(": NULL editor pointer"));
-		_SendNotification(notification.String(), "FILE_ERR");
+		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
 
@@ -882,7 +974,12 @@ IdeamWindow::_GetEditorIndex(entry_ref* ref)
 {
 	BEntry entry(ref, true);
 	int32 filesCount = fEditorObjectList->CountItems();
-	
+
+	// Could try to reopen at start a saved index that was deleted,
+	// check existence
+	if (entry.Exists() == false)
+		return -1;
+		
 	for (int32 index = 0; index < filesCount; index++) {
 
 		fEditor = fEditorObjectList->ItemAt(index);
@@ -891,7 +988,7 @@ IdeamWindow::_GetEditorIndex(entry_ref* ref)
 			BString notification;
 			notification << B_TRANSLATE("Index ") << index
 				<< (B_TRANSLATE(": NULL editor pointer"));
-			_SendNotification(notification.String(), "FILE_ERR");
+			_SendNotification(notification, "FILE_ERR");
 			continue;
 		}
 
@@ -916,7 +1013,7 @@ IdeamWindow::_GetEditorIndex(node_ref* nref)
 			BString notification;
 			notification << B_TRANSLATE("Index ") << index
 				<< (B_TRANSLATE(": NULL editor pointer"));
-			_SendNotification(notification.String(), "FILE_ERR");
+			_SendNotification(notification, "FILE_ERR");
 			continue;
 		}
 
@@ -936,7 +1033,7 @@ IdeamWindow::_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRe
 	newEntry.GetPath(&newPath);
 
 	BString text;
-	text << kApplicationName << ":\n";
+	text << IdeamNames::kApplicationName << ":\n";
 	text << (B_TRANSLATE("File \"%file%\" was moved externally,\n"
 							"do You want to ignore, close or reload it?"));
 	text.ReplaceAll("%file%", oldRef->name);
@@ -964,7 +1061,7 @@ IdeamWindow::_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRe
 		BString notification;
 		notification << oldPath.Path() << B_TRANSLATE(" moved externally to ");
 		notification << newPath.Path();
-		_SendNotification(notification.String(), "FILE_INFO");
+		_SendNotification(notification, "FILE_INFO");
 	}
 }
 
@@ -978,7 +1075,7 @@ IdeamWindow::_HandleExternalRemoveModification(int32 index)
 	fEditor = fEditorObjectList->ItemAt(index);
 
 	BString text;
-	text << kApplicationName << ":\n";
+	text << IdeamNames::kApplicationName << ":\n";
 	text << (B_TRANSLATE("File \"%file%\" was removed externally,\n"
 							"do You want to keep the file or discard it?\n"
 							"If kept and modified save it or it will be lost"));
@@ -1005,7 +1102,7 @@ IdeamWindow::_HandleExternalRemoveModification(int32 index)
 
 		BString notification;
 		notification << fEditor->Name() << B_TRANSLATE(" removed externally");
-		_SendNotification(notification.String(), "FILE_INFO");
+		_SendNotification(notification, "FILE_INFO");
 	}
 }
 
@@ -1019,7 +1116,7 @@ IdeamWindow::_HandleExternalStatModification(int32 index)
 	fEditor = fEditorObjectList->ItemAt(index);
 
 	BString text;
-	text << kApplicationName << ":\n";
+	text << IdeamNames::kApplicationName << ":\n";
 	text << (B_TRANSLATE("File \"%file%\" was modified externally, reload it?"));
 	text.ReplaceAll("%file%", fEditor->Name());
 
@@ -1038,7 +1135,7 @@ IdeamWindow::_HandleExternalStatModification(int32 index)
 
 		BString notification;
 		notification << fEditor->Name() << B_TRANSLATE(" modified externally");
-		_SendNotification(notification.String(), "FILE_INFO");
+		_SendNotification(notification, "FILE_INFO");
 	}
 }
 
@@ -1199,7 +1296,7 @@ IdeamWindow::_LoadSizedVectorIcon(int32 resourceID, int32 size)
 }
 
 void
-IdeamWindow::_SendNotification(const char* message, const char* type)
+IdeamWindow::_SendNotification(BString message, BString type)
 {
        BRow* fRow = new BRow();
        time_t now =  static_cast<bigtime_t>(real_time_clock());
@@ -1267,6 +1364,11 @@ fStatusBar->SetTrailingText(text.String());
 		fPasteMenuItem->SetEnabled(false);
 		fDeleteMenuItem->SetEnabled(false);
 		fSelectAllMenuItem->SetEnabled(false);
+
+			// TODO variable
+		if (true) {
+			SetTitle(IdeamNames::kApplicationName);
+		}
 		return;
 	}
 
@@ -1305,6 +1407,12 @@ fStatusBar->SetTrailingText(text.String());
 	fDeleteMenuItem->SetEnabled(fEditor->CanClear());
 	fSelectAllMenuItem->SetEnabled(true);
 
+	// TODO variable
+	if (true) {
+		BString title;
+		title << IdeamNames::kApplicationName << ": " << fEditor->FilePath();
+		SetTitle(title.String());
+	}
 	// fEditor is modified by _FilesNeedSave so it should be the last
 	// or reload editor pointer
 	bool filesNeedSave = _FilesNeedSave();

@@ -1,47 +1,80 @@
-1	English	application/x-vnd.Ideam-Ideam	1812141048
+1	English	application/x-vnd.Ideam-Ideam	2856132684
+tuned 	SettingsWindow		tuned 
+Load	IdeamApp		Load
 opened with index	IdeamWindow		opened with index
 Index 	IdeamWindow		Index 
+Toggle Projects panes	IdeamWindow		Toggle Projects panes
 : NULL editor pointer	IdeamWindow		: NULL editor pointer
+Startup	SettingsWindow		Startup
 length: 	IdeamWindow		length: 
 Help	IdeamWindow		Help
 About…	IdeamWindow		About…
 Show/Hide Output split	IdeamWindow		Show/Hide Output split
+ time	SettingsWindow		 time
+Show ToolBar	SettingsWindow		Show ToolBar
 Save current File	IdeamWindow		Save current File
 Project	IdeamWindow		Project
+Tab width:	SettingsWindow		Tab width:
+Reload files	SettingsWindow		Reload files
 Save changes to file \"%file%\"	IdeamWindow		Save changes to file \"%file%\"
 Cut	IdeamWindow		Cut
+Editor	SettingsWindow		Editor
 Select all	IdeamWindow		Select all
 Delete	IdeamWindow		Delete
 Undo	IdeamWindow		Undo
 Type	IdeamWindow		Type
+Defaults loaded	SettingsWindow		Defaults loaded
+Show Projects panes	SettingsWindow		Show Projects panes
 Notifications	IdeamWindow		Notifications
 Don't save	Editor		Don't save
+Default	SettingsWindow		Default
+Ignore	IdeamApp		Ignore
 Time	IdeamWindow		Time
+Toggle ToolBar	IdeamWindow		Toggle ToolBar
+Font size:	SettingsWindow		Font size:
+applied 	SettingsWindow		applied 
+available under the MIT license.\n\n	IdeamApp		available under the MIT license.\n\n
 Select previous File	IdeamWindow		Select previous File
+Save caret position	SettingsWindow		Save caret position
 New	IdeamWindow		New
 There are modified files, do you want to save changes before quitting?	IdeamWindow		There are modified files, do you want to save changes before quitting?
 Redo	IdeamWindow		Redo
+Build	SettingsWindow		Build
+Interface	IdeamWindow		Interface
+Toggle Output panes	IdeamWindow		Toggle Output panes
 Paste	IdeamWindow		Paste
 Discard	IdeamWindow		Discard
-uses	IdeamApp		uses
+Window	IdeamWindow		Window
+Edge column:	SettingsWindow		Edge column:
+Revert	SettingsWindow		Revert
+Save position	SettingsWindow		Save position
  modified externally	IdeamWindow		 modified externally
 Set buffer read-only	IdeamWindow		Set buffer read-only
 File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost	IdeamWindow		File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost
+Show Output panes	SettingsWindow		Show Output panes
  removed externally	IdeamWindow		 removed externally
  saved.	IdeamWindow		 saved.
 Select next File	IdeamWindow		Select next File
+Review	IdeamApp		Review
 Message	IdeamWindow		Message
+Enable Notifications	SettingsWindow		Enable Notifications
  moved externally to 	IdeamWindow		 moved externally to 
+File full path in window title	SettingsWindow		File full path in window title
 File \"%file%\" was modified externally, reload it?	IdeamWindow		File \"%file%\" was modified externally, reload it?
  bytes -> 	IdeamWindow		 bytes -> 
 Save	IdeamWindow		Save
 Quit	IdeamWindow		Quit
+ Modifications 	SettingsWindow		 Modifications 
 File is Read-only	IdeamWindow		File is Read-only
 Save	Editor		Save
 Show/Hide Projects split	IdeamWindow		Show/Hide Projects split
 Open	IdeamWindow		Open
 File	IdeamWindow		File
+Show line number	SettingsWindow		Show line number
+Font:	SettingsWindow		Font:
 No file selected	IdeamWindow		No file selected
+Apply	SettingsWindow		Apply
+Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?	IdeamApp		Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?
 Open recent…	IdeamWindow		Open recent…
 Ideam	System name		Ideam
 Ignore	IdeamWindow		Ignore
@@ -52,17 +85,35 @@ Save all	IdeamWindow		Save all
 Cancel	Editor		Cancel
 Don't save	IdeamWindow		Don't save
 Save dialog	Editor		Save dialog
+Browse…	SettingsWindow		Browse…
+Show edge line	SettingsWindow		Show edge line
 Save all Files	IdeamWindow		Save all Files
 File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?	IdeamWindow		File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?
+Notifications	SettingsWindow		Notifications
+Exit	SettingsWindow		Exit
 Reload	IdeamWindow		Reload
+ times	SettingsWindow		 times
+Settings	IdeamWindow		Settings
+Enable Brace matching	SettingsWindow		Enable Brace matching
 Close all	IdeamWindow		Close all
+Set for app ver: 	SettingsWindow		Set for app ver: 
 Close	IdeamWindow		Close
+Enable Syntax highlighting	SettingsWindow		Enable Syntax highlighting
+Visual	SettingsWindow		Visual
 Save as…	IdeamWindow		Save as…
 Edit	IdeamWindow		Edit
 NULL editor pointer	IdeamWindow		NULL editor pointer
+Settings file is corrupted or deleted,\ndo You want to ignore, review or load to defaults?	IdeamApp		Settings file is corrupted or deleted,\ndo You want to ignore, review or load to defaults?
+ Controls loaded.	SettingsWindow		 Controls loaded.
+Mark caret line	SettingsWindow		Mark caret line
 Save changes to file	Editor		Save changes to file
 Cancel	IdeamWindow		Cancel
+Enable folding	SettingsWindow		Enable folding
+See Credits for a complete list.	IdeamApp		See Credits for a complete list.
 Projects	IdeamWindow		Projects
+Projects directory:	SettingsWindow		Projects directory:
+General	SettingsWindow		General
  bytes written	IdeamWindow		 bytes written
+ uses:	IdeamApp		 uses:
 Keep	IdeamWindow		Keep
 Close File	IdeamWindow		Close File

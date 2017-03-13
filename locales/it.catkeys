@@ -1,47 +1,80 @@
-1	English	application/x-vnd.Ideam-Ideam	1812141048
+1	English	application/x-vnd.Ideam-Ideam	2856132684
+tuned 	SettingsWindow		settato 
+Load	IdeamApp		Carica
 opened with index	IdeamWindow		aperto con indice
 Index 	IdeamWindow		Indice
+Toggle Projects panes	IdeamWindow		On/Off pannelli dei Progetti
 : NULL editor pointer	IdeamWindow		: puntatore dell' editor NULL
+Startup	SettingsWindow		Avvio
 length: 	IdeamWindow		lunghezza: 
 Help	IdeamWindow		Aiuto
 About…	IdeamWindow		About…
 Show/Hide Output split	IdeamWindow		Mostra/Nascondi split di Output
+ time	SettingsWindow		 volta
+Show ToolBar	SettingsWindow		Mostra ToolBar
 Save current File	IdeamWindow		Salva il File corrente
 Project	IdeamWindow		Progetto
+Tab width:	SettingsWindow		Tabulazioni:
+Reload files	SettingsWindow		Ricarica i file
 Save changes to file \"%file%\"	IdeamWindow		Salva cambiamenti al file \"%file%\"
 Cut	IdeamWindow		Taglia
+Editor	SettingsWindow		Editor
 Select all	IdeamWindow		Seleziona tutto
 Delete	IdeamWindow		Elimina
 Undo	IdeamWindow		Annulla
 Type	IdeamWindow		Tipo
+Defaults loaded	SettingsWindow		Predefiniti caricati
+Show Projects panes	SettingsWindow		Mostra pannelli dei Progetti
 Notifications	IdeamWindow		Notifiche
 Don't save	Editor		Non salvare
+Default	SettingsWindow		Default
+Ignore	IdeamApp		Ignora
 Time	IdeamWindow		Data
+Toggle ToolBar	IdeamWindow		On/Off barra Strumenti
+Font size:	SettingsWindow		Dimensione Font:
+applied 	SettingsWindow		applicati 
+available under the MIT license.\n\n	IdeamApp		available under the MIT license.\n\n
 Select previous File	IdeamWindow		Seleziona il File precedente
+Save caret position	SettingsWindow		Salva posizione cursore
 New	IdeamWindow		Nuovo
 There are modified files, do you want to save changes before quitting?	IdeamWindow		Ci sono file modificati, vuoi salvare le modifiche prima di uscire?
 Redo	IdeamWindow		Ripeti
+Build	SettingsWindow		Build
+Interface	IdeamWindow		Interfaccia
+Toggle Output panes	IdeamWindow		On/Off pannelli di Output
 Paste	IdeamWindow		Incolla
 Discard	IdeamWindow		Elimina
-uses	IdeamApp		utilizza
+Window	IdeamWindow		Finestra
+Edge column:	SettingsWindow		Colonna di margine a:
+Revert	SettingsWindow		Ripristina
+Save position	SettingsWindow		Salva posizione
  modified externally	IdeamWindow		 modificato da altra applicazione
 Set buffer read-only	IdeamWindow		Imposta il buffer a sola lettura
 File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost	IdeamWindow		Il File \"%file%\" è stato rimosso da un' altra applicazione,\nvuoi mantenere il file o eliminarlo?\nSe vuoi mantenerlo ma è modificato occorre salvarlo o sarà eliminato
+Show Output panes	SettingsWindow		Mostra pannelli di Output
  removed externally	IdeamWindow		 eliminato da altra applicazione
  saved.	IdeamWindow		salvato.
 Select next File	IdeamWindow		Seleziona il File seguente
+Review	IdeamApp		Revisiona
 Message	IdeamWindow		Messaggio
+Enable Notifications	SettingsWindow		Abilita Notifiche
  moved externally to 	IdeamWindow		 spostato da altra applicazione in
+File full path in window title	SettingsWindow		Percorso del File nel titolo
 File \"%file%\" was modified externally, reload it?	IdeamWindow		Il File \"%file%\" è stato modificato da un altra applicazione, lo ricarico?
  bytes -> 	IdeamWindow		 byte -> 
 Save	IdeamWindow		Salva
 Quit	IdeamWindow		Esci
+ Modifications 	SettingsWindow		 Modifiche 
 File is Read-only	IdeamWindow		File di sola lettura
 Save	Editor		Salva
 Show/Hide Projects split	IdeamWindow		Mostra/Nascondi split dei Progetti
 Open	IdeamWindow		Apri
 File	IdeamWindow		File
+Show line number	SettingsWindow		Mostra numeri di linea
+Font:	SettingsWindow		Font:
 No file selected	IdeamWindow		Nessun file selezionato
+Apply	SettingsWindow		Applica
+Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?	IdeamApp		File di Impostazioni per versione precedente,\nignora, revisiona o carica predefiniti?
 Open recent…	IdeamWindow		File recenti…
 Ideam	System name		Ideam
 Ignore	IdeamWindow		Ignora
@@ -52,17 +85,35 @@ Save all	IdeamWindow		Salva tutti
 Cancel	Editor		Cancella
 Don't save	IdeamWindow		Non salvare
 Save dialog	Editor		Salva dialog
+Browse…	SettingsWindow		Browse…
+Show edge line	SettingsWindow		Mostra margine
 Save all Files	IdeamWindow		Salva tutti i File
 File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?	IdeamWindow		Il File \"%file%\" è stato spostato da altra applicazione,\nvuoi ignorarlo, chiuderlo o ricaricarlo?
+Notifications	SettingsWindow		Notifiche
+Exit	SettingsWindow		Esci
 Reload	IdeamWindow		Ricarica
+ times	SettingsWindow		 volte
+Settings	IdeamWindow		Impostazioni
+Enable Brace matching	SettingsWindow		Abilita corrispondenza parentesi
 Close all	IdeamWindow		Chiudi tutti
+Set for app ver: 	SettingsWindow		Per la versione: 
 Close	IdeamWindow		Chiudi
+Enable Syntax highlighting	SettingsWindow		Abilita colorazione sintassi
+Visual	SettingsWindow		Visuale
 Save as…	IdeamWindow		Salva con nome…
 Edit	IdeamWindow		Modifica
 NULL editor pointer	IdeamWindow		puntatore dell' editor NULL
+Settings file is corrupted or deleted,\ndo You want to ignore, review or load to defaults?	IdeamApp		File Impostazioni corrotto o mancante,\nignora, revisiona o carica i predefiniti?
+ Controls loaded.	SettingsWindow		 Controlli caricati.
+Mark caret line	SettingsWindow		Evidenzia linea del cursore
 Save changes to file	Editor		Salva i cambiamenti su file
 Cancel	IdeamWindow		Cancella
+Enable folding	SettingsWindow		Abilita folding
+See Credits for a complete list.	IdeamApp		Vedi Credits per una lista completa.
 Projects	IdeamWindow		Progetti
+Projects directory:	SettingsWindow		Directory dei Progetti:
+General	SettingsWindow		Generale
  bytes written	IdeamWindow		 byte scritti
+ uses:	IdeamApp		 utilizza:
 Keep	IdeamWindow		Mantieni
 Close File	IdeamWindow		Chiudi il File

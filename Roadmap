@@ -77,6 +77,7 @@ legenda:
 +) Node monitoring
 +) Open with
 +) Warn on modified Files on exit
++) Left/Right and 1..9 tabs shortcuts
 
 ) Tabs should be swappable
 ) Recheck permissions on a monitored file with mode/uid/gid changed
@@ -84,13 +85,23 @@ legenda:
 ] Pe and StyledEdit fire different messages of B_STAT_CHANGED fields
   on modifying the same file
 --------------------------------------------------------------------------------
+
+0.0.8) Storing window settings
+
++) Settings window
++) Load settings
++) Store settings
++) Reset to default
++) Update settings on new app version
+
++) File full path in title bar
++) Reopen files at startup
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
 
 
 0.1.0) Integrate Scintilla
-
-0.2.0) Storing window settings
 
 0.3.0) Project class & settings
 

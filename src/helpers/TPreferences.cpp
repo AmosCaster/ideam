@@ -9,6 +9,7 @@
 /*
  * All rights reserved. Distributed under the terms of the Be Sample Code
  * license.
+ *	Modified by A. Mosca <amoscaster@gmail.com>
  */
 
 // from: Be Newsletter Issue 3-35, September 2, 1998
@@ -26,9 +27,10 @@
 //
 // Open the settings file and read the data in.
 //
-TPreferences::TPreferences(const char *filename, const char* directory)
+TPreferences::TPreferences(const BString filename, const BString directory,
+							uint32 command)
 	: 
- 	BMessage('pref')
+ 	BMessage(command)
 {
 	BFile file;
 
@@ -58,7 +60,8 @@ TPreferences::TPreferences(const char *filename, const char* directory)
 //
 TPreferences::~TPreferences() {
 
-	//PrintToStream();
+	if (what == 'IDSE')
+		PrintToStream();
 
 	BFile file;
 	
