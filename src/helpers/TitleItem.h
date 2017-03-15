@@ -23,7 +23,7 @@ public:
 	{
 		BFont font;
 
-		font.SetFamilyAndStyle("DejaVu Sans", "Bold");
+		font.SetFamilyAndStyle("Noto Sans", "Bold");
 		owner->SetFont(&font);
 
 		BStringItem::DrawItem(owner, bounds, complete);
