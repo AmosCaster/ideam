@@ -10,7 +10,6 @@
 #include <Catalog.h>
 #include <IconUtils.h>
 #include <LayoutBuilder.h>
-#include <MenuBar.h>
 #include <NodeMonitor.h>
 #include <Path.h>
 #include <PopUpMenu.h>
@@ -38,7 +37,6 @@ const auto kRecentFilesNumber = 14 + 1;
 
 static const float kTabBarHeight = 30.0f;
 
-static float kProjectsWeight = 1.0f;
 static float kEditorWeight  = 3.0f;
 static float kOutputWeight  = 0.4f;
 
@@ -77,195 +75,22 @@ IdeamWindow::IdeamWindow(BRect frame)
 	BWindow(frame, "Ideam", B_TITLED_WINDOW, B_ASYNCHRONOUS_CONTROLS |
 												B_QUIT_ON_WINDOW_CLOSE)
 {
-	// Menu
-	BMenuBar* menuBar = new BMenuBar("menubar");
+	_InitMenu();
 
-	BMenu* menu = new BMenu(B_TRANSLATE("Project"));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Quit"),
-		new BMessage(B_QUIT_REQUESTED), 'Q'));
-	menuBar->AddItem(menu);
+	_InitWindow();
 
-	menu = new BMenu(B_TRANSLATE("File"));
-	menu->AddItem(fFileNewMenuItem = new BMenuItem(B_TRANSLATE("New"),
-		new BMessage(MSG_FILE_NEW)));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Open"),
-		new BMessage(MSG_FILE_OPEN), 'O'));
-	menu->AddItem(new BMenuItem(BRecentFilesList::NewFileListMenu(
-			B_TRANSLATE("Open recent" B_UTF8_ELLIPSIS), nullptr, nullptr, this,
-			kRecentFilesNumber, true, nullptr, IdeamNames::kApplicationSignature), nullptr));
-	menu->AddSeparatorItem();
-	menu->AddItem(fSaveMenuItem = new BMenuItem(B_TRANSLATE("Save"),
-		new BMessage(MSG_FILE_SAVE), 'S'));
-	menu->AddItem(fSaveAsMenuItem = new BMenuItem(B_TRANSLATE("Save as" B_UTF8_ELLIPSIS),
-		new BMessage(MSG_FILE_SAVE_AS)));
-	menu->AddItem(fSaveAllMenuItem = new BMenuItem(B_TRANSLATE("Save all"),
-		new BMessage(MSG_FILE_SAVE_ALL), 'S', B_SHIFT_KEY));
-	menu->AddSeparatorItem();
-	menu->AddItem(fCloseMenuItem = new BMenuItem(B_TRANSLATE("Close"),
-		new BMessage(MSG_FILE_CLOSE), 'W'));
-	menu->AddItem(fCloseAllMenuItem = new BMenuItem(B_TRANSLATE("Close all"),
-		new BMessage(MSG_FILE_CLOSE_ALL), 'W', B_SHIFT_KEY));
-	fFileNewMenuItem->SetEnabled(false);
-
-	fSaveMenuItem->SetEnabled(false);
-	fSaveAsMenuItem->SetEnabled(false);
-	fSaveAllMenuItem->SetEnabled(false);
-	fCloseMenuItem->SetEnabled(false);
-	fCloseAllMenuItem->SetEnabled(false);
-
-	menuBar->AddItem(menu);
-
-	menu = new BMenu(B_TRANSLATE("Edit"));
-	menu->AddItem(fUndoMenuItem = new BMenuItem(B_TRANSLATE("Undo"),
-		new BMessage(B_UNDO), 'Z'));
-	menu->AddItem(fRedoMenuItem = new BMenuItem(B_TRANSLATE("Redo"),
-		new BMessage(B_REDO), 'Z', B_SHIFT_KEY));
-	menu->AddSeparatorItem();
-	menu->AddItem(fCutMenuItem = new BMenuItem(B_TRANSLATE("Cut"),
-		new BMessage(B_CUT), 'X'));
-	menu->AddItem(fCopyMenuItem = new BMenuItem(B_TRANSLATE("Copy"),
-		new BMessage(B_COPY), 'C'));
-	menu->AddItem(fPasteMenuItem = new BMenuItem(B_TRANSLATE("Paste"),
-		new BMessage(B_PASTE), 'V'));
-	menu->AddItem(fDeleteMenuItem = new BMenuItem(B_TRANSLATE("Delete"),
-		new BMessage(MSG_TEXT_DELETE), 'D'));
-	menu->AddSeparatorItem();
-	menu->AddItem(fSelectAllMenuItem = new BMenuItem(B_TRANSLATE("Select all"),
-		new BMessage(B_SELECT_ALL), 'A'));
-
-	fUndoMenuItem->SetEnabled(false);
-	fRedoMenuItem->SetEnabled(false);
-	fCutMenuItem->SetEnabled(false);
-	fCopyMenuItem->SetEnabled(false);
-	fPasteMenuItem->SetEnabled(false);
-	fDeleteMenuItem->SetEnabled(false);
-	fSelectAllMenuItem->SetEnabled(false);
-
-	menuBar->AddItem(menu);
-
-	menu = new BMenu(B_TRANSLATE("Window"));		
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
-		new BMessage(MSG_WINDOW_SETTINGS), 'P', B_OPTION_KEY));
-	BMenu* submenu = new BMenu(B_TRANSLATE("Interface"));
-	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Projects panes"),
-		new BMessage(MSG_SHOW_HIDE_PROJECTS)));
-	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Output panes"),
-		new BMessage(MSG_SHOW_HIDE_OUTPUT)));
-	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle ToolBar"),
-		new BMessage(MSG_TOGGLE_TOOLBAR)));
-	menu->AddItem(submenu);
-	menuBar->AddItem(menu);
-
-	menu = new BMenu(B_TRANSLATE("Help"));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("About" B_UTF8_ELLIPSIS),
-		new BMessage(B_ABOUT_REQUESTED)));
-
-	menuBar->AddItem(menu);
-
-	// toolbar group
-	fProjectsButton = _LoadIconButton("ProjectsButton", MSG_SHOW_HIDE_PROJECTS,
-						111, true, B_TRANSLATE("Show/Hide Projects split"));
-	fOutputButton = _LoadIconButton("OutputButton", MSG_SHOW_HIDE_OUTPUT,
-						115, true, B_TRANSLATE("Show/Hide Output split"));
-
-	fUndoButton = _LoadIconButton("UndoButton", B_UNDO, 204, false,
-						B_TRANSLATE("Undo"));
-	fRedoButton = _LoadIconButton("RedoButton", B_REDO, 205, false,
-						B_TRANSLATE("Redo"));
-	fFileSaveButton = _LoadIconButton("FileSaveButton", MSG_FILE_SAVE,
-						206, false, B_TRANSLATE("Save current File"));
-	fFileSaveAllButton = _LoadIconButton("FileSaveAllButton", MSG_FILE_SAVE_ALL,
-						207, false, B_TRANSLATE("Save all Files"));
-
-	fFileUnlockedButton = _LoadIconButton("FileUnlockedButton", MSG_BUFFER_LOCK,
-						212, false, B_TRANSLATE("Set buffer read-only"));
-	fFilePreviousButton = _LoadIconButton("FilePreviousButton", MSG_FILE_PREVIOUS_SELECTED,
-						208, false, B_TRANSLATE("Select previous File"));
-	fFileNextButton = _LoadIconButton("FileNextButton", MSG_FILE_NEXT_SELECTED,
-						209, false, B_TRANSLATE("Select next File"));
-	fFileCloseButton = _LoadIconButton("FileCloseButton", MSG_FILE_CLOSE,
-						210, false, B_TRANSLATE("Close File"));
-	fFileMenuButton = _LoadIconButton("FileMenuButton", MSG_FILE_MENU_SHOW,
-						211, false, B_TRANSLATE("Indexed File list"));
-
-	fToolBar = BLayoutBuilder::Group<>(B_VERTICAL, 0)
-		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, 1)
-			.AddGlue()
-			.Add(fProjectsButton)
-			.Add(fOutputButton)
-			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
-			.Add(fUndoButton)
-			.Add(fRedoButton)
-			.Add(fFileSaveButton)
-			.Add(fFileSaveAllButton)
-			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
-			.AddGlue()
-			.Add(fFileUnlockedButton)
-			.Add(fFilePreviousButton)
-			.Add(fFileNextButton)
-			.Add(fFileCloseButton)
-			.Add(fFileMenuButton)
-			.SetInsets(1, 1, 1, 1)
-		)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
-	;
-
-	// Projects View
-	fProjectsTabView = new BTabView("ProjectsTabview");
-	fProjectsOutline = new BOutlineListView("ProjectsOutline", B_SINGLE_SELECTION_LIST);
-	fProjectsScroll = new BScrollView(B_TRANSLATE("Projects"),
-		fProjectsOutline, B_FRAME_EVENTS | B_WILL_DRAW, true, true, B_NO_BORDER);
-	fProjectsTabView->AddTab(fProjectsScroll);
-
-	// Editor tab & view
-	fEditorObjectList = new BObjectList<Editor>();
-
-	fTabManager = new TabManager(BMessenger(this));
-	fTabManager->TabGroup()->SetExplicitMaxSize(BSize(B_SIZE_UNSET, kTabBarHeight));
-
-	dirtyFrameHack = fTabManager->TabGroup()->Frame();
-
-	// Status Bar
-	fStatusBar = new BStatusBar("StatusBar");
-	fStatusBar->SetBarHeight(1.0);
-
-	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.SetInsets(1, 1, 1, 1)
-		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-			.Add(fTabManager->TabGroup())
-			.Add(fTabManager->ContainerView())
-			.Add(new BSeparatorView(B_HORIZONTAL))
-			.Add(fStatusBar)
-		)
-	;
-
-	// Panels
-	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), nullptr, B_FILE_NODE, true);
-	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), nullptr, B_FILE_NODE, false);
-
-	// Output
-	fOutputTabView = new BTabView("OutputTabview");
-
-	fNotificationsListView = new BColumnListView(B_TRANSLATE("Notifications"),
-									B_NAVIGABLE, B_PLAIN_BORDER, true);
-	fNotificationsListView->AddColumn(new BDateColumn(B_TRANSLATE("Time"),
-								140.0, 140.0, 140.0), kTimeColumn);
-	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Message"),
-								400.0, 400.0, 800.0, 0), kMessageColumn);
-	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Type"),
-								140.0, 140.0, 140.0, 0), kTypeColumn);
-
-	fOutputTabView->AddTab(fNotificationsListView);
+	// Fill Settings vars before using
+	IdeamNames::LoadSettingsVars();
 
 	// Layout
 	fRootLayout = BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
 		.SetInsets(0.0f, 0.0f, 0.0f, 0.0f)
-		.Add(menuBar)
+		.Add(fMenuBar)
 		.Add(fToolBar)
 
 			.AddSplit(B_VERTICAL, 0.0f) // output split
 				.AddSplit(B_HORIZONTAL, 0.0f) // sidebar split
-					.Add(fProjectsTabView, kProjectsWeight)
+					.Add(fProjectsTabView)
 					.AddGroup(B_VERTICAL, 0, kEditorWeight)  // Editor
 						.SetInsets(2.0f, 2.0f, 0.0f, 2.0f)
 						.Add(fEditorTabsGroup)
@@ -285,8 +110,18 @@ IdeamWindow::IdeamWindow(BRect frame)
 	AddShortcut(B_LEFT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_PREVIOUS_SELECTED));
 	AddShortcut(B_RIGHT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_NEXT_SELECTED));
 
+	// Interface elements
+	if (IdeamNames::Settings.show_projects == false)
+		fProjectsTabView->Hide();
+
+	if (IdeamNames::Settings.show_output == false)
+		fOutputTabView->Hide();
+
+	if (IdeamNames::Settings.show_toolbar == false)
+		fToolBar->View()->Hide();
+
 	// Reopen files
-	if (true) {
+	if (IdeamNames::Settings.reopen_files == true) {
 		TPreferences* files = new TPreferences(IdeamNames::kSettingsFilesToReopen,
 												IdeamNames::kApplicationName, 'FRSE');
 		if (!files->IsEmpty()) {
@@ -629,7 +464,7 @@ IdeamWindow::QuitRequested()
 	}
 
 	// Files to reopen
-	if (true) {
+	if (IdeamNames::Settings.reopen_files == true) {
 		TPreferences* files = new TPreferences(IdeamNames::kSettingsFilesToReopen,
 												IdeamNames::kApplicationName, 'FRSE');
 		// Just empty it for now TODO check if equal
@@ -804,6 +639,9 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 		if (status != B_OK) {
 			continue;
 		}
+
+		fEditor->ApplySettings();
+
 		// First tab gets selected by tabview
 		if (index > 0)
 			fTabManager->SelectTab(index, true);
@@ -1263,6 +1101,196 @@ std::cerr << __PRETTY_FUNCTION__ << "fields is: 0x" << std::hex << fields << std
 	}
 }
 
+void
+IdeamWindow::_InitMenu()
+{
+	// Menu
+	fMenuBar = new BMenuBar("menubar");
+
+	BMenu* menu = new BMenu(B_TRANSLATE("Project"));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("Quit"),
+		new BMessage(B_QUIT_REQUESTED), 'Q'));
+	fMenuBar->AddItem(menu);
+
+	menu = new BMenu(B_TRANSLATE("File"));
+	menu->AddItem(fFileNewMenuItem = new BMenuItem(B_TRANSLATE("New"),
+		new BMessage(MSG_FILE_NEW)));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("Open"),
+		new BMessage(MSG_FILE_OPEN), 'O'));
+	menu->AddItem(new BMenuItem(BRecentFilesList::NewFileListMenu(
+			B_TRANSLATE("Open recent" B_UTF8_ELLIPSIS), nullptr, nullptr, this,
+			kRecentFilesNumber, true, nullptr, IdeamNames::kApplicationSignature), nullptr));
+	menu->AddSeparatorItem();
+	menu->AddItem(fSaveMenuItem = new BMenuItem(B_TRANSLATE("Save"),
+		new BMessage(MSG_FILE_SAVE), 'S'));
+	menu->AddItem(fSaveAsMenuItem = new BMenuItem(B_TRANSLATE("Save as" B_UTF8_ELLIPSIS),
+		new BMessage(MSG_FILE_SAVE_AS)));
+	menu->AddItem(fSaveAllMenuItem = new BMenuItem(B_TRANSLATE("Save all"),
+		new BMessage(MSG_FILE_SAVE_ALL), 'S', B_SHIFT_KEY));
+	menu->AddSeparatorItem();
+	menu->AddItem(fCloseMenuItem = new BMenuItem(B_TRANSLATE("Close"),
+		new BMessage(MSG_FILE_CLOSE), 'W'));
+	menu->AddItem(fCloseAllMenuItem = new BMenuItem(B_TRANSLATE("Close all"),
+		new BMessage(MSG_FILE_CLOSE_ALL), 'W', B_SHIFT_KEY));
+	fFileNewMenuItem->SetEnabled(false);
+
+	fSaveMenuItem->SetEnabled(false);
+	fSaveAsMenuItem->SetEnabled(false);
+	fSaveAllMenuItem->SetEnabled(false);
+	fCloseMenuItem->SetEnabled(false);
+	fCloseAllMenuItem->SetEnabled(false);
+
+	fMenuBar->AddItem(menu);
+
+	menu = new BMenu(B_TRANSLATE("Edit"));
+	menu->AddItem(fUndoMenuItem = new BMenuItem(B_TRANSLATE("Undo"),
+		new BMessage(B_UNDO), 'Z'));
+	menu->AddItem(fRedoMenuItem = new BMenuItem(B_TRANSLATE("Redo"),
+		new BMessage(B_REDO), 'Z', B_SHIFT_KEY));
+	menu->AddSeparatorItem();
+	menu->AddItem(fCutMenuItem = new BMenuItem(B_TRANSLATE("Cut"),
+		new BMessage(B_CUT), 'X'));
+	menu->AddItem(fCopyMenuItem = new BMenuItem(B_TRANSLATE("Copy"),
+		new BMessage(B_COPY), 'C'));
+	menu->AddItem(fPasteMenuItem = new BMenuItem(B_TRANSLATE("Paste"),
+		new BMessage(B_PASTE), 'V'));
+	menu->AddItem(fDeleteMenuItem = new BMenuItem(B_TRANSLATE("Delete"),
+		new BMessage(MSG_TEXT_DELETE), 'D'));
+	menu->AddSeparatorItem();
+	menu->AddItem(fSelectAllMenuItem = new BMenuItem(B_TRANSLATE("Select all"),
+		new BMessage(B_SELECT_ALL), 'A'));
+
+	fUndoMenuItem->SetEnabled(false);
+	fRedoMenuItem->SetEnabled(false);
+	fCutMenuItem->SetEnabled(false);
+	fCopyMenuItem->SetEnabled(false);
+	fPasteMenuItem->SetEnabled(false);
+	fDeleteMenuItem->SetEnabled(false);
+	fSelectAllMenuItem->SetEnabled(false);
+
+	fMenuBar->AddItem(menu);
+
+	menu = new BMenu(B_TRANSLATE("Window"));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
+		new BMessage(MSG_WINDOW_SETTINGS), 'P', B_OPTION_KEY));
+	BMenu* submenu = new BMenu(B_TRANSLATE("Interface"));
+	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Projects panes"),
+		new BMessage(MSG_SHOW_HIDE_PROJECTS)));
+	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Output panes"),
+		new BMessage(MSG_SHOW_HIDE_OUTPUT)));
+	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle ToolBar"),
+		new BMessage(MSG_TOGGLE_TOOLBAR)));
+	menu->AddItem(submenu);
+
+	fMenuBar->AddItem(menu);
+
+	menu = new BMenu(B_TRANSLATE("Help"));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("About" B_UTF8_ELLIPSIS),
+		new BMessage(B_ABOUT_REQUESTED)));
+
+	fMenuBar->AddItem(menu);
+}
+
+
+void
+IdeamWindow::_InitWindow()
+{
+	// toolbar group
+	fProjectsButton = _LoadIconButton("ProjectsButton", MSG_SHOW_HIDE_PROJECTS,
+						111, true, B_TRANSLATE("Show/Hide Projects split"));
+	fOutputButton = _LoadIconButton("OutputButton", MSG_SHOW_HIDE_OUTPUT,
+						115, true, B_TRANSLATE("Show/Hide Output split"));
+
+	fUndoButton = _LoadIconButton("UndoButton", B_UNDO, 204, false,
+						B_TRANSLATE("Undo"));
+	fRedoButton = _LoadIconButton("RedoButton", B_REDO, 205, false,
+						B_TRANSLATE("Redo"));
+	fFileSaveButton = _LoadIconButton("FileSaveButton", MSG_FILE_SAVE,
+						206, false, B_TRANSLATE("Save current File"));
+	fFileSaveAllButton = _LoadIconButton("FileSaveAllButton", MSG_FILE_SAVE_ALL,
+						207, false, B_TRANSLATE("Save all Files"));
+
+	fFileUnlockedButton = _LoadIconButton("FileUnlockedButton", MSG_BUFFER_LOCK,
+						212, false, B_TRANSLATE("Set buffer read-only"));
+	fFilePreviousButton = _LoadIconButton("FilePreviousButton", MSG_FILE_PREVIOUS_SELECTED,
+						208, false, B_TRANSLATE("Select previous File"));
+	fFileNextButton = _LoadIconButton("FileNextButton", MSG_FILE_NEXT_SELECTED,
+						209, false, B_TRANSLATE("Select next File"));
+	fFileCloseButton = _LoadIconButton("FileCloseButton", MSG_FILE_CLOSE,
+						210, false, B_TRANSLATE("Close File"));
+	fFileMenuButton = _LoadIconButton("FileMenuButton", MSG_FILE_MENU_SHOW,
+						211, false, B_TRANSLATE("Indexed File list"));
+
+	fToolBar = BLayoutBuilder::Group<>(B_VERTICAL, 0)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, 1)
+			.AddGlue()
+			.Add(fProjectsButton)
+			.Add(fOutputButton)
+			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
+			.Add(fUndoButton)
+			.Add(fRedoButton)
+			.Add(fFileSaveButton)
+			.Add(fFileSaveAllButton)
+			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
+			.AddGlue()
+			.Add(fFileUnlockedButton)
+			.Add(fFilePreviousButton)
+			.Add(fFileNextButton)
+			.Add(fFileCloseButton)
+			.Add(fFileMenuButton)
+			.SetInsets(1, 1, 1, 1)
+		)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+	;
+
+	// Projects View
+	fProjectsTabView = new BTabView("ProjectsTabview");
+	fProjectsOutline = new BOutlineListView("ProjectsOutline", B_SINGLE_SELECTION_LIST);
+	fProjectsScroll = new BScrollView(B_TRANSLATE("Projects"),
+		fProjectsOutline, B_FRAME_EVENTS | B_WILL_DRAW, true, true, B_NO_BORDER);
+	fProjectsTabView->AddTab(fProjectsScroll);
+
+	// Editor tab & view
+	fEditorObjectList = new BObjectList<Editor>();
+
+	fTabManager = new TabManager(BMessenger(this));
+	fTabManager->TabGroup()->SetExplicitMaxSize(BSize(B_SIZE_UNSET, kTabBarHeight));
+
+	dirtyFrameHack = fTabManager->TabGroup()->Frame();
+
+	// Status Bar
+	fStatusBar = new BStatusBar("StatusBar");
+	fStatusBar->SetBarHeight(1.0);
+
+	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.SetInsets(1, 1, 1, 1)
+		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+			.Add(fTabManager->TabGroup())
+			.Add(fTabManager->ContainerView())
+			.Add(new BSeparatorView(B_HORIZONTAL))
+			.Add(fStatusBar)
+		)
+	;
+
+	// Panels
+	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), nullptr, B_FILE_NODE, true);
+	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), nullptr, B_FILE_NODE, false);
+
+	// Output
+	fOutputTabView = new BTabView("OutputTabview");
+
+	fNotificationsListView = new BColumnListView(B_TRANSLATE("Notifications"),
+									B_NAVIGABLE, B_PLAIN_BORDER, true);
+	fNotificationsListView->AddColumn(new BDateColumn(B_TRANSLATE("Time"),
+								140.0, 140.0, 140.0), kTimeColumn);
+	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Message"),
+								400.0, 400.0, 800.0, 0), kMessageColumn);
+	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Type"),
+								140.0, 140.0, 140.0, 0), kTypeColumn);
+
+	fOutputTabView->AddTab(fNotificationsListView);
+}
+
 BIconButton*
 IdeamWindow::_LoadIconButton(const char* name, int32 msg,
 								int32 resIndex, bool enabled, const char* tooltip)
@@ -1298,6 +1326,9 @@ IdeamWindow::_LoadSizedVectorIcon(int32 resourceID, int32 size)
 void
 IdeamWindow::_SendNotification(BString message, BString type)
 {
+	if (IdeamNames::Settings.enable_notifications == false)
+		return;
+
        BRow* fRow = new BRow();
        time_t now =  static_cast<bigtime_t>(real_time_clock());
 
@@ -1365,10 +1396,9 @@ fStatusBar->SetTrailingText(text.String());
 		fDeleteMenuItem->SetEnabled(false);
 		fSelectAllMenuItem->SetEnabled(false);
 
-			// TODO variable
-		if (true) {
+		if (IdeamNames::Settings.fullpath_title == true)
 			SetTitle(IdeamNames::kApplicationName);
-		}
+
 		return;
 	}
 
@@ -1407,8 +1437,7 @@ fStatusBar->SetTrailingText(text.String());
 	fDeleteMenuItem->SetEnabled(fEditor->CanClear());
 	fSelectAllMenuItem->SetEnabled(true);
 
-	// TODO variable
-	if (true) {
+	if (IdeamNames::Settings.fullpath_title == true) {
 		BString title;
 		title << IdeamNames::kApplicationName << ": " << fEditor->FilePath();
 		SetTitle(title.String());

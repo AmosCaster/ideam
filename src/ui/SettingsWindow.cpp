@@ -26,6 +26,7 @@
  */
 #include "SettingsWindow.h"
 
+#include <Application.h>
 #include <Catalog.h>
 #include <GroupLayoutBuilder.h>
 #include <LayoutBuilder.h>
@@ -91,8 +92,14 @@ SettingsWindow::SettingsWindow()
 
 	_InitWindow();
 
+
 	// Map Items
 	_MapPages();
+
+	// Modified and Applied Controls List
+	fModifiedList = new BObjectList<BControl>();
+	fAppliedList = new BObjectList<BControl>();
+	fOrphansList= new BObjectList<BControl>();
 
 	// Load control values from file
 	_LoadFromFile(nullptr, true);
@@ -105,10 +112,15 @@ SettingsWindow::SettingsWindow()
 
 SettingsWindow::~SettingsWindow()
 {
-	delete fWindowSettingsFile;
 	delete fModifiedList;
 	delete fAppliedList;
 	delete fOrphansList;
+	delete fGeneralTitle;
+	delete fGeneralStartupItem;
+	delete fEditorTitle;
+	delete fEditorVisualItem;
+	delete fNotificationsTitle;
+	delete fBuildTitle;
 }
 
 void
@@ -178,6 +190,9 @@ SettingsWindow::MessageReceived(BMessage *msg)
 		}
 		case MSG_EDITOR_FONT_SIZE_CHANGED: {
 			// TODO SetViewColor not working
+			fEditorFont.SetSize(fEditorFontSizeOP->Value());
+			fPreviewText->SetFont(&fEditorFont);
+
 			bool modified = fEditorFontSizeOP->Value() !=
 								fWindowSettingsFile->FindInt32("edit_fontsize");
 				_ManageModifications(fEditorFontSizeOP, modified);
@@ -281,6 +296,20 @@ SettingsWindow::MessageReceived(BMessage *msg)
 			break;
 		}
 	}
+}
+
+bool
+SettingsWindow::QuitRequested()
+{
+	delete fWindowSettingsFile;
+	// Reload vars from file
+	IdeamNames::LoadSettingsVars();
+	// Do some cleaning
+	// If full path window title has been set off, clean title
+	if (IdeamNames::Settings.fullpath_title == false)
+		be_app->WindowAt(0)->SetTitle(IdeamNames::kApplicationName);
+
+	return true;
 }
 
 void
@@ -434,10 +463,7 @@ SettingsWindow::_InitWindow()
 			.Add(fApplyButton)
 		.End() // buttons group
 		;
-	// Modified and Applied Controls List
-	fModifiedList = new BObjectList<BControl>();
-	fAppliedList = new BObjectList<BControl>();
-	fOrphansList= new BObjectList<BControl>();
+
 
 	// Load all Pages
 	fSettingsBaseView->AddChild(_PageGeneralView());
@@ -714,8 +740,8 @@ BBox*	fBox = new BBox("");
 	BView* view = BGroupLayoutBuilder(B_VERTICAL, 0)
 		.Add(BLayoutBuilder::Grid<>(fBox)
 
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER), 0, 3, 4)
-		.AddGlue(0, 4)
+//		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER), 0, 3, 4)
+//		.AddGlue(0, 4)
 		.SetInsets(10, 20, 10, 10))
 	.TopView();
 
@@ -734,6 +760,30 @@ SettingsWindow::_PageEditorView()
 	fFontMenuOP = new BOptionPopUp("FontMenu",
 		B_TRANSLATE("Font:"), new BMessage(MSG_EDITOR_FONT_CHANGED));
 
+//	fFontMenuOP->SetExplicitMaxSize(BSize(400, B_SIZE_UNSET));
+
+	BFont font(be_fixed_font);
+	font.SetSize(IdeamNames::Settings.edit_fontsize);
+
+	// preview
+	fPreviewText = new BStringView("preview text",
+		B_TRANSLATE("This is the font size preview"));
+
+	fPreviewText->SetFont(&font);
+
+//	fPreviewText->SetExplicitMaxSize(BSize(600, 40));
+//fPreviewText->SetAlignment(B_ALIGN_LEFT);
+
+	// box around preview
+	BBox* fPreviewBox = new BBox("PreviewBox", B_WILL_DRAW | B_FRAME_EVENTS);
+	fPreviewBox->AddChild(BGroupLayoutBuilder(B_HORIZONTAL)
+		.Add(fPreviewText)
+		.SetInsets(B_USE_SMALL_SPACING, B_USE_SMALL_SPACING,
+			B_USE_SMALL_SPACING, B_USE_SMALL_SPACING)
+		.TopView()
+	);
+
+
 	fEditorFontSizeOP = new BOptionPopUp("EditSizeMenu",
 		B_TRANSLATE("Font size:"), new BMessage(MSG_EDITOR_FONT_SIZE_CHANGED));
 
@@ -745,24 +795,26 @@ SettingsWindow::_PageEditorView()
 
 	fSyntaxHighlight = new BCheckBox("SyntaxHighlight",
 		B_TRANSLATE("Enable Syntax highlighting"), new BMessage(MSG_SYNTAX_HIGHLIGHT_TOGGLED));
-	fTabWidthSpinner = new BSpinner("tabwidth",
-		B_TRANSLATE("Tab width:"), new BMessage(MSG_TAB_WIDTH_CHANGED));
-	fTabWidthSpinner->SetRange(1, 8);
 	fBraceMatch = new BCheckBox("BraceMatch",
 		B_TRANSLATE("Enable Brace matching"), new BMessage(MSG_BRACE_MATCHING_TOGGLED));
 	fSaveCaret = new BCheckBox("SaveCaret",
 		B_TRANSLATE("Save caret position"), new BMessage(MSG_SAVE_CARET_TOGGLED));
+	fTabWidthSpinner = new BSpinner("TabWidth",
+		B_TRANSLATE("Tab width:  "), new BMessage(MSG_TAB_WIDTH_CHANGED));
+	fTabWidthSpinner->SetRange(1, 8);
+	fTabWidthSpinner->SetAlignment(B_ALIGN_RIGHT);
 
 	BView* view = BGroupLayoutBuilder(B_VERTICAL, 0)
 		.Add(BLayoutBuilder::Grid<>(fEditorBox)
-		.Add(fFontMenuOP, 0, 0, 3)
-		.Add(fEditorFontSizeOP, 4, 0, 2)
-		.Add(fSyntaxHighlight, 0, 1)
-		.Add(fTabWidthSpinner, 0, 2)
+		.Add(fFontMenuOP, 0, 0, 2)
+		.Add(fEditorFontSizeOP, 3, 0)
+		.Add(fPreviewBox, 0, 1, 3)
+		.Add(fSyntaxHighlight, 0, 2)
 		.Add(fBraceMatch, 0, 3)
 		.Add(fSaveCaret, 0, 4)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER), 0, 5, 6)
-		.AddGlue(0, 6)
+		.Add(fTabWidthSpinner, 0, 5, 1)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER), 0, 6, 6)
+		.AddGlue(0, 7)
 		.SetInsets(10, 20, 10, 10))
 	.TopView();
 
@@ -944,6 +996,14 @@ SettingsWindow::_RevertModifications()
 void
 SettingsWindow::_ShowOrphans()
 {
+	BString appVersion(IdeamNames::GetVersionInfo());
+	BString fileVersion(fWindowSettingsFile->FindString("app_version"));
+
+	// If there is a new app version with no settings modifications
+	// ReadyToRun will keep asking to review forever so update version
+	if (IdeamNames::CompareVersion(appVersion, fileVersion) > 0)
+		fWindowSettingsFile->SetBString("app_version", appVersion);
+
 	if (fOrphansList->CountItems() == 0)
 		return;
 

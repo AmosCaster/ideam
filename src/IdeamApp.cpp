@@ -131,6 +131,7 @@ IdeamApp::ReadyToRun()
 {
 	// Window Settings file needs updating?
 	_CheckSettingsVersion();
+
 	std::cerr << IdeamNames::GetSignature() << std::endl;
 }
 
@@ -161,14 +162,17 @@ IdeamApp::_CheckSettingsVersion()
 		int32 choice = alert->Go();
 	 
 		if (choice == 0)
-			return;
+			;
 		else if (choice == 1) {
+			// Fill file with defaults
 			IdeamNames::UpdateSettingsFile();
 			SettingsWindow* window = new SettingsWindow();
 			window->Show();
 		}
-		else if (choice == 2)
+		else if (choice == 2) {
 			IdeamNames::UpdateSettingsFile();
+			IdeamNames::LoadSettingsVars();
+		}
 	}
 	else {
 
@@ -189,13 +193,15 @@ IdeamApp::_CheckSettingsVersion()
 			int32 choice = alert->Go();
 		 
 			if (choice == 0)
-				return;
+				;
 			else if (choice == 1) {
 				SettingsWindow* window = new SettingsWindow();
 				window->Show();
 			}
-			else if (choice == 2)
+			else if (choice == 2) {
 				IdeamNames::UpdateSettingsFile();
+				IdeamNames::LoadSettingsVars();
+			}
 		}
 	}
 }

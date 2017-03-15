@@ -8,13 +8,19 @@
 #include <Alert.h>
 #include <Application.h>
 #include <Catalog.h>
+#include <Control.h>
 #include <NodeMonitor.h>
 #include <Path.h>
 #include <Volume.h>
 
+#include <sstream>
+
+#include "IdeamNamespace.h"
 
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "Editor"
+
+using namespace IdeamNames;
 
 // Differentiate unset parameters from 0 ones
 // in scintilla messages
@@ -45,6 +51,43 @@ Editor::MessageReceived(BMessage* message)
 			BScintillaView::MessageReceived(message);
 			break;
 	}
+}
+
+void
+Editor::ApplySettings()
+{
+	// White spaces color
+//	SendMessage(SCI_SETWHITESPACEFORE, 1, 0x3030C0);
+	SendMessage(SCI_SETWHITESPACESIZE, 2, UNSET);
+	SendMessage(SCI_SETWHITESPACEBACK, 1, 0xB0B0B0);
+
+	// Selection background
+	SendMessage(SCI_SETSELBACK, 1, 0x80FFFF);
+
+	// Font & Size
+	SendMessage(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t) "Noto Mono");
+	SendMessage(SCI_STYLESETSIZE, STYLE_DEFAULT, Settings.edit_fontsize);
+	SendMessage(SCI_STYLECLEARALL, UNSET, UNSET);
+
+	// Caret line visible
+	if (Settings.mark_caretline == B_CONTROL_ON) {
+		SendMessage(SCI_SETCARETLINEVISIBLE, 1, UNSET);
+		SendMessage(SCI_SETCARETLINEBACK, 0xF8EFE9, UNSET);
+	}
+
+	// Edge line
+	if (Settings.show_edgeline == B_CONTROL_ON) {
+		SendMessage(SCI_SETEDGEMODE, EDGE_LINE, UNSET);
+
+		std::string column(Settings.edgeline_column);
+		int32 col;
+		std::istringstream (column) >>  col;
+		SendMessage(SCI_SETEDGECOLUMN, col, UNSET);
+		SendMessage(SCI_SETEDGECOLOUR, 0xE0E0E0, UNSET); // TODO color
+	}
+
+	// Tab width
+	SendMessage(SCI_SETTABWIDTH, Settings.tab_width, UNSET);
 }
 
 bool

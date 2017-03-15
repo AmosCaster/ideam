@@ -11,6 +11,7 @@
 #include <FilePanel.h>
 #include <GroupLayout.h>
 #include <IconButton.h>
+#include <MenuBar.h>
 #include <ObjectList.h>
 #include <OutlineListView.h>
 #include <ScrollView.h>
@@ -53,6 +54,8 @@ private:
 			void				_HandleExternalRemoveModification(int32 index);
 			void				_HandleExternalStatModification(int32 index);
 			void				_HandleNodeMonitorMsg(BMessage* msg);
+			void				_InitMenu();
+			void				_InitWindow();
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
 									int32 resIndex, bool enabled, const char* tooltip);
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);
@@ -60,7 +63,7 @@ private:
 			status_t			_UpdateLabel(int32 index, bool isModified);
 			void				_UpdateSelectionChange(int32 index);
 private:
-
+			BMenuBar*			fMenuBar;
 			BMenuItem*			fFileNewMenuItem;
 			BMenuItem*			fSaveMenuItem;
 			BMenuItem*			fSaveAsMenuItem;

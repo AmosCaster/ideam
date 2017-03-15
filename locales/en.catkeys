@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	2856132684
+1	English	application/x-vnd.Ideam-Ideam	1238783305
 tuned 	SettingsWindow		tuned 
 Load	IdeamApp		Load
 opened with index	IdeamWindow		opened with index
@@ -14,7 +14,6 @@ Show/Hide Output split	IdeamWindow		Show/Hide Output split
 Show ToolBar	SettingsWindow		Show ToolBar
 Save current File	IdeamWindow		Save current File
 Project	IdeamWindow		Project
-Tab width:	SettingsWindow		Tab width:
 Reload files	SettingsWindow		Reload files
 Save changes to file \"%file%\"	IdeamWindow		Save changes to file \"%file%\"
 Cut	IdeamWindow		Cut
@@ -48,8 +47,8 @@ Window	IdeamWindow		Window
 Edge column:	SettingsWindow		Edge column:
 Revert	SettingsWindow		Revert
 Save position	SettingsWindow		Save position
- modified externally	IdeamWindow		 modified externally
 Set buffer read-only	IdeamWindow		Set buffer read-only
+ modified externally	IdeamWindow		 modified externally
 File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost	IdeamWindow		File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost
 Show Output panes	SettingsWindow		Show Output panes
  removed externally	IdeamWindow		 removed externally
@@ -81,6 +80,7 @@ Ignore	IdeamWindow		Ignore
 closed	IdeamWindow		closed
 Indexed File list	IdeamWindow		Indexed File list
 Copy	IdeamWindow		Copy
+This is the font size preview	SettingsWindow		This is the font size preview
 Save all	IdeamWindow		Save all
 Cancel	Editor		Cancel
 Don't save	IdeamWindow		Don't save
@@ -109,6 +109,7 @@ Mark caret line	SettingsWindow		Mark caret line
 Save changes to file	Editor		Save changes to file
 Cancel	IdeamWindow		Cancel
 Enable folding	SettingsWindow		Enable folding
+Tab width:  	SettingsWindow		Tab width:  
 See Credits for a complete list.	IdeamApp		See Credits for a complete list.
 Projects	IdeamWindow		Projects
 Projects directory:	SettingsWindow		Projects directory:

@@ -14,12 +14,14 @@
 #include <ScrollView.h>
 #include <Spinner.h>
 #include <StatusBar.h>
+#include <StringView.h>
 #include <TextControl.h>
 #include <Window.h>
 #include <map>
 
 #include "TitleItem.h"
 #include "TPreferences.h"
+
 
 class SettingsWindow : public BWindow
 {
@@ -30,7 +32,7 @@ public:
 	virtual	void				DispatchMessage(BMessage* message,
 									BHandler* target);
 	virtual void				MessageReceived(BMessage* message);
-
+	virtual bool				QuitRequested();
 private:
 			void				_ApplyModifications();
 			void				_ApplyOrphans();
@@ -129,6 +131,8 @@ private: // File Data
 			int32				fControlsDone;
 			int32				fAppliedModifications;
 			int32				fUseCount;
+			BFont				fEditorFont;
+			BStringView* 		fPreviewText;
 };
 
 

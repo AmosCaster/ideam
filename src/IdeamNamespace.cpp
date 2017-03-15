@@ -88,6 +88,41 @@ GetVersionInfo()
 	return version;
 }
 
+SettingsVars Settings;
+
+status_t
+LoadSettingsVars()
+{
+	status_t status;
+	TPreferences file(kSettingsFileName, kApplicationName, 'IDSE');
+
+	if ((status = file.InitCheck()) != B_OK)
+		return status;
+
+	status += file.FindString("projects_directory",	&Settings.projects_directory);
+	status += file.FindInt32("fullpath_title", &Settings.fullpath_title);
+	status += file.FindInt32("reopen_files", &Settings.reopen_files);
+	status += file.FindInt32("show_projects", &Settings.show_projects);
+	status += file.FindInt32("show_output", &Settings.show_output);
+	status += file.FindInt32("show_toolbar", &Settings.show_toolbar);
+	status += file.FindInt32("edit_fontsize", &Settings.edit_fontsize);
+	status += file.FindInt32("syntax_highlight", &Settings.syntax_highlight);
+	status += file.FindInt32("tab_width", &Settings.tab_width);
+	status += file.FindInt32("brace_match", &Settings.brace_match);
+	status += file.FindInt32("save_caret", &Settings.save_caret);
+	status += file.FindInt32("show_linenumber", &Settings.show_linenumber);
+	status += file.FindInt32("mark_caretline", &Settings.mark_caretline);
+	status += file.FindInt32("show_edgeline", &Settings.show_edgeline);
+	status += file.FindString("edgeline_column", &Settings.edgeline_column);
+	status += file.FindInt32("enable_folding", &Settings.enable_folding);
+	status += file.FindInt32("enable_notifications", &Settings.enable_notifications);
+
+	return status;
+}
+
+/*
+ * When new app version is created,
+ */
 status_t
 UpdateSettingsFile()
 {
@@ -133,7 +168,6 @@ UpdateSettingsFile()
 	if (settings.FindInt32("show_edgeline", &intVal) != B_OK)
 		settings.SetInt32("show_edgeline", kSKShowEdgeLine);
 	if (settings.FindString("edgeline_column", &stringVal) != B_OK)
-//		settings.SetString("edgeline_column", "66");
 		settings.SetString("edgeline_column", kSKEdgeLineColumn);
 	if (settings.FindInt32("enable_folding", &intVal) != B_OK)
 		settings.SetInt32("enable_folding", kSKEnableFolding);

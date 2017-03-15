@@ -23,6 +23,7 @@ public:
 								~Editor();
 	virtual	void 				MessageReceived(BMessage* message);
 
+			void				ApplySettings();
 			bool				CanClear();
 			bool				CanCopy();
 			bool				CanCut();

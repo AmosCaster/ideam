@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	2856132684
+1	English	application/x-vnd.Ideam-Ideam	1238783305
 tuned 	SettingsWindow		settato 
 Load	IdeamApp		Carica
 opened with index	IdeamWindow		aperto con indice
@@ -14,7 +14,6 @@ Show/Hide Output split	IdeamWindow		Mostra/Nascondi split di Output
 Show ToolBar	SettingsWindow		Mostra ToolBar
 Save current File	IdeamWindow		Salva il File corrente
 Project	IdeamWindow		Progetto
-Tab width:	SettingsWindow		Tabulazioni:
 Reload files	SettingsWindow		Ricarica i file
 Save changes to file \"%file%\"	IdeamWindow		Salva cambiamenti al file \"%file%\"
 Cut	IdeamWindow		Taglia
@@ -48,8 +47,8 @@ Window	IdeamWindow		Finestra
 Edge column:	SettingsWindow		Colonna di margine a:
 Revert	SettingsWindow		Ripristina
 Save position	SettingsWindow		Salva posizione
- modified externally	IdeamWindow		 modificato da altra applicazione
 Set buffer read-only	IdeamWindow		Imposta il buffer a sola lettura
+ modified externally	IdeamWindow		 modificato da altra applicazione
 File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost	IdeamWindow		Il File \"%file%\" è stato rimosso da un' altra applicazione,\nvuoi mantenere il file o eliminarlo?\nSe vuoi mantenerlo ma è modificato occorre salvarlo o sarà eliminato
 Show Output panes	SettingsWindow		Mostra pannelli di Output
  removed externally	IdeamWindow		 eliminato da altra applicazione
@@ -81,6 +80,7 @@ Ignore	IdeamWindow		Ignora
 closed	IdeamWindow		chiuso
 Indexed File list	IdeamWindow		Lista dei File indicizzata
 Copy	IdeamWindow		Copia
+This is the font size preview	SettingsWindow		This is the font size preview
 Save all	IdeamWindow		Salva tutti
 Cancel	Editor		Cancella
 Don't save	IdeamWindow		Non salvare
@@ -110,6 +110,7 @@ Save changes to file	Editor		Salva i cambiamenti su file
 Cancel	IdeamWindow		Cancella
 Enable folding	SettingsWindow		Abilita folding
 See Credits for a complete list.	IdeamApp		Vedi Credits per una lista completa.
+Tab width:  	SettingsWindow		Tabulazioni:  
 Projects	IdeamWindow		Progetti
 Projects directory:	SettingsWindow		Directory dei Progetti:
 General	SettingsWindow		Generale

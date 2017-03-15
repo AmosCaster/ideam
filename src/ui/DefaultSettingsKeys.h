@@ -8,6 +8,7 @@
 #include <Control.h>
 
 // General settings (SK: SettingsKey)
+
 const BString kSKProjectsDirectory = "/boot/home/workspace";// "projects_directory"
 const int32 kSKFullPathTitle = B_CONTROL_ON;// "fullpath_title"
 

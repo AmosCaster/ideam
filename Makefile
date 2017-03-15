@@ -4,7 +4,7 @@
 
 arch := $(shell getarch)
 
-CXX	:= clang++
+#CXX	:= clang++
 
 NAME := Ideam
 
@@ -57,7 +57,7 @@ LOCALES := en it
 
 DEBUGGER := TRUE
 
-
+## Useful for scan-build too
 ifneq ($(CXX), g++)
 SYSTEM_INCLUDE_PATHS += /system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++/ \
 	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++/x86_64-unknown-haiku/
