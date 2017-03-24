@@ -19,6 +19,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <sstream>
 
 #include "IdeamNamespace.h"
 #include "TPreferences.h"
@@ -37,6 +38,8 @@ const auto kRecentFilesNumber = 14 + 1;
 
 static const float kTabBarHeight = 30.0f;
 
+static const auto kGotolineMaxBytes = 6;
+
 static float kEditorWeight  = 3.0f;
 static float kOutputWeight  = 0.4f;
 
@@ -54,6 +57,15 @@ enum {
 
 	// Edit menu
 	MSG_TEXT_DELETE				= 'tede',
+	MSG_WHITE_SPACES_TOGGLE		= 'whsp',
+	MSG_LINE_ENDINGS_TOGGLE		= 'lien',
+
+	// Search menu
+	MSG_GOTO_LINE				= 'goli',
+	MSG_BOOKMARK_CLEAR_ALL		= 'bcal',
+	MSG_BOOKMARK_GOTO_NEXT		= 'bgne',
+	MSG_BOOKMARK_GOTO_PREVIOUS	= 'bgpr',
+	MSG_BOOKMARK_TOGGLE			= 'book',
 
 	// Window menu
 	MSG_WINDOW_SETTINGS			= 'wise',
@@ -64,6 +76,7 @@ enum {
 	MSG_FILE_MENU_SHOW			= 'fmsh',
 	MSG_FILE_NEXT_SELECTED		= 'fnse',
 	MSG_FILE_PREVIOUS_SELECTED	= 'fpse',
+	MSG_LINE_TO_GOTO			= 'ltgt',
 	MSG_SHOW_HIDE_PROJECTS		= 'shpr',
 	MSG_SHOW_HIDE_OUTPUT		= 'shou',
 
@@ -153,6 +166,28 @@ IdeamWindow::~IdeamWindow()
 }
 
 void
+IdeamWindow::DispatchMessage(BMessage* message, BHandler* handler)
+{
+	if (handler == fGotoLine->TextView()) {
+		if (message->what == B_KEY_DOWN) {
+			int8 key;
+			if (message->FindInt8("byte", 0, &key) == B_OK) {
+				if (key == B_ESCAPE) {
+					fGotoLine->Hide();
+					int32 index = fTabManager->SelectedTabIndex();
+					if (index > -1 && index < fTabManager->CountTabs()) {
+						fEditor = fEditorObjectList->ItemAt(index);
+						fEditor->GrabFocus();
+					}
+				}
+			}
+		}
+	}
+
+	BWindow::DispatchMessage(message, handler);
+}
+
+void
 IdeamWindow::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
@@ -227,13 +262,17 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
-		case MSG_BUFFER_LOCK: {
-			int32 index =  fTabManager->SelectedTabIndex();
-
-			if (index > -1 && index < fTabManager->CountTabs()) {
-				fEditor = fEditorObjectList->ItemAt(index);
-				fEditor->SetReadOnly();
-				_UpdateSelectionChange(index);
+		case EDITOR_SELECTION_CHANGED: {
+			entry_ref ref;
+			if (message->FindRef("ref", &ref) == B_OK) {
+				int32 index =  _GetEditorIndex(&ref);
+				if (index == fTabManager->SelectedTabIndex()) {
+					int line, column;
+					_UpdateSelectionChange(index);
+					if (message->FindInt32("line", &line) == B_OK
+						&& message->FindInt32("column", &column) == B_OK)
+						_UpdateStatusBarText(line, column);
+				}
 			}
 			break;
 		}
@@ -269,11 +308,60 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 #endif
 			break;
 		}
-		case EDITOR_SELECTION_CHANGED: {
-			entry_ref ref;
-			if (message->FindRef("ref", &ref) == B_OK) {
-				int32 index = _GetEditorIndex(&ref);
-std::cerr << "EDITOR_SELECTION_CHANGED " << "index: " << index << std::endl;
+		case MSG_BOOKMARK_CLEAR_ALL: {
+			int32 index =  fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->BookmarkClearAll(sci_BOOKMARK);
+			}
+			break;
+		}
+		case MSG_BOOKMARK_GOTO_NEXT: {
+			int32 index =  fTabManager->SelectedTabIndex();
+			bool found;
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				found = fEditor->BookmarkGoToNext();
+
+				if (found == false)
+					_SendNotification(B_TRANSLATE("Next Bookmark not found"),
+													"BOOKMARK");
+			}
+
+			break;
+		}
+		case MSG_BOOKMARK_GOTO_PREVIOUS: {
+			int32 index =  fTabManager->SelectedTabIndex();
+			bool found;
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				found = fEditor->BookmarkGoToPrevious();
+
+				if (found == false)
+					_SendNotification(B_TRANSLATE("Previous Bookmark not found"),
+													"BOOKMARK");
+			}
+
+
+			break;
+		}
+		case MSG_BOOKMARK_TOGGLE: {
+			int32 index =  fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				// TODO position in callee?
+				fEditor->BookmarkToggle(fEditor->GetCurrentPosition());
+			}
+			break;
+		}
+		case MSG_BUFFER_LOCK: {
+			int32 index =  fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->SetReadOnly();
 				_UpdateSelectionChange(index);
 			}
 			break;
@@ -325,6 +413,7 @@ std::cerr << "EDITOR_SELECTION_CHANGED " << "index: " << index << std::endl;
 		}
 		case MSG_FILE_NEXT_SELECTED: {
 			int32 index = fTabManager->SelectedTabIndex();
+
 			if (index < fTabManager->CountTabs() - 1)
 				fTabManager->SelectTab(index + 1);
 			break;
@@ -334,7 +423,8 @@ std::cerr << "EDITOR_SELECTION_CHANGED " << "index: " << index << std::endl;
 			break;
 		case MSG_FILE_PREVIOUS_SELECTED: {
 			int32 index = fTabManager->SelectedTabIndex();
-			if (index > 0)
+
+			if (index > 0 && index < fTabManager->CountTabs())
 				fTabManager->SelectTab(index - 1);
 			break;
 		}	
@@ -352,6 +442,10 @@ std::cerr << "EDITOR_SELECTION_CHANGED " << "index: " << index << std::endl;
 		}
 		case MSG_FILE_SAVE_ALL:
 			_FileSaveAll();
+			break;
+		case MSG_GOTO_LINE:
+			fGotoLine->Show();
+			fGotoLine->MakeFocus();
 			break;
 		case MSG_SELECT_TAB: {
 			int32 index;
@@ -388,11 +482,50 @@ std::cerr << "EDITOR_SELECTION_CHANGED " << "index: " << index << std::endl;
 			}
 			break;
 		}
+		case MSG_LINE_ENDINGS_TOGGLE: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->ToggleLineEndings();
+			}
+			break;
+		}
+		case MSG_LINE_TO_GOTO: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index < 0 || index >= fTabManager->CountTabs())
+				break;
+
+			std::string linestr(fGotoLine->Text());
+			int32 line;
+			std::istringstream (linestr) >>  line;
+
+			fEditor = fEditorObjectList->ItemAt(index);
+
+			if (line <= fEditor->CountLines())
+				fEditor->GoToLine(line);
+
+			fEditor->GrabFocus();
+			fGotoLine->SetText("");
+			fGotoLine->Hide();
+
+			break;
+		}
 		case MSG_TOGGLE_TOOLBAR: {
 			if (fToolBar->View()->IsHidden()) {
 				fToolBar->View()->Show();
 			} else {
 				fToolBar->View()->Hide();
+			}
+			break;
+		}
+		case MSG_WHITE_SPACES_TOGGLE: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->ToggleWhiteSpaces();
 			}
 			break;
 		}
@@ -412,6 +545,11 @@ std::cerr << "TABMANAGER_TAB_CHANGED " << "NULL on index: " << index << std::end
 						break;
 					}	
 */					fEditor->GrabFocus();
+					// In multifile open not-focused files place scroll just after
+					// caret line when reselected. Ensure visibility.
+					// TODO caret policy
+					fEditor->EnsureVisiblePolicy();
+
 std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 			}
@@ -428,7 +566,8 @@ std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index
 			int32 index;
 			if (message->FindInt32("index", &index) == B_OK) {
 std::cerr << "TABMANAGER_TAB_NEW_OPENED" << " index: " << index << std::endl;
-
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->SetSavedCaretPosition();
 			}
 			break;
 		}
@@ -1159,6 +1298,11 @@ IdeamWindow::_InitMenu()
 	menu->AddSeparatorItem();
 	menu->AddItem(fSelectAllMenuItem = new BMenuItem(B_TRANSLATE("Select all"),
 		new BMessage(B_SELECT_ALL), 'A'));
+	menu->AddSeparatorItem();
+	menu->AddItem(fToggleWhiteSpacesItem = new BMenuItem(B_TRANSLATE("Toggle white spaces"),
+		new BMessage(MSG_WHITE_SPACES_TOGGLE)));
+	menu->AddItem(fToggleLineEndingsItem =new BMenuItem(B_TRANSLATE("Toggle line endings"),
+		new BMessage(MSG_LINE_ENDINGS_TOGGLE)));
 
 	fUndoMenuItem->SetEnabled(false);
 	fRedoMenuItem->SetEnabled(false);
@@ -1167,13 +1311,39 @@ IdeamWindow::_InitMenu()
 	fPasteMenuItem->SetEnabled(false);
 	fDeleteMenuItem->SetEnabled(false);
 	fSelectAllMenuItem->SetEnabled(false);
+	fToggleWhiteSpacesItem->SetEnabled(false);
+	fToggleLineEndingsItem->SetEnabled(false);
 
+	fMenuBar->AddItem(menu);
+
+	menu = new BMenu(B_TRANSLATE("Search"));
+
+	menu->AddItem(fGoToLineItem = new BMenuItem(B_TRANSLATE("Go to line" B_UTF8_ELLIPSIS),
+		new BMessage(MSG_GOTO_LINE), '<'));
+
+	BMenu* submenu = new BMenu(B_TRANSLATE("Bookmark"));
+	submenu->AddItem(fBookmarkToggleItem = new BMenuItem(B_TRANSLATE("Toggle"),
+		new BMessage(MSG_BOOKMARK_TOGGLE)));
+	submenu->AddItem(fBookmarkClearAllItem = new BMenuItem(B_TRANSLATE("Clear all"),
+		new BMessage(MSG_BOOKMARK_CLEAR_ALL)));
+	submenu->AddItem(fBookmarkGoToNextItem = new BMenuItem(B_TRANSLATE("Go to next"),
+		new BMessage(MSG_BOOKMARK_GOTO_NEXT)));
+	submenu->AddItem(fBookmarkGoToPreviousItem = new BMenuItem(B_TRANSLATE("Go to previous"),
+		new BMessage(MSG_BOOKMARK_GOTO_PREVIOUS)));
+
+	fGoToLineItem->SetEnabled(false);
+	fBookmarkToggleItem->SetEnabled(false);
+	fBookmarkClearAllItem->SetEnabled(false);
+	fBookmarkGoToNextItem->SetEnabled(false);
+	fBookmarkGoToPreviousItem->SetEnabled(false);
+
+	menu->AddItem(submenu);
 	fMenuBar->AddItem(menu);
 
 	menu = new BMenu(B_TRANSLATE("Window"));
 	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
 		new BMessage(MSG_WINDOW_SETTINGS), 'P', B_OPTION_KEY));
-	BMenu* submenu = new BMenu(B_TRANSLATE("Interface"));
+	submenu = new BMenu(B_TRANSLATE("Interface"));
 	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Projects panes"),
 		new BMessage(MSG_SHOW_HIDE_PROJECTS)));
 	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Output panes"),
@@ -1221,6 +1391,17 @@ IdeamWindow::_InitWindow()
 	fFileMenuButton = _LoadIconButton("FileMenuButton", MSG_FILE_MENU_SHOW,
 						211, false, B_TRANSLATE("Indexed File list"));
 
+	fGotoLine = new BTextControl("GotoLine", nullptr, nullptr, new BMessage(MSG_LINE_TO_GOTO));
+	fGotoLine->SetToolTip(B_TRANSLATE("Go to line" B_UTF8_ELLIPSIS));
+	float stringWidth = fGotoLine->StringWidth(" 123456") + 24.0f;
+	fGotoLine->SetExplicitMaxSize(BSize(stringWidth, 24.0f)); //B_SIZE_UNSET
+	for (auto i = 0; i < 256; i++)
+		if (i < '0' || i > '9')
+			fGotoLine->TextView()->DisallowChar(i);
+	fGotoLine->TextView()->SetMaxBytes(kGotolineMaxBytes);
+	fGotoLine->TextView()->SetAlignment(B_ALIGN_RIGHT);
+	fGotoLine->Hide();
+
 	fToolBar = BLayoutBuilder::Group<>(B_VERTICAL, 0)
 		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, 1)
 			.AddGlue()
@@ -1234,6 +1415,9 @@ IdeamWindow::_InitWindow()
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
 			.AddGlue()
 			.Add(fFileUnlockedButton)
+			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
+			.Add(fGotoLine)
+			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
 			.Add(fFilePreviousButton)
 			.Add(fFileNextButton)
 			.Add(fFileCloseButton)
@@ -1329,6 +1513,7 @@ IdeamWindow::_SendNotification(BString message, BString type)
 	if (IdeamNames::Settings.enable_notifications == false)
 		return;
 
+	// TODO bring to front
        BRow* fRow = new BRow();
        time_t now =  static_cast<bigtime_t>(real_time_clock());
 
@@ -1395,6 +1580,17 @@ fStatusBar->SetTrailingText(text.String());
 		fPasteMenuItem->SetEnabled(false);
 		fDeleteMenuItem->SetEnabled(false);
 		fSelectAllMenuItem->SetEnabled(false);
+		fToggleWhiteSpacesItem->SetEnabled(false);
+		fToggleLineEndingsItem->SetEnabled(false);
+		fGoToLineItem->SetEnabled(false);
+		fBookmarkToggleItem->SetEnabled(false);
+		fBookmarkClearAllItem->SetEnabled(false);
+		fBookmarkGoToNextItem->SetEnabled(false);
+		fBookmarkGoToPreviousItem->SetEnabled(false);
+
+		// Status bar
+		fStatusBar->SetText("");
+		fStatusBar->SetTrailingText("");
 
 		if (IdeamNames::Settings.fullpath_title == true)
 			SetTitle(IdeamNames::kApplicationName);
@@ -1436,6 +1632,13 @@ fStatusBar->SetTrailingText(text.String());
 	fPasteMenuItem->SetEnabled(fEditor->CanPaste());
 	fDeleteMenuItem->SetEnabled(fEditor->CanClear());
 	fSelectAllMenuItem->SetEnabled(true);
+	fToggleWhiteSpacesItem->SetEnabled(true);
+	fToggleLineEndingsItem->SetEnabled(true);
+	fGoToLineItem->SetEnabled(true);
+	fBookmarkToggleItem->SetEnabled(true);
+	fBookmarkClearAllItem->SetEnabled(true);
+	fBookmarkGoToNextItem->SetEnabled(true);
+	fBookmarkGoToPreviousItem->SetEnabled(true);
 
 	if (IdeamNames::Settings.fullpath_title == true) {
 		BString title;
@@ -1452,4 +1655,12 @@ fStatusBar->SetTrailingText(text.String());
 	if (fTabManager->SelectedTabIndex() != index);
 */
 
+}
+
+void
+IdeamWindow::_UpdateStatusBarText(int line, int column)
+{
+	BString text;
+	text << "  " << line << ':' << column;
+	fStatusBar->SetText(text.String());
 }

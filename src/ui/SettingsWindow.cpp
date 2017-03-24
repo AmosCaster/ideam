@@ -304,10 +304,13 @@ SettingsWindow::QuitRequested()
 	delete fWindowSettingsFile;
 	// Reload vars from file
 	IdeamNames::LoadSettingsVars();
+
 	// Do some cleaning
 	// If full path window title has been set off, clean title
 	if (IdeamNames::Settings.fullpath_title == false)
 		be_app->WindowAt(0)->SetTitle(IdeamNames::kApplicationName);
+
+	// TODO Send a message to reload file settings
 
 	return true;
 }

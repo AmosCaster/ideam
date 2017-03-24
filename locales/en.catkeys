@@ -1,8 +1,9 @@
-1	English	application/x-vnd.Ideam-Ideam	1238783305
+1	English	application/x-vnd.Ideam-Ideam	3227796257
 tuned 	SettingsWindow		tuned 
 Load	IdeamApp		Load
 opened with index	IdeamWindow		opened with index
 Index 	IdeamWindow		Index 
+Search	IdeamWindow		Search
 Toggle Projects panes	IdeamWindow		Toggle Projects panes
 : NULL editor pointer	IdeamWindow		: NULL editor pointer
 Startup	SettingsWindow		Startup
@@ -12,6 +13,7 @@ About…	IdeamWindow		About…
 Show/Hide Output split	IdeamWindow		Show/Hide Output split
  time	SettingsWindow		 time
 Show ToolBar	SettingsWindow		Show ToolBar
+Go to line…	IdeamWindow		Go to line…
 Save current File	IdeamWindow		Save current File
 Project	IdeamWindow		Project
 Reload files	SettingsWindow		Reload files
@@ -22,6 +24,7 @@ Select all	IdeamWindow		Select all
 Delete	IdeamWindow		Delete
 Undo	IdeamWindow		Undo
 Type	IdeamWindow		Type
+Go to next	IdeamWindow		Go to next
 Defaults loaded	SettingsWindow		Defaults loaded
 Show Projects panes	SettingsWindow		Show Projects panes
 Notifications	IdeamWindow		Notifications
@@ -57,21 +60,26 @@ Select next File	IdeamWindow		Select next File
 Review	IdeamApp		Review
 Message	IdeamWindow		Message
 Enable Notifications	SettingsWindow		Enable Notifications
+Next Bookmark not found	IdeamWindow		Next Bookmark not found
  moved externally to 	IdeamWindow		 moved externally to 
 File full path in window title	SettingsWindow		File full path in window title
 File \"%file%\" was modified externally, reload it?	IdeamWindow		File \"%file%\" was modified externally, reload it?
+Bookmark	IdeamWindow		Bookmark
  bytes -> 	IdeamWindow		 bytes -> 
 Save	IdeamWindow		Save
 Quit	IdeamWindow		Quit
  Modifications 	SettingsWindow		 Modifications 
 File is Read-only	IdeamWindow		File is Read-only
 Save	Editor		Save
+Clear all	IdeamWindow		Clear all
 Show/Hide Projects split	IdeamWindow		Show/Hide Projects split
+Toggle line endings	IdeamWindow		Toggle line endings
 Open	IdeamWindow		Open
 File	IdeamWindow		File
 Show line number	SettingsWindow		Show line number
 Font:	SettingsWindow		Font:
 No file selected	IdeamWindow		No file selected
+Previous Bookmark not found	IdeamWindow		Previous Bookmark not found
 Apply	SettingsWindow		Apply
 Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?	IdeamApp		Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?
 Open recent…	IdeamWindow		Open recent…
@@ -101,8 +109,10 @@ Close	IdeamWindow		Close
 Enable Syntax highlighting	SettingsWindow		Enable Syntax highlighting
 Visual	SettingsWindow		Visual
 Save as…	IdeamWindow		Save as…
+Go to previous	IdeamWindow		Go to previous
 Edit	IdeamWindow		Edit
 NULL editor pointer	IdeamWindow		NULL editor pointer
+Toggle	IdeamWindow		Toggle
 Settings file is corrupted or deleted,\ndo You want to ignore, review or load to defaults?	IdeamApp		Settings file is corrupted or deleted,\ndo You want to ignore, review or load to defaults?
  Controls loaded.	SettingsWindow		 Controls loaded.
 Mark caret line	SettingsWindow		Mark caret line
@@ -116,5 +126,6 @@ Projects directory:	SettingsWindow		Projects directory:
 General	SettingsWindow		General
  bytes written	IdeamWindow		 bytes written
  uses:	IdeamApp		 uses:
+Toggle white spaces	IdeamWindow		Toggle white spaces
 Keep	IdeamWindow		Keep
 Close File	IdeamWindow		Close File

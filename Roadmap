@@ -101,13 +101,25 @@ legenda:
 0.0.9) Mapping window settings
 
 +) Interface mappings
+--------------------------------------------------------------------------------
 
+0.1.0) Integrate Scintilla
+
++) Bookmarks management
++) File position in status bar
++) Goto line
++) Save caret position
++) Show line number
++) Toggle line endings
++) Toggle white spaces
+
+
+-] Scintilla does not scroll on mouse selection
+ ] Bookmarks seems to leak
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
 
-
-0.1.0) Integrate Scintilla
 
 0.3.0) Project class & settings
 

@@ -1,8 +1,9 @@
-1	English	application/x-vnd.Ideam-Ideam	1238783305
+1	English	application/x-vnd.Ideam-Ideam	3227796257
 tuned 	SettingsWindow		settato 
 Load	IdeamApp		Carica
 opened with index	IdeamWindow		aperto con indice
 Index 	IdeamWindow		Indice
+Search	IdeamWindow		Cerca
 Toggle Projects panes	IdeamWindow		On/Off pannelli dei Progetti
 : NULL editor pointer	IdeamWindow		: puntatore dell' editor NULL
 Startup	SettingsWindow		Avvio
@@ -12,6 +13,7 @@ About…	IdeamWindow		About…
 Show/Hide Output split	IdeamWindow		Mostra/Nascondi split di Output
  time	SettingsWindow		 volta
 Show ToolBar	SettingsWindow		Mostra ToolBar
+Go to line…	IdeamWindow		Vai alla riga…
 Save current File	IdeamWindow		Salva il File corrente
 Project	IdeamWindow		Progetto
 Reload files	SettingsWindow		Ricarica i file
@@ -22,6 +24,7 @@ Select all	IdeamWindow		Seleziona tutto
 Delete	IdeamWindow		Elimina
 Undo	IdeamWindow		Annulla
 Type	IdeamWindow		Tipo
+Go to next	IdeamWindow		Vai al prossimo
 Defaults loaded	SettingsWindow		Predefiniti caricati
 Show Projects panes	SettingsWindow		Mostra pannelli dei Progetti
 Notifications	IdeamWindow		Notifiche
@@ -57,21 +60,26 @@ Select next File	IdeamWindow		Seleziona il File seguente
 Review	IdeamApp		Revisiona
 Message	IdeamWindow		Messaggio
 Enable Notifications	SettingsWindow		Abilita Notifiche
+Next Bookmark not found	IdeamWindow		Segnalibro successivo non trovato
  moved externally to 	IdeamWindow		 spostato da altra applicazione in
 File full path in window title	SettingsWindow		Percorso del File nel titolo
 File \"%file%\" was modified externally, reload it?	IdeamWindow		Il File \"%file%\" è stato modificato da un altra applicazione, lo ricarico?
+Bookmark	IdeamWindow		Segnalibro
  bytes -> 	IdeamWindow		 byte -> 
 Save	IdeamWindow		Salva
 Quit	IdeamWindow		Esci
  Modifications 	SettingsWindow		 Modifiche 
 File is Read-only	IdeamWindow		File di sola lettura
 Save	Editor		Salva
+Clear all	IdeamWindow		Pulisci tutti
 Show/Hide Projects split	IdeamWindow		Mostra/Nascondi split dei Progetti
+Toggle line endings	IdeamWindow		Mostra i fine riga
 Open	IdeamWindow		Apri
 File	IdeamWindow		File
 Show line number	SettingsWindow		Mostra numeri di linea
 Font:	SettingsWindow		Font:
 No file selected	IdeamWindow		Nessun file selezionato
+Previous Bookmark not found	IdeamWindow		Segnalibro precedente non trovato
 Apply	SettingsWindow		Applica
 Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?	IdeamApp		File di Impostazioni per versione precedente,\nignora, revisiona o carica predefiniti?
 Open recent…	IdeamWindow		File recenti…
@@ -101,20 +109,23 @@ Close	IdeamWindow		Chiudi
 Enable Syntax highlighting	SettingsWindow		Abilita colorazione sintassi
 Visual	SettingsWindow		Visuale
 Save as…	IdeamWindow		Salva con nome…
+Go to previous	IdeamWindow		Vai al precedente
 Edit	IdeamWindow		Modifica
 NULL editor pointer	IdeamWindow		puntatore dell' editor NULL
+Toggle	IdeamWindow		Toggle
 Settings file is corrupted or deleted,\ndo You want to ignore, review or load to defaults?	IdeamApp		File Impostazioni corrotto o mancante,\nignora, revisiona o carica i predefiniti?
  Controls loaded.	SettingsWindow		 Controlli caricati.
 Mark caret line	SettingsWindow		Evidenzia linea del cursore
 Save changes to file	Editor		Salva i cambiamenti su file
 Cancel	IdeamWindow		Cancella
 Enable folding	SettingsWindow		Abilita folding
+Tab width:  	SettingsWindow		Tabulazioni: 
 See Credits for a complete list.	IdeamApp		Vedi Credits per una lista completa.
-Tab width:  	SettingsWindow		Tabulazioni:  
 Projects	IdeamWindow		Progetti
 Projects directory:	SettingsWindow		Directory dei Progetti:
 General	SettingsWindow		Generale
  bytes written	IdeamWindow		 byte scritti
  uses:	IdeamApp		 utilizza:
+Toggle white spaces	IdeamWindow		Mostra gli spazi bianchi
 Keep	IdeamWindow		Mantieni
 Close File	IdeamWindow		Chiudi il File

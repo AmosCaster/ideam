@@ -17,7 +17,8 @@
 #include <ScrollView.h>
 #include <StatusBar.h>
 #include <TabView.h>
-#include <TextView.h>
+#include <TabView.h>
+#include <TextControl.h>
 #include <Window.h>
 
 #include "Editor.h"
@@ -35,6 +36,7 @@ public:
 								IdeamWindow(BRect frame);
 	virtual						~IdeamWindow();
 
+	virtual void				DispatchMessage(BMessage* message, BHandler* handler);
 	virtual void				MessageReceived(BMessage* message);
 	virtual bool				QuitRequested();
 
@@ -62,6 +64,7 @@ private:
 			void				_SendNotification(BString message, BString type);
 			status_t			_UpdateLabel(int32 index, bool isModified);
 			void				_UpdateSelectionChange(int32 index);
+			void				_UpdateStatusBarText(int line, int column);
 private:
 			BMenuBar*			fMenuBar;
 			BMenuItem*			fFileNewMenuItem;
@@ -77,6 +80,13 @@ private:
 			BMenuItem*			fPasteMenuItem;
 			BMenuItem*			fDeleteMenuItem;
 			BMenuItem*			fSelectAllMenuItem;
+			BMenuItem*			fToggleWhiteSpacesItem;
+			BMenuItem*			fToggleLineEndingsItem;
+			BMenuItem*			fGoToLineItem;
+			BMenuItem*			fBookmarkToggleItem;
+			BMenuItem*			fBookmarkClearAllItem;
+			BMenuItem*			fBookmarkGoToNextItem;
+			BMenuItem*			fBookmarkGoToPreviousItem;
 
 			BGroupLayout*		fRootLayout;
 			BGroupLayout* 		fToolBar;
@@ -93,6 +103,7 @@ private:
 			BIconButton*		fFileNextButton;
 			BIconButton*		fFileCloseButton;
 			BIconButton*		fFileMenuButton;
+			BTextControl*		fGotoLine;
 
 			BTabView*	  		fProjectsTabView;
 			BOutlineListView*	fProjectsOutline;

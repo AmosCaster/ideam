@@ -13,6 +13,7 @@
 #include <Path.h>
 #include <Volume.h>
 
+#include <iostream>
 #include <sstream>
 
 #include "IdeamNamespace.h"
@@ -34,12 +35,42 @@ Editor::Editor(entry_ref* ref, const BMessenger& target)
 {
 	fName = BString(ref->name);
 	SetTarget(target);
+
+	// Filter notifying changes
+/*	SendMessage(SCI_SETMODEVENTMASK,SC_MOD_INSERTTEXT
+									 | SC_MOD_DELETETEXT
+									 | SC_MOD_CHANGESTYLE
+									 | SC_MOD_CHANGEFOLD
+									 | SC_PERFORMED_USER
+									 | SC_PERFORMED_UNDO
+									 | SC_PERFORMED_REDO
+									 | SC_MULTISTEPUNDOREDO
+									 | SC_LASTSTEPINUNDOREDO
+									 | SC_MOD_CHANGEMARKER
+									 | SC_MOD_BEFOREINSERT
+									 | SC_MOD_BEFOREDELETE
+									 | SC_MULTILINEUNDOREDO
+									 | SC_MODEVENTMASKALL
+									 , UNSET);
+*/
+
+//SendMessage(SCI_SETYCARETPOLICY, CARET_SLOP | CARET_STRICT | CARET_JUMPS, 20);
+//CARET_SLOP  CARET_STRICT  CARET_JUMPS  CARET_EVEN
 }
 
 Editor::~Editor()
 {
 	// Stop monitoring
 	StopMonitoring();
+
+	// Set caret position
+	if (Settings.save_caret == true) {
+		BNode node(&fFileRef);
+		if (node.InitCheck() == B_OK) {
+			int32 pos = GetCurrentPosition();
+			node.WriteAttr("be:caret_position", B_INT32_TYPE, 0, &pos, sizeof(pos));
+		}
+	}
 }
 
 void
@@ -57,12 +88,12 @@ void
 Editor::ApplySettings()
 {
 	// White spaces color
-//	SendMessage(SCI_SETWHITESPACEFORE, 1, 0x3030C0);
-	SendMessage(SCI_SETWHITESPACESIZE, 2, UNSET);
-	SendMessage(SCI_SETWHITESPACEBACK, 1, 0xB0B0B0);
+	SendMessage(SCI_SETWHITESPACESIZE, 4, UNSET);
+	SendMessage(SCI_SETWHITESPACEFORE, 1, kWhiteSpaceFore);
+	SendMessage(SCI_SETWHITESPACEBACK, 1, kWhiteSpaceBack);
 
 	// Selection background
-	SendMessage(SCI_SETSELBACK, 1, 0x80FFFF);
+	SendMessage(SCI_SETSELBACK, 1, kSelectionBackColor);
 
 	// Font & Size
 	SendMessage(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t) "Noto Mono");
@@ -70,24 +101,117 @@ Editor::ApplySettings()
 	SendMessage(SCI_STYLECLEARALL, UNSET, UNSET);
 
 	// Caret line visible
-	if (Settings.mark_caretline == B_CONTROL_ON) {
+	if (Settings.mark_caretline == true) {
 		SendMessage(SCI_SETCARETLINEVISIBLE, 1, UNSET);
-		SendMessage(SCI_SETCARETLINEBACK, 0xF8EFE9, UNSET);
+		SendMessage(SCI_SETCARETLINEBACK, kCaretLineBackColor, UNSET);
 	}
 
 	// Edge line
-	if (Settings.show_edgeline == B_CONTROL_ON) {
+	if (Settings.show_edgeline == true) {
 		SendMessage(SCI_SETEDGEMODE, EDGE_LINE, UNSET);
 
 		std::string column(Settings.edgeline_column);
 		int32 col;
 		std::istringstream (column) >>  col;
 		SendMessage(SCI_SETEDGECOLUMN, col, UNSET);
-		SendMessage(SCI_SETEDGECOLOUR, 0xE0E0E0, UNSET); // TODO color
+		SendMessage(SCI_SETEDGECOLOUR, kEdgeColor, UNSET);
 	}
 
 	// Tab width
 	SendMessage(SCI_SETTABWIDTH, Settings.tab_width, UNSET);
+
+	// MARGINS
+	SendMessage(SCI_SETMARGINS, 3, UNSET);
+	// Line numbers
+	if (Settings.show_linenumber == true) {
+
+		int32 pixW = SendMessage(SCI_TEXTWIDTH, STYLE_LINENUMBER, (sptr_t) "_123456");
+
+		SendMessage(SCI_SETMARGINWIDTHN, sci_NUMBER_MARGIN, pixW);
+		SendMessage(SCI_STYLESETBACK, STYLE_LINENUMBER, 0xD3D3D3);
+	}
+
+	// Bookmark margin
+	SendMessage(SCI_SETMARGINTYPEN, sci_BOOKMARK_MARGIN, SC_MARGIN_SYMBOL);
+	SendMessage(SCI_SETMARGINSENSITIVEN, sci_BOOKMARK_MARGIN, 1);
+	SendMessage(SCI_MARKERDEFINE, sci_BOOKMARK, SC_MARK_BOOKMARK);
+//	SendMessage(SCI_MARKERSETFORE, sci_BOOKMARK, 0x3030C0);
+	SendMessage(SCI_MARKERSETBACK, sci_BOOKMARK, kBookmarkColor);
+
+}
+
+void
+Editor::BookmarkClearAll(int marker)
+{
+	SendMessage(SCI_MARKERDELETEALL, marker, UNSET);
+}
+
+bool
+Editor::BookmarkGoToNext(bool wrap /*= false*/)
+{
+	int32 position = GetCurrentPosition();
+
+	int lineToGoTo;
+	int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET);
+
+	line += 1;
+	lineToGoTo = SendMessage(SCI_MARKERNEXT, line, 1 << sci_BOOKMARK);
+
+
+	if (lineToGoTo == -1) {
+			if (wrap == false)
+				return false;
+			else {
+				lineToGoTo = SendMessage(SCI_MARKERNEXT, 0, 1 << sci_BOOKMARK);
+				if (lineToGoTo == -1)
+					return false;
+		}
+	}
+
+	SendMessage(SCI_ENSUREVISIBLEENFORCEPOLICY, lineToGoTo, UNSET);
+	SendMessage(SCI_GOTOLINE, lineToGoTo, UNSET);
+
+	return true;
+}
+
+bool
+Editor::BookmarkGoToPrevious(bool wrap)
+{
+	int32 position = GetCurrentPosition();
+
+	int lineToGoTo;
+	int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET);
+
+	line -= 1;
+	lineToGoTo = SendMessage(SCI_MARKERPREVIOUS, line, 1 << sci_BOOKMARK);
+
+	if (lineToGoTo == -1) {
+			if (wrap == false)
+				return false;
+			else {
+				int32 line = SendMessage(SCI_GETLINECOUNT, UNSET, UNSET);
+				lineToGoTo = SendMessage(SCI_MARKERPREVIOUS, line, 1 << sci_BOOKMARK);
+				if (lineToGoTo == -1)
+					return false;
+		}
+	}
+
+	SendMessage(SCI_ENSUREVISIBLEENFORCEPOLICY, lineToGoTo, UNSET);
+	SendMessage(SCI_GOTOLINE, lineToGoTo, UNSET);
+
+	return true;
+}
+
+void
+Editor::BookmarkToggle(int position)
+{
+	int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET);
+	int markerSet = SendMessage(SCI_MARKERGET, line, UNSET);
+
+	if ((markerSet & (1 << sci_BOOKMARK)) != 0)
+		SendMessage(SCI_MARKERDELETE, line, sci_BOOKMARK);
+	else
+		SendMessage(SCI_MARKERADD, line, sci_BOOKMARK);
 }
 
 bool
@@ -139,10 +263,23 @@ Editor::Copy()
 	SendMessage(SCI_COPY, UNSET, UNSET);
 }
 
+int32
+Editor::CountLines()
+{
+	return SendMessage(SCI_GETLINECOUNT, UNSET, UNSET);
+}
+
 void
 Editor::Cut()
 {
 	SendMessage(SCI_CUT, UNSET, UNSET);
+}
+
+void
+Editor::EnsureVisiblePolicy()
+{
+	SendMessage(SCI_ENSUREVISIBLEENFORCEPOLICY,
+		SendMessage(SCI_LINEFROMPOSITION, GetCurrentPosition(), UNSET), UNSET);
 }
 
 const BString
@@ -151,6 +288,27 @@ Editor::FilePath() const
 	BPath path(&fFileRef);
 
 	return path.Path();
+}
+
+int32
+Editor::GetCurrentPosition()
+{
+	return SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
+}
+
+/*
+ * Mind that first line is 0!
+ */
+void
+Editor::GoToLine(int32 line)
+{
+	// Do not go to line 0
+	if (line == 0)
+		return;
+
+	line -= 1;
+	SendMessage(SCI_ENSUREVISIBLEENFORCEPOLICY, line, UNSET);
+	SendMessage(SCI_GOTOLINE, line, UNSET);
 }
 
 void
@@ -226,6 +384,16 @@ Editor::NotificationReceived(SCNotification* notification)
 	Sci_NotifyHeader* pNmhdr = &notification->nmhdr;
 
 	switch (pNmhdr->code) {
+		// Bookmark toggle
+		case SCN_MARGINCLICK: {
+			if (notification->margin == sci_BOOKMARK_MARGIN)
+				BookmarkToggle(notification->position);
+			break;
+		}
+		case SCN_NEEDSHOWN: {
+std::cerr << "SCN_NEEDSHOWN " << std::endl;
+		break;
+		}
 		case SCN_SAVEPOINTLEFT: {
 			fModified = true;
 			BMessage message(EDITOR_SAVEPOINT_LEFT);
@@ -241,12 +409,28 @@ Editor::NotificationReceived(SCNotification* notification)
 			break;
 		}
 		case SCN_UPDATEUI: {
-			// Selection has changed
+
+			// Selection/Position has changed
 			if (notification->updated & SC_UPDATE_SELECTION) {
-				BMessage message(EDITOR_SELECTION_CHANGED);
-				message.AddRef("ref", &fFileRef);
-				fTarget.SendMessage(&message);
+
+				// Ugly hack to enable mouse selection scrolling
+				// in both directions
+				int32 position = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
+				int32 anchor = SendMessage(SCI_GETANCHOR, UNSET, UNSET);
+				if (anchor != position) {
+					int32 line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET);
+					if (line == SendMessage(SCI_GETFIRSTVISIBLELINE, UNSET, UNSET))
+						SendMessage(SCI_SETFIRSTVISIBLELINE, line - 1, UNSET);
+					else
+						SendMessage(SCI_SCROLLCARET, UNSET, UNSET);
+				}
+
+				// Send position to main window so it can update status bar
+				SendCurrentPosition();
 			}
+
+
+
 			break;
 		}
 	}
@@ -346,9 +530,32 @@ Editor::SaveToFile()
 }
 
 void
+Editor::ScrollCaret()
+{
+	SendMessage(SCI_SCROLLCARET, UNSET, UNSET);
+}
+
+void
 Editor::SelectAll()
 {
 	SendMessage(SCI_SELECTALL, UNSET, UNSET);
+}
+
+/*
+ * Name is misleading: it sends Selection/Position changes
+ */
+void
+Editor::SendCurrentPosition()
+{
+	int32 position = GetCurrentPosition();
+
+	BMessage message(EDITOR_SELECTION_CHANGED);
+	message.AddRef("ref", &fFileRef);
+	int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET) + 1;
+	int column = SendMessage(SCI_GETCOLUMN, position, UNSET) + 1;
+	message.AddInt32("line", line);
+	message.AddInt32("column", column);
+	fTarget.SendMessage(&message);
 }
 
 status_t
@@ -390,6 +597,33 @@ Editor::SetReadOnly()
 	SendMessage(SCI_SETREADONLY, 1, UNSET);
 }
 
+status_t
+Editor::SetSavedCaretPosition()
+{
+	if (Settings.save_caret == false)
+		return B_ERROR; //TODO maybe tweak
+
+	status_t status;
+	// Get caret position
+	BNode node(&fFileRef);
+	if ((status = node.InitCheck()) != B_OK)
+		return status;
+	int32 pos = 0;
+	ssize_t bytes = 0;
+	bytes = node.ReadAttr("be:caret_position", B_INT32_TYPE, 0, &pos, sizeof(pos));
+
+	if (bytes < (int32) sizeof(pos))
+		return B_ERROR; //TODO maybe tweak + cast
+
+
+	SendMessage(SCI_ENSUREVISIBLEENFORCEPOLICY,
+			SendMessage(SCI_LINEFROMPOSITION, pos, UNSET), UNSET);
+
+	SendMessage(SCI_GOTOPOS, pos, UNSET);
+
+	return B_OK;
+}
+
 void
 Editor::SetTarget(const BMessenger& target)
 {
@@ -417,8 +651,25 @@ Editor::StopMonitoring()
 }
 
 void
+Editor::ToggleLineEndings()
+{
+	if (SendMessage(SCI_GETVIEWEOL, UNSET, UNSET) == false)
+		SendMessage(SCI_SETVIEWEOL, 1, UNSET);
+	else
+		SendMessage(SCI_SETVIEWEOL, 0, UNSET);
+}
+
+void
+Editor::ToggleWhiteSpaces()
+{
+	if (SendMessage(SCI_GETVIEWWS, UNSET, UNSET) == SCWS_INVISIBLE)
+		SendMessage(SCI_SETVIEWWS, SCWS_VISIBLEALWAYS, UNSET);
+	else
+		SendMessage(SCI_SETVIEWWS, SCWS_INVISIBLE, UNSET);
+}
+
+void
 Editor::Undo()
 {
 	SendMessage(SCI_UNDO, UNSET, UNSET);
 }
-
