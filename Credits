@@ -5,3 +5,4 @@
 - Scintilla lib by Neil Hodgson
 - Scintilla for Haiku  by Andrea Anzani, Kacper Kasper
 - TitleItem	class taken from Haiku preferences/network
+- Editor::ReplaceAll adapted from Koder

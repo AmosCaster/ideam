@@ -215,6 +215,8 @@ main(int argc, char* argv[])
 		app->Run();
 
 		delete app;
+	} catch (std::out_of_range) {
+		std::cerr << "OUT OF RANGE" << std::endl;
 
 	} catch (...) {
 

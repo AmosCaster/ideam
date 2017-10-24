@@ -31,14 +31,21 @@
 #define MULTIFILE_OPEN_SELECT_FIRST_FILE
 
 
-const auto kRecentFilesNumber = 14 + 1;
+constexpr auto kRecentFilesNumber = 14 + 1;
 
 // If enabled check menu open point
 //static const auto kToolBarSize = 29;
 
-static const float kTabBarHeight = 30.0f;
+static constexpr float kTabBarHeight = 30.0f;
 
-static const auto kGotolineMaxBytes = 6;
+static constexpr auto kGotolineMaxBytes = 6;
+
+// Find group
+static constexpr auto kFindReplaceMaxBytes = 50;
+static constexpr auto kFindReplaceMinBytes = 32;
+static constexpr float kFindReplaceOPSize = 120.0;
+static constexpr auto kFindReplaceMenuItems = 10;
+
 
 static float kEditorWeight  = 3.0f;
 static float kOutputWeight  = 0.4f;
@@ -57,10 +64,22 @@ enum {
 
 	// Edit menu
 	MSG_TEXT_DELETE				= 'tede',
+	MSG_TEXT_OVERWRITE			= 'teov',
 	MSG_WHITE_SPACES_TOGGLE		= 'whsp',
 	MSG_LINE_ENDINGS_TOGGLE		= 'lien',
 
-	// Search menu
+	// Search menu & group
+	MSG_FIND_GROUP_SHOW			= 'figs',
+	MSG_FIND_MENU_SELECTED		= 'fmse',
+	MSG_FIND_PREVIOUS			= 'fipr',
+	MSG_FIND_MARK_ALL			= 'fmal',
+	MSG_FIND_NEXT				= 'fite',
+	MSG_REPLACE_GROUP_SHOW		= 'regs',
+	MSG_REPLACE_MENU_SELECTED 	= 'rmse',
+	MSG_REPLACE_ONE				= 'reon',
+	MSG_REPLACE_NEXT			= 'rene',
+	MSG_REPLACE_PREVIOUS		= 'repr',
+	MSG_REPLACE_ALL				= 'real',
 	MSG_GOTO_LINE				= 'goli',
 	MSG_BOOKMARK_CLEAR_ALL		= 'bcal',
 	MSG_BOOKMARK_GOTO_NEXT		= 'bgne',
@@ -76,7 +95,10 @@ enum {
 	MSG_FILE_MENU_SHOW			= 'fmsh',
 	MSG_FILE_NEXT_SELECTED		= 'fnse',
 	MSG_FILE_PREVIOUS_SELECTED	= 'fpse',
+	MSG_FIND_GROUP_TOGGLED		= 'figt',
+	MSG_FIND_IN_FILES			= 'fifi',
 	MSG_LINE_TO_GOTO			= 'ltgt',
+	MSG_REPLACE_GROUP_TOGGLED	= 'regt',
 	MSG_SHOW_HIDE_PROJECTS		= 'shpr',
 	MSG_SHOW_HIDE_OUTPUT		= 'shou',
 
@@ -115,7 +137,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 
 	// Shortcuts
 	for (int32 index = 1; index < 10; index++) {
-		const auto kAsciiPos = 48;
+		constexpr auto kAsciiPos {48};
 		BMessage* selectTab = new BMessage(MSG_SELECT_TAB);
 		selectTab->AddInt32("index", index - 1);
 		AddShortcut(index + kAsciiPos, B_COMMAND_KEY, selectTab);
@@ -168,7 +190,38 @@ IdeamWindow::~IdeamWindow()
 void
 IdeamWindow::DispatchMessage(BMessage* message, BHandler* handler)
 {
-	if (handler == fGotoLine->TextView()) {
+	if (handler == fFindTextControl->TextView()) {
+		if (message->what == B_KEY_DOWN) {
+			int8 key;
+			if (message->FindInt8("byte", 0, &key) == B_OK) {
+				if (key == B_ESCAPE) {
+					// If keep focus activated TODO
+					#if 0
+					int32 index = fTabManager->SelectedTabIndex();
+					if (index > -1 && index < fTabManager->CountTabs()) {
+						fEditor = fEditorObjectList->ItemAt(index);
+						fEditor->GrabFocus();
+					}
+					#else
+					{
+						fFindGroup->SetVisible(false);
+						fReplaceGroup->SetVisible(false);
+					}
+					#endif
+				}
+			}
+		}
+	} else if (handler == fReplaceTextControl->TextView()) {
+		if (message->what == B_KEY_DOWN) {
+			int8 key;
+			if (message->FindInt8("byte", 0, &key) == B_OK) {
+				if (key == B_ESCAPE) {
+					fReplaceGroup->SetVisible(false);
+					fFindTextControl->MakeFocus(true);
+				}
+			}
+		}
+	} else if (handler == fGotoLine->TextView()) {
 		if (message->what == B_KEY_DOWN) {
 			int8 key;
 			if (message->FindInt8("byte", 0, &key) == B_OK) {
@@ -259,6 +312,44 @@ IdeamWindow::MessageReceived(BMessage* message)
 				if (fEditor->CanUndo())
 					fEditor->Undo();
 				_UpdateSelectionChange(index);
+			}
+			break;
+		}
+		case EDITOR_BOOKMARK_MARK: {
+			entry_ref ref;
+			if (message->FindRef("ref", &ref) == B_OK) {
+				int32 index = _GetEditorIndex(&ref);
+				if (index == fTabManager->SelectedTabIndex()) {
+					fEditor = fEditorObjectList->ItemAt(index);
+
+					int line;
+					if (message->FindInt32("line", &line) == B_OK) {
+						BString text;
+						text << fEditor->Name() << " :" << line;
+						_SendNotification( text.String(), "MARK_FOUND");
+					}
+				}
+			}
+
+			break;
+		}
+		case EDITOR_REPLACED_ONE: {
+			entry_ref ref;
+			if (message->FindRef("ref", &ref) == B_OK) {
+				int32 index =  _GetEditorIndex(&ref);
+				if (index == fTabManager->SelectedTabIndex()) {
+					int line, column;
+					BString selection, replacement;
+					if (message->FindInt32("line", &line) == B_OK
+						&& message->FindInt32("column", &column) == B_OK
+						&& message->FindString("selection", &selection) == B_OK
+						&& message->FindString("replacement", &replacement) == B_OK) {
+						BString text;
+						text << fEditor->Name() << " " << line  << ":" << column
+							 << " -- " << selection << " -> " << replacement;
+						_SendNotification( text.String(), "REPLACE_DONE");
+					}
+				}
 			}
 			break;
 		}
@@ -443,9 +534,77 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		case MSG_FILE_SAVE_ALL:
 			_FileSaveAll();
 			break;
+		case MSG_FIND_GROUP_SHOW:
+			_FindGroupShow();
+			break;
+		case MSG_FIND_MARK_ALL: {
+			BString textToFind(fFindTextControl->Text());
+
+			if (!textToFind.IsEmpty()) {
+				int32 counts = _FindMarkAll(textToFind);
+				BString text;
+				text << "\"" << textToFind << "\""
+					<< B_TRANSLATE(" occurrences found: ") << counts;
+				_SendNotification( text.String(), "BOOKMARKS");
+			}
+			break;
+		}
+		case MSG_FIND_MENU_SELECTED: {
+			int32 index;
+			if (message->FindInt32("index", &index) == B_OK) {
+				BMenuItem* item = fFindMenuField->Menu()->ItemAt(index);
+				fFindTextControl->SetText(item->Label());
+			}
+			break;
+		}
+		case MSG_FIND_NEXT: {
+			const BString& text(fFindTextControl->Text());
+//			if (!text.IsEmpty())
+			_FindNext(text, false);
+			break;
+		}
+		case MSG_FIND_PREVIOUS: {
+			const BString& text(fFindTextControl->Text());
+//			if (!text.IsEmpty())
+			_FindNext(text, true);
+			break;
+		}
+		case MSG_FIND_GROUP_TOGGLED:
+			_FindGroupToggled();
+			break;
 		case MSG_GOTO_LINE:
 			fGotoLine->Show();
 			fGotoLine->MakeFocus();
+			break;
+		case MSG_REPLACE_GROUP_SHOW:
+			_ReplaceGroupShow();
+			break;
+		case MSG_REPLACE_ALL: {
+			int32 counts = _Replace(REPLACE_ALL);
+			BString text;
+			text << B_TRANSLATE(" replacements done: ") << counts;
+			_SendNotification( text.String(), "REPLACEMENTS");
+			break;
+		}
+		case MSG_REPLACE_GROUP_TOGGLED:
+			_ReplaceGroupToggled();
+			break;
+		case MSG_REPLACE_MENU_SELECTED: {
+			int32 index;
+			if (message->FindInt32("index", &index) == B_OK) {
+				BMenuItem* item = fReplaceMenuField->Menu()->ItemAt(index);
+				fReplaceTextControl->SetText(item->Label());
+			}
+			break;
+		}
+		case MSG_REPLACE_NEXT:
+			_Replace(REPLACE_NEXT);
+			break;
+		case MSG_REPLACE_ONE:
+			_Replace(REPLACE_ONE);
+			break;
+		case MSG_REPLACE_PREVIOUS:
+			_Replace(REPLACE_PREVIOUS);
 			break;
 		case MSG_SELECT_TAB: {
 			int32 index;
@@ -479,6 +638,16 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			if (index > -1 && index < fTabManager->CountTabs()) {
 				fEditor = fEditorObjectList->ItemAt(index);
 				fEditor->Clear();
+			}
+			break;
+		}
+		case MSG_TEXT_OVERWRITE: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->OverwriteToggle();
+				_UpdateStatusBarTrailing(index);
 			}
 			break;
 		}
@@ -552,6 +721,7 @@ std::cerr << "TABMANAGER_TAB_CHANGED " << "NULL on index: " << index << std::end
 
 std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index << std::endl;
 				_UpdateSelectionChange(index);
+				_UpdateStatusBarTrailing(index);
 			}
 			break;
 		}
@@ -611,7 +781,7 @@ IdeamWindow::QuitRequested()
 			// Save if there is an opened file
 			int32 index = fTabManager->SelectedTabIndex();
 
-			if (index > -1) {
+			if (index > -1 && index < fTabManager->CountTabs()) {
 				files->AddInt32("opened_index", index);
 
 				for (int32 index = 0; index < fTabManager->CountTabs(); index++) {
@@ -946,6 +1116,77 @@ IdeamWindow::_FilesNeedSave()
 	return false;
 }
 
+void
+IdeamWindow::_FindGroupShow()
+{
+	if (!fFindGroup->IsVisible()) {
+		fFindGroup->SetVisible(true);
+		_GetFocusAndSelection(fFindTextControl);
+	}
+	else if (fFindGroup->IsVisible())
+		_GetFocusAndSelection(fFindTextControl);
+}
+
+void
+IdeamWindow::_FindGroupToggled()
+{
+	fFindGroup->SetVisible(!fFindGroup->IsVisible());
+
+	if (fFindGroup->IsVisible()) {
+		_GetFocusAndSelection(fFindTextControl);
+	}
+	else {
+		if (fReplaceGroup->IsVisible())
+			fReplaceGroup->SetVisible(false);
+		int32 index = fTabManager->SelectedTabIndex();
+		if (index > -1 && index < fTabManager->CountTabs()) {
+			fEditor = fEditorObjectList->ItemAt(index);
+			fEditor->GrabFocus();
+		}
+	}
+}
+
+int32
+IdeamWindow::_FindMarkAll(const BString text)
+{
+	fEditor = fEditorObjectList->ItemAt(fTabManager->SelectedTabIndex());
+
+	int flags = fEditor->SetSearchFlags(fFindCaseSensitiveCheck->Value(),
+										fFindWholeWordCheck->Value(),
+										false, false, false);
+
+	int countMarks = fEditor->FindMarkAll(text, flags);
+
+	fEditor->GrabFocus();
+
+	_UpdateFindMenuItems(text);
+
+	return countMarks;
+}
+
+void
+IdeamWindow::_FindNext(const BString& strToFind, bool backwards)
+{
+	if (strToFind.IsEmpty())
+		return;
+
+	fEditor = fEditorObjectList->ItemAt(fTabManager->SelectedTabIndex());
+//fFindTextControl->MakeFocus(true);
+	fEditor->GrabFocus();
+
+	int flags = fEditor->SetSearchFlags(fFindCaseSensitiveCheck->Value(),
+										fFindWholeWordCheck->Value(),
+										false, false, false);
+	bool wrap = fFindWrapCheck->Value();
+
+	if (backwards == false)
+		fEditor->FindNext(strToFind, flags, wrap);
+	else
+		fEditor->FindPrevious(strToFind, flags, wrap);
+
+	_UpdateFindMenuItems(strToFind);
+}
+
 int32
 IdeamWindow::_GetEditorIndex(entry_ref* ref)
 {
@@ -999,6 +1240,24 @@ IdeamWindow::_GetEditorIndex(node_ref* nref)
 	}
 	return -1;
 }
+
+
+void
+IdeamWindow::_GetFocusAndSelection(BTextControl* control)
+{
+	control->MakeFocus(true);
+	// If some text is selected, use that TODO index check
+	fEditor = fEditorObjectList->ItemAt(fTabManager->SelectedTabIndex());
+	if (fEditor->IsTextSelected()) {
+		int32 size = fEditor->SendMessage(SCI_GETSELTEXT, 0, 0);
+		char text[size];
+		fEditor->SendMessage(SCI_GETSELTEXT, 0, (sptr_t)text);
+		control->SetText(text);
+	}
+	else
+		control->TextView()->Clear();
+}
+
 
 void
 IdeamWindow::_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRef)
@@ -1299,6 +1558,11 @@ IdeamWindow::_InitMenu()
 	menu->AddItem(fSelectAllMenuItem = new BMenuItem(B_TRANSLATE("Select all"),
 		new BMessage(B_SELECT_ALL), 'A'));
 	menu->AddSeparatorItem();
+	menu->AddItem(fOverwiteItem = new BMenuItem(B_TRANSLATE("Overwrite"),
+		new BMessage(MSG_TEXT_OVERWRITE), B_INSERT));
+
+
+	menu->AddSeparatorItem();
 	menu->AddItem(fToggleWhiteSpacesItem = new BMenuItem(B_TRANSLATE("Toggle white spaces"),
 		new BMessage(MSG_WHITE_SPACES_TOGGLE)));
 	menu->AddItem(fToggleLineEndingsItem =new BMenuItem(B_TRANSLATE("Toggle line endings"),
@@ -1311,6 +1575,7 @@ IdeamWindow::_InitMenu()
 	fPasteMenuItem->SetEnabled(false);
 	fDeleteMenuItem->SetEnabled(false);
 	fSelectAllMenuItem->SetEnabled(false);
+	fOverwiteItem->SetEnabled(false);
 	fToggleWhiteSpacesItem->SetEnabled(false);
 	fToggleLineEndingsItem->SetEnabled(false);
 
@@ -1318,6 +1583,10 @@ IdeamWindow::_InitMenu()
 
 	menu = new BMenu(B_TRANSLATE("Search"));
 
+	menu->AddItem(fFindItem = new BMenuItem(B_TRANSLATE("Find"),
+		new BMessage(MSG_FIND_GROUP_SHOW), 'F'));
+	menu->AddItem(fReplaceItem = new BMenuItem(B_TRANSLATE("Replace"),
+		new BMessage(MSG_REPLACE_GROUP_SHOW), 'R'));
 	menu->AddItem(fGoToLineItem = new BMenuItem(B_TRANSLATE("Go to line" B_UTF8_ELLIPSIS),
 		new BMessage(MSG_GOTO_LINE), '<'));
 
@@ -1331,6 +1600,8 @@ IdeamWindow::_InitMenu()
 	submenu->AddItem(fBookmarkGoToPreviousItem = new BMenuItem(B_TRANSLATE("Go to previous"),
 		new BMessage(MSG_BOOKMARK_GOTO_PREVIOUS)));
 
+	fFindItem->SetEnabled(false);
+	fReplaceItem->SetEnabled(false);
 	fGoToLineItem->SetEnabled(false);
 	fBookmarkToggleItem->SetEnabled(false);
 	fBookmarkClearAllItem->SetEnabled(false);
@@ -1370,6 +1641,15 @@ IdeamWindow::_InitWindow()
 						111, true, B_TRANSLATE("Show/Hide Projects split"));
 	fOutputButton = _LoadIconButton("OutputButton", MSG_SHOW_HIDE_OUTPUT,
 						115, true, B_TRANSLATE("Show/Hide Output split"));
+
+	fFindButton = _LoadIconButton("Find", MSG_FIND_GROUP_TOGGLED, 199, false,
+						B_TRANSLATE("Find toggle (closes Replace bar if open)"));
+
+	fReplaceButton = _LoadIconButton("Replace", MSG_REPLACE_GROUP_TOGGLED, 200, false,
+						B_TRANSLATE("Replace toggle (leaves Find bar open)"));
+
+	fFindinFilesButton = _LoadIconButton("FindinFiles", MSG_FIND_IN_FILES, 201, false,
+						B_TRANSLATE("Find in files"));
 
 	fUndoButton = _LoadIconButton("UndoButton", B_UNDO, 204, false,
 						B_TRANSLATE("Undo"));
@@ -1413,6 +1693,9 @@ IdeamWindow::_InitWindow()
 			.Add(fFileSaveButton)
 			.Add(fFileSaveAllButton)
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
+			.Add(fFindButton)
+			.Add(fReplaceButton)
+			.Add(fFindinFilesButton)
 			.AddGlue()
 			.Add(fFileUnlockedButton)
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
@@ -1434,6 +1717,86 @@ IdeamWindow::_InitWindow()
 		fProjectsOutline, B_FRAME_EVENTS | B_WILL_DRAW, true, true, B_NO_BORDER);
 	fProjectsTabView->AddTab(fProjectsScroll);
 
+	// Find group
+	fFindMenuField = new BMenuField("FindMenuField", NULL, new BMenu(B_TRANSLATE("Find:")));
+	fFindMenuField->SetExplicitMaxSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
+	fFindMenuField->SetExplicitMinSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
+
+	fFindTextControl = new BTextControl("FindTextControl", "" , "", nullptr);
+	fFindTextControl->TextView()->SetMaxBytes(kFindReplaceMaxBytes);
+	float charWidth = fFindTextControl->StringWidth("0", 1);
+	fFindTextControl->SetExplicitMinSize(
+						BSize(charWidth * kFindReplaceMinBytes + 10.0f,
+						B_SIZE_UNSET));
+	fFindTextControl->SetExplicitMaxSize(fFindTextControl->MinSize());
+
+	fFindNextButton = _LoadIconButton("FindNextButton", MSG_FIND_NEXT, 164, true,
+						B_TRANSLATE("Find Next"));
+	fFindPreviousButton = _LoadIconButton("FindPreviousButton", MSG_FIND_PREVIOUS,
+							165, true, B_TRANSLATE("Find previous"));
+	fFindMarkAllButton = _LoadIconButton("FindMarkAllButton", MSG_FIND_MARK_ALL,
+							202, true, B_TRANSLATE("Mark all"));
+//	AddShortcut(B_DOWN_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
+//	AddShortcut(B_UP_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
+//	AddShortcut(B_PAGE_DOWN, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
+//	AddShortcut(B_PAGE_UP, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
+
+	fFindCaseSensitiveCheck = new BCheckBox(B_TRANSLATE("Match case"));
+	fFindWholeWordCheck = new BCheckBox(B_TRANSLATE("Whole word"));
+	fFindWrapCheck = new BCheckBox(B_TRANSLATE("Wrap"));
+
+	fFindGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+			.Add(fFindMenuField)
+			.Add(fFindTextControl)
+			.Add(fFindNextButton)
+			.Add(fFindPreviousButton)
+			.Add(fFindWrapCheck)
+			.Add(fFindWholeWordCheck)
+			.Add(fFindCaseSensitiveCheck)
+			.Add(fFindMarkAllButton)
+			.AddGlue()
+///			.SetInsets(2, 2, 2, 2)
+		)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+	;
+	fFindGroup->SetVisible(false);
+
+	// Replace group
+	fReplaceMenuField = new BMenuField("ReplaceMenu", NULL,
+										new BMenu(B_TRANSLATE("Replace:")));
+	fReplaceMenuField->SetExplicitMaxSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
+	fReplaceMenuField->SetExplicitMinSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
+
+	fReplaceTextControl = new BTextControl("ReplaceTextControl", "", "", NULL);
+	fReplaceTextControl->TextView()->SetMaxBytes(kFindReplaceMaxBytes);
+	fReplaceTextControl->SetExplicitMaxSize(fFindTextControl->MaxSize());
+	fReplaceTextControl->SetExplicitMinSize(fFindTextControl->MinSize());
+
+	fReplaceOneButton = _LoadIconButton("ReplaceOneButton", MSG_REPLACE_ONE,
+						166, true, B_TRANSLATE("Replace selection"));
+	fReplaceAndFindNextButton = _LoadIconButton("ReplaceFindNextButton", MSG_REPLACE_NEXT,
+								167, true, B_TRANSLATE("Replace and find next"));
+	fReplaceAndFindPrevButton = _LoadIconButton("ReplaceFindPrevButton", MSG_REPLACE_PREVIOUS,
+								168, false, B_TRANSLATE("Replace and find previous"));
+	fReplaceAllButton = _LoadIconButton("ReplaceAllButton", MSG_REPLACE_ALL,
+							169, true, B_TRANSLATE("Replace all"));
+
+	fReplaceGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+			.Add(fReplaceMenuField)
+			.Add(fReplaceTextControl)
+			.Add(fReplaceOneButton)
+			.Add(fReplaceAndFindNextButton)
+			.Add(fReplaceAndFindPrevButton)
+			.Add(fReplaceAllButton)
+			.AddGlue()
+///			.SetInsets(2, 2, 2, 2)
+		)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+	;
+	fReplaceGroup->SetVisible(false);
+
 	// Editor tab & view
 	fEditorObjectList = new BObjectList<Editor>();
 
@@ -1449,6 +1812,8 @@ IdeamWindow::_InitWindow()
 	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
 		.SetInsets(1, 1, 1, 1)
 		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+			.Add(fFindGroup)
+			.Add(fReplaceGroup)
 			.Add(fTabManager->TabGroup())
 			.Add(fTabManager->ContainerView())
 			.Add(new BSeparatorView(B_HORIZONTAL))
@@ -1507,6 +1872,124 @@ IdeamWindow::_LoadSizedVectorIcon(int32 resourceID, int32 size)
 	return bitmap;
 }
 
+int
+IdeamWindow::_Replace(int what)
+{
+	if (_ReplaceAllow() == false)
+		return REPLACE_SKIP;
+
+	BString selection(fFindTextControl->Text());
+	BString replacement(fReplaceTextControl->Text());
+	int retValue = REPLACE_NONE;
+
+	fEditor = fEditorObjectList->ItemAt(fTabManager->SelectedTabIndex());
+	int flags = fEditor->SetSearchFlags(fFindCaseSensitiveCheck->Value(),
+										fFindWholeWordCheck->Value(),
+										false, false, false);
+
+	bool wrap = fFindWrapCheck->Value();
+
+	switch (what) {
+		case REPLACE_ALL: {
+			retValue = fEditor->ReplaceAll(selection, replacement, flags);
+			fEditor->GrabFocus();
+			break;
+		}
+		case REPLACE_NEXT: {
+			retValue = fEditor->ReplaceAndFindNext(selection, replacement, flags, wrap);
+			break;
+		}
+		case REPLACE_ONE: {
+			retValue = fEditor->ReplaceOne(selection, replacement);
+			break;
+		}
+		case REPLACE_PREVIOUS: {
+//			retValue = fEditor->ReplaceAndFindPrevious(selection, replacement, flags, wrap);
+			break;
+		}
+		default:
+			return REPLACE_NONE;
+	}
+	_UpdateFindMenuItems(fFindTextControl->Text());
+	_UpdateReplaceMenuItems(fReplaceTextControl->Text());
+
+	return retValue;
+}
+
+bool
+IdeamWindow::_ReplaceAllow()
+{
+	BString selection(fFindTextControl->Text());
+	BString replacement(fReplaceTextControl->Text());
+
+	if (selection.Length() < 1
+//			|| replacement.Length() < 1
+			|| selection == replacement)
+		return false;
+
+	return true;
+}
+/*
+void
+IdeamWindow::_ReplaceAndFind()
+{
+	if (_ReplaceAllow() == false)
+		return;
+
+	BString selection(fFindTextControl->Text());
+	BString replacement(fReplaceTextControl->Text());
+	fEditor = fEditorObjectList->ItemAt(fTabManager->SelectedTabIndex());
+
+	int flags = fEditor->SetSearchFlags(fFindCaseSensitiveCheck->Value(),
+										fFindWholeWordCheck->Value(),
+										false, false, false);
+
+	bool wrap = fFindWrapCheck->Value();
+
+	fEditor->ReplaceAndFind(selection, replacement, flags, wrap);
+
+	_UpdateFindMenuItems(fFindTextControl->Text());
+	_UpdateReplaceMenuItems(fReplaceTextControl->Text());
+}
+*/
+void
+IdeamWindow::_ReplaceGroupShow()
+{
+	bool findGroupOpen = fFindGroup->IsVisible();
+
+	if (findGroupOpen == false)
+		_FindGroupToggled();
+
+	if (!fReplaceGroup->IsVisible()) {
+		fReplaceGroup->SetVisible(true);
+		fReplaceTextControl->TextView()->Clear();
+		// If find group was not open focus and selection go there
+		if (findGroupOpen == false)
+			_GetFocusAndSelection(fFindTextControl);
+		else
+			_GetFocusAndSelection(fReplaceTextControl);
+	}
+	// Replace group was opened, get focus and selection
+	else if (fReplaceGroup->IsVisible())
+		_GetFocusAndSelection(fReplaceTextControl);
+}
+
+void
+IdeamWindow::_ReplaceGroupToggled()
+{
+	fReplaceGroup->SetVisible(!fReplaceGroup->IsVisible());
+
+	if (fReplaceGroup->IsVisible()) {
+		if (!fFindGroup->IsVisible())
+			_FindGroupToggled();
+		else if (fFindGroup->IsVisible()) {
+			// Find group was already visible, grab focus and selection
+			// on replace text control
+			_GetFocusAndSelection(fReplaceTextControl);
+		}
+	}
+}
+
 void
 IdeamWindow::_SendNotification(BString message, BString type)
 {
@@ -1523,10 +2006,23 @@ IdeamWindow::_SendNotification(BString message, BString type)
        fNotificationsListView->AddRow(fRow, 0);
 }
 
+void
+IdeamWindow::_UpdateFindMenuItems(const BString& text)
+{
+	int32 count = fFindMenuField->Menu()->CountItems();
+	// Add item if not already present
+	if (fFindMenuField->Menu()->FindItem(text) == nullptr) {
+		BMenuItem* item = new BMenuItem(text, new BMessage(MSG_FIND_MENU_SELECTED));
+		fFindMenuField->Menu()->AddItem(item, 0);
+	}
+	if (count == kFindReplaceMenuItems)
+		fFindMenuField->Menu()->RemoveItem(count);
+}
+
 status_t
 IdeamWindow::_UpdateLabel(int32 index, bool isModified)
 {
-	if (index > -1) {
+	if (index > -1 && index < fTabManager->CountTabs()) {
 		if (isModified == true) {
 				// Add '*' to file name
 				BString label(fTabManager->TabLabel(index));
@@ -1544,12 +2040,28 @@ IdeamWindow::_UpdateLabel(int32 index, bool isModified)
 	return B_ERROR;
 }
 
+
+void
+IdeamWindow::_UpdateReplaceMenuItems(const BString& text)
+{
+	int32 items = fReplaceMenuField->Menu()->CountItems();
+	// Add item if not already present
+	if (fReplaceMenuField->Menu()->FindItem(text) == NULL) {
+		BMenuItem* item = new BMenuItem(text, new BMessage(MSG_REPLACE_MENU_SELECTED));
+		fReplaceMenuField->Menu()->AddItem(item, 0);
+	}
+	if (items == kFindReplaceMenuItems)
+		fReplaceMenuField->Menu()->RemoveItem(items);
+}
+
+
+/*
+ * Updating menu, toolbar, title.
+ * Also cleaning statusbar if no open files
+ */
 void
 IdeamWindow::_UpdateSelectionChange(int32 index)
 {
-BString text;
-text << "index: " << index << " sti: " << fTabManager->SelectedTabIndex();
-fStatusBar->SetTrailingText(text.String());
 	// Should not happen
 	if (index < -1)
 		return;
@@ -1557,6 +2069,10 @@ fStatusBar->SetTrailingText(text.String());
 	// All files are closed
 	if (index == -1) {
 		// ToolBar Items
+		fFindButton->SetEnabled(false);
+		fFindGroup->SetVisible(false);
+		fReplaceButton->SetEnabled(false);
+		fReplaceGroup->SetVisible(false);
 		fUndoButton->SetEnabled(false);
 		fRedoButton->SetEnabled(false);
 		fFileSaveButton->SetEnabled(false);
@@ -1580,15 +2096,18 @@ fStatusBar->SetTrailingText(text.String());
 		fPasteMenuItem->SetEnabled(false);
 		fDeleteMenuItem->SetEnabled(false);
 		fSelectAllMenuItem->SetEnabled(false);
+		fOverwiteItem->SetEnabled(false);
 		fToggleWhiteSpacesItem->SetEnabled(false);
 		fToggleLineEndingsItem->SetEnabled(false);
+		fFindItem->SetEnabled(false);
+		fReplaceItem->SetEnabled(false);
 		fGoToLineItem->SetEnabled(false);
 		fBookmarkToggleItem->SetEnabled(false);
 		fBookmarkClearAllItem->SetEnabled(false);
 		fBookmarkGoToNextItem->SetEnabled(false);
 		fBookmarkGoToPreviousItem->SetEnabled(false);
 
-		// Status bar
+		// Clean Status bar
 		fStatusBar->SetText("");
 		fStatusBar->SetTrailingText("");
 
@@ -1599,6 +2118,8 @@ fStatusBar->SetTrailingText(text.String());
 	}
 
 	// ToolBar Items
+	fFindButton->SetEnabled(true);
+	fReplaceButton->SetEnabled(true);
 	fUndoButton->SetEnabled(fEditor->CanUndo());
 	fRedoButton->SetEnabled(fEditor->CanRedo());
 	fFileSaveButton->SetEnabled(fEditor->IsModified());
@@ -1632,8 +2153,12 @@ fStatusBar->SetTrailingText(text.String());
 	fPasteMenuItem->SetEnabled(fEditor->CanPaste());
 	fDeleteMenuItem->SetEnabled(fEditor->CanClear());
 	fSelectAllMenuItem->SetEnabled(true);
+	fOverwiteItem->SetEnabled(true);
+//fOverwiteItem->SetMarked(fEditor->IsOverwrite());
 	fToggleWhiteSpacesItem->SetEnabled(true);
 	fToggleLineEndingsItem->SetEnabled(true);
+	fFindItem->SetEnabled(true);
+	fReplaceItem->SetEnabled(true);
 	fGoToLineItem->SetEnabled(true);
 	fBookmarkToggleItem->SetEnabled(true);
 	fBookmarkClearAllItem->SetEnabled(true);
@@ -1645,6 +2170,7 @@ fStatusBar->SetTrailingText(text.String());
 		title << IdeamNames::kApplicationName << ": " << fEditor->FilePath();
 		SetTitle(title.String());
 	}
+
 	// fEditor is modified by _FilesNeedSave so it should be the last
 	// or reload editor pointer
 	bool filesNeedSave = _FilesNeedSave();
@@ -1657,10 +2183,44 @@ fStatusBar->SetTrailingText(text.String());
 
 }
 
+/*
+ * Status bar is cleaned (both text and trailing) when
+ * _UpdateSelectionChange is called with -1 index
+ *
+ */
 void
 IdeamWindow::_UpdateStatusBarText(int line, int column)
 {
 	BString text;
 	text << "  " << line << ':' << column;
 	fStatusBar->SetText(text.String());
+}
+
+/*
+ * Index has to be verified before the call
+ * so it is not checked here too
+ */
+void
+IdeamWindow::_UpdateStatusBarTrailing(int32 index)
+{
+	BString trailing;
+
+	fEditor = fEditorObjectList->ItemAt(index);
+
+	if (fEditor->IsOverwrite())
+		trailing << "OVR";
+	else
+		trailing << "INS";
+/*
+	trailing << '\t' << fEditor->EndOfLineString();
+
+	switch (fEditor->Encoding()) {
+		case B_UNICODE_UTF8:
+			trailing << '\t' << "UTF-8" << '\t';
+			break;
+		default:
+			break;
+	}
+*/
+	fStatusBar->SetTrailingText(trailing.String());
 }

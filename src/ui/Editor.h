@@ -12,24 +12,42 @@
 #include <String.h>
 
 enum {
+	EDITOR_BOOKMARK_MARK		= 'Ebma',
+	EDITOR_REPLACED_ONE			= 'Ereo',
 	EDITOR_SAVEPOINT_REACHED	= 'Esre',
 	EDITOR_SAVEPOINT_LEFT		= 'Esle',
 	EDITOR_SELECTION_CHANGED	= 'Esch',
 };
 
-const auto sci_NUMBER_MARGIN = 0;
-const auto sci_BOOKMARK_MARGIN = 1;
-const auto sci_FOLD_MARGIN = 2;
+/*
+ * Not very smart: NONE,SKIP,DONE is Status
+ * while the other are Function placeholders
+ *
+ */
+enum {
+	REPLACE_NONE = -1,
+	REPLACE_SKIP = 0,
+	REPLACE_DONE = 1,
+	REPLACE_ONE,
+	REPLACE_NEXT,
+	REPLACE_PREVIOUS,
+	REPLACE_ALL
+};
 
-const auto sci_BOOKMARK = 0;
+constexpr auto sci_NUMBER_MARGIN = 0;
+constexpr auto sci_BOOKMARK_MARGIN = 1;
+constexpr auto sci_FOLD_MARGIN = 2;
+
+constexpr auto sci_BOOKMARK = 0;
 
 // Colors
-static const auto kWhiteSpaceFore = 0x3030C0;
-static const auto kWhiteSpaceBack = 0xB0B0B0;
-static const auto kSelectionBackColor = 0x80FFFF;
-static const auto kCaretLineBackColor = 0xF8EFE9;
-static const auto kEdgeColor = 0xE0E0E0;
-static const auto kBookmarkColor = 0x3030C0;
+static constexpr auto kLineNumberBack = 0xD3D3D3;
+static constexpr auto kWhiteSpaceFore = 0x3030C0;
+static constexpr auto kWhiteSpaceBack = 0xB0B0B0;
+static constexpr auto kSelectionBackColor = 0x80FFFF;
+static constexpr auto kCaretLineBackColor = 0xF8EFE9;
+static constexpr auto kEdgeColor = 0xE0E0E0;
+static constexpr auto kBookmarkColor = 0x3030C0;
 
 
 
@@ -60,25 +78,45 @@ public:
 			void				EnsureVisiblePolicy();
 		const BString			FilePath() const;
 			entry_ref*			FileRef() { return &fFileRef; }
+			int					Find(const BString&  text, int flags, bool backwards = false);
+			int					FindInTarget(const BString& search, int flags, int startPosition, int endPosition);
+			int32				FindMarkAll(const BString& text, int flags);
+			int					FindNext(const BString& search, int flags, bool wrap);
+			int					FindPrevious(const BString& search, int flags, bool wrap);
 			int32				GetCurrentPosition();
 			void				GoToLine(int32 line);
 			void				GrabFocus();
 			bool				IsModified() { return fModified; }
+			bool				IsOverwrite();
 			bool				IsReadOnly();
+			bool				IsSearchSelected(const BString& search, int flags);
+			bool				IsTextSelected();
 			status_t			LoadFromFile();
 			BString				Name() const { return fName; }
 			node_ref*			NodeRef() { return &fNodeRef; }
 			void				NotificationReceived(SCNotification* n);
+			void				OverwriteToggle();
 			void				Paste();
 			void				Redo();
 			status_t			Reload();
+			int					ReplaceAndFindNext(const BString& selection,
+									const BString& replacement, int flags, bool wrap);
+			int					ReplaceAll(const BString& selection,
+									const BString& replacement, int flags);
+			void 				ReplaceMessage(int position, const BString& selection,
+									const BString& replacement);
+			int					ReplaceOne(const BString& selection,
+									const BString& replacement);
 			ssize_t				SaveToFile();
 			void				ScrollCaret();
 			void				SelectAll();
+	const 	BString				Selection();
 			void				SendCurrentPosition();
 			status_t			SetFileRef(entry_ref* ref);
 			void				SetReadOnly();
 			status_t			SetSavedCaretPosition();
+			int					SetSearchFlags(bool matchCase, bool wholeWord,
+									bool wordStart,	bool regExp, bool posix);
 			void				SetTarget(const BMessenger& target);
 			status_t			StartMonitoring();
 			status_t			StopMonitoring();

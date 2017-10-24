@@ -26,6 +26,7 @@ using namespace IdeamNames;
 // Differentiate unset parameters from 0 ones
 // in scintilla messages
 #define UNSET 0
+#define UNUSED 0
 
 Editor::Editor(entry_ref* ref, const BMessenger& target)
 	:
@@ -128,7 +129,7 @@ Editor::ApplySettings()
 		int32 pixW = SendMessage(SCI_TEXTWIDTH, STYLE_LINENUMBER, (sptr_t) "_123456");
 
 		SendMessage(SCI_SETMARGINWIDTHN, sci_NUMBER_MARGIN, pixW);
-		SendMessage(SCI_STYLESETBACK, STYLE_LINENUMBER, 0xD3D3D3);
+		SendMessage(SCI_STYLESETBACK, STYLE_LINENUMBER, kLineNumberBack);
 	}
 
 	// Bookmark margin
@@ -137,7 +138,6 @@ Editor::ApplySettings()
 	SendMessage(SCI_MARKERDEFINE, sci_BOOKMARK, SC_MARK_BOOKMARK);
 //	SendMessage(SCI_MARKERSETFORE, sci_BOOKMARK, 0x3030C0);
 	SendMessage(SCI_MARKERSETBACK, sci_BOOKMARK, kBookmarkColor);
-
 }
 
 void
@@ -291,6 +291,137 @@ Editor::FilePath() const
 }
 
 int32
+Editor::Find(const BString&  text, int flags, bool backwards /* = false */)
+{
+	int position;
+
+	SendMessage(SCI_SEARCHANCHOR, UNSET, UNSET);
+
+	if (backwards == false)
+		position = SendMessage(SCI_SEARCHNEXT, flags, (sptr_t) text.String());
+	else
+		position = SendMessage(SCI_SEARCHPREV, flags, (sptr_t) text.String());
+
+	if (position != -1) {
+		SendMessage(SCI_ENSUREVISIBLEENFORCEPOLICY,
+			SendMessage(SCI_LINEFROMPOSITION, position, UNSET), UNSET);
+
+		SendMessage(SCI_SCROLLCARET, UNSET, UNSET);
+	}
+	return position;
+}
+
+int
+Editor::FindInTarget(const BString& search, int flags, int startPosition, int endPosition)
+{
+	SendMessage(SCI_SETTARGETSTART, startPosition, UNSET);
+	SendMessage(SCI_SETTARGETEND, endPosition, UNSET);
+	SendMessage(SCI_SETSEARCHFLAGS, flags, UNSET);
+	int position = SendMessage(SCI_SEARCHINTARGET, search.Length(), (sptr_t) search.String());
+
+	return position;
+}
+
+int32
+Editor::FindMarkAll(const BString& text, int flags)
+{
+	int position, count = 0;
+	int line, firstMark;
+
+	// Clear all
+	BookmarkClearAll(sci_BOOKMARK);
+
+	// TODO use wrap
+	SendMessage(SCI_TARGETWHOLEDOCUMENT, UNSET, UNSET);
+	SendMessage(SCI_SETSEARCHFLAGS, flags, UNSET);
+	position = SendMessage(SCI_SEARCHINTARGET, text.Length(), (sptr_t) text.String());
+	firstMark = position;
+
+	if (position == -1)
+		// No occurrence found
+		return 0;
+	else
+		SendMessage(SCI_GOTOPOS, position, UNSET);
+
+	while (position != -1) {
+		SendMessage(SCI_SEARCHANCHOR, 0, 0);
+		position = SendMessage(SCI_SEARCHNEXT, flags, (sptr_t) text.String());
+
+		if (position == -1)
+			break;
+		else {
+			// Get line
+			line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET);
+			SendMessage(SCI_MARKERADD, line, sci_BOOKMARK);
+			SendMessage(SCI_CHARRIGHT, UNSET, UNSET);
+			count++;
+
+			// Found occurrence, message window
+			BMessage message(EDITOR_BOOKMARK_MARK);
+			message.AddRef("ref", &fFileRef);
+			int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET) + 1;
+			message.AddInt32("line", line);
+			fTarget.SendMessage(&message);
+		}
+	}
+
+	SendMessage(SCI_GOTOPOS, firstMark, UNSET);
+
+	return count;
+}
+
+int
+Editor::FindNext(const BString& search, int flags, bool wrap)
+{
+	static bool fFound = false;
+
+	if (fFound == true || IsSearchSelected(search, flags) == true)
+		SendMessage(SCI_CHARRIGHT, UNSET, UNSET);
+
+	int position = Find(search, flags);
+
+	if (position != -1)
+		fFound = true;
+	else if (position == -1 && wrap == false) {
+		fFound = false;
+	} else if (position == -1 && wrap == true) {
+		// If wrap and not found go to saved position
+		int savedPosition = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
+		SendMessage(SCI_SETSEL, 0, 0);
+		position = Find(search, flags);
+		if (position == -1)
+			SendMessage(SCI_GOTOPOS, savedPosition, 0);
+	}
+	return position;
+}
+
+int
+Editor::FindPrevious(const BString& search, int flags, bool wrap)
+{
+	static bool fFound = false;
+
+	if (fFound == true)
+		SendMessage(SCI_CHARLEFT, 0, 0);
+
+	int position = Find(search, flags, true);
+
+	if (position != -1)
+		fFound = true;
+	else if (position == -1 && wrap == false) {
+		fFound = false;
+	} else if (position == -1 && wrap == true) {
+		// If wrap and not found go to saved position
+		int savedPosition = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
+		int endPosition = SendMessage(SCI_GETTEXTLENGTH, UNSET, UNSET);
+		SendMessage(SCI_SETSEL, endPosition, endPosition);
+		position = Find(search, flags, true);
+		if (position == -1)
+			SendMessage(SCI_GOTOPOS, savedPosition, 0);
+	}
+	return position;
+}
+
+int32
 Editor::GetCurrentPosition()
 {
 	return SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
@@ -318,9 +449,34 @@ Editor::GrabFocus()
 }
 
 bool
+Editor::IsOverwrite()
+{
+	return SendMessage(SCI_GETOVERTYPE, UNSET, UNSET);
+}
+
+bool
 Editor::IsReadOnly()
 {
 	return SendMessage(SCI_GETREADONLY, UNSET, UNSET);
+}
+
+bool
+Editor::IsSearchSelected(const BString& search, int flags)
+{
+	int start = SendMessage(SCI_GETSELECTIONSTART, UNSET, UNSET);
+	int end = SendMessage(SCI_GETSELECTIONEND, UNSET, UNSET);
+
+	if (FindInTarget(search, flags, start, end) == start)
+		return true;
+
+	return false;
+}
+
+bool
+Editor::IsTextSelected()
+{
+	return SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET) !=
+			SendMessage(SCI_GETANCHOR, UNSET, UNSET);
 }
 
 /*
@@ -437,6 +593,12 @@ std::cerr << "SCN_NEEDSHOWN " << std::endl;
 }
 
 void
+Editor::OverwriteToggle()
+{
+	SendMessage(SCI_SETOVERTYPE, !IsOverwrite(), UNSET);
+}
+
+void
 Editor::Paste()
 {
 	if (SendMessage(SCI_CANPASTE, UNSET, UNSET))
@@ -495,6 +657,110 @@ Editor::Reload()
 	return B_OK;
 }
 
+int
+Editor::ReplaceAndFindNext(const BString& selection, const BString& replacement,
+															int flags, bool wrap)
+{
+	int retValue = REPLACE_NONE;
+
+	int position = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
+	int endPosition = SendMessage(SCI_GETTEXTLENGTH, UNSET, UNSET);
+
+	if (IsSearchSelected(selection, flags) == true) {
+		//SendMessage(SCI_CHARRIGHT, UNSET, UNSET);
+		SendMessage(SCI_REPLACESEL, UNUSED, (sptr_t)replacement.String());
+		SendMessage(SCI_SETTARGETRANGE, position + replacement.Length(), endPosition);
+		retValue = REPLACE_DONE;
+	} else {
+		SendMessage(SCI_SETTARGETRANGE, position, endPosition);
+	}
+
+	position = SendMessage(SCI_SEARCHINTARGET, selection.Length(),
+											(sptr_t) selection.String());
+	if(position != -1) {
+		SendMessage(SCI_SETSEL, position, position + selection.Length());
+		retValue = REPLACE_DONE;
+	} else if (wrap == true) {
+		// position == -1: not found or reached file end, ensue second case
+		SendMessage(SCI_TARGETWHOLEDOCUMENT, UNSET, UNSET);
+
+		position = SendMessage(SCI_SEARCHINTARGET, selection.Length(),
+												(sptr_t) selection.String());
+		if(position != -1) {
+			SendMessage(SCI_SETSEL, position, position + selection.Length());
+			retValue = REPLACE_DONE;
+		}
+	}
+
+	return retValue;
+}
+
+/*
+ * Adapted from Koder EditorWindow::_FindReplace
+ */
+int
+Editor::ReplaceAll(const BString& selection, const BString& replacement, int flags)
+{
+	int count = 0;
+
+	SendMessage(SCI_TARGETWHOLEDOCUMENT, UNSET, UNSET);
+	SendMessage(SCI_SETSEARCHFLAGS, flags, UNSET);
+
+	int position;
+	int endPosition = SendMessage(SCI_GETTARGETEND, 0, 0);
+
+	SendMessage(SCI_BEGINUNDOACTION, 0, 0);
+
+	do {
+		position = SendMessage(SCI_SEARCHINTARGET, selection.Length(),
+												(sptr_t) selection.String());
+		if(position != -1) {
+			SendMessage(SCI_REPLACETARGET, -1, (sptr_t) replacement.String());
+			count++;
+
+			// Found occurrence, message window
+			ReplaceMessage(position, selection, replacement);
+
+			SendMessage(SCI_SETTARGETRANGE, position + replacement.Length(), endPosition);
+		}
+	} while(position != -1);
+
+	SendMessage(SCI_ENDUNDOACTION, 0, 0);
+
+	return count;
+}
+
+void
+Editor::ReplaceMessage(int position, const BString& selection,
+							const BString& replacement)
+{
+	BMessage message(EDITOR_REPLACED_ONE);
+	message.AddRef("ref", &fFileRef);
+	int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET) + 1;
+	int column = SendMessage(SCI_GETCOLUMN, position, UNSET) + 1;
+	column -= selection.Length();
+	message.AddInt32("line", line);
+	message.AddInt32("column", column);
+	message.AddString("selection", selection);
+	message.AddString("replacement", replacement);
+	fTarget.SendMessage(&message);
+}
+
+int
+Editor::ReplaceOne(const BString& selection, const BString& replacement)
+{
+	if (selection == Selection()) {
+		SendMessage(SCI_REPLACESEL, UNUSED, (sptr_t)replacement.String());
+
+		int position = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
+		// Found occurrence, message window
+		ReplaceMessage(position, selection, replacement);
+
+		return REPLACE_DONE;
+	}
+	return REPLACE_NONE;
+}
+
 ssize_t
 Editor::SaveToFile()
 {
@@ -539,6 +805,15 @@ void
 Editor::SelectAll()
 {
 	SendMessage(SCI_SELECTALL, UNSET, UNSET);
+}
+
+const BString
+Editor::Selection()
+{
+	int32 size = SendMessage(SCI_GETSELTEXT, 0, 0);
+	char text[size];
+	SendMessage(SCI_GETSELTEXT, 0, (sptr_t)text);
+	return text;
 }
 
 /*
@@ -622,6 +897,22 @@ Editor::SetSavedCaretPosition()
 	SendMessage(SCI_GOTOPOS, pos, UNSET);
 
 	return B_OK;
+}
+
+int
+Editor::SetSearchFlags(bool matchCase, bool wholeWord, bool wordStart,
+			bool regExp, bool posix)
+{
+	int flags = 0;
+
+	if (matchCase == true)
+		flags |= SCFIND_MATCHCASE;
+	if (wholeWord == true)
+		flags |= SCFIND_WHOLEWORD;
+	if (wordStart == true)
+		flags |= SCFIND_WORDSTART;
+
+	return flags;
 }
 
 void

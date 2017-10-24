@@ -1,6 +1,8 @@
-1	English	application/x-vnd.Ideam-Ideam	3227796257
-tuned 	SettingsWindow		settato 
+1	English	application/x-vnd.Ideam-Ideam	3214833171
+tuned 	SettingsWindow		settato
+Find	IdeamWindow		Trova
 Load	IdeamApp		Carica
+Replace toggle (leaves Find bar open)	IdeamWindow		Sostituisci (non chiude barra Trova)
 opened with index	IdeamWindow		aperto con indice
 Index 	IdeamWindow		Indice
 Search	IdeamWindow		Cerca
@@ -8,16 +10,21 @@ Toggle Projects panes	IdeamWindow		On/Off pannelli dei Progetti
 : NULL editor pointer	IdeamWindow		: puntatore dell' editor NULL
 Startup	SettingsWindow		Avvio
 length: 	IdeamWindow		lunghezza: 
+Find Next	IdeamWindow		Trova successivo
 Help	IdeamWindow		Aiuto
 About…	IdeamWindow		About…
 Show/Hide Output split	IdeamWindow		Mostra/Nascondi split di Output
  time	SettingsWindow		 volta
 Show ToolBar	SettingsWindow		Mostra ToolBar
+Replace	IdeamWindow		Sostituisci
 Go to line…	IdeamWindow		Vai alla riga…
 Save current File	IdeamWindow		Salva il File corrente
 Project	IdeamWindow		Progetto
+Match case	IdeamWindow		Match case
+Replace and find next	IdeamWindow		Sostituisci e trova il prossimo
 Reload files	SettingsWindow		Ricarica i file
 Save changes to file \"%file%\"	IdeamWindow		Salva cambiamenti al file \"%file%\"
+Replace:	IdeamWindow		Sostituisci:
 Cut	IdeamWindow		Taglia
 Editor	SettingsWindow		Editor
 Select all	IdeamWindow		Seleziona tutto
@@ -41,13 +48,16 @@ Save caret position	SettingsWindow		Salva posizione cursore
 New	IdeamWindow		Nuovo
 There are modified files, do you want to save changes before quitting?	IdeamWindow		Ci sono file modificati, vuoi salvare le modifiche prima di uscire?
 Redo	IdeamWindow		Ripeti
+Find:	IdeamWindow		Trova:
 Build	SettingsWindow		Build
 Interface	IdeamWindow		Interfaccia
 Toggle Output panes	IdeamWindow		On/Off pannelli di Output
+Find toggle (closes Replace bar if open)	IdeamWindow		Trova (chiude barra Sost. se aperta)
 Paste	IdeamWindow		Incolla
 Discard	IdeamWindow		Elimina
 Window	IdeamWindow		Finestra
 Edge column:	SettingsWindow		Colonna di margine a:
+Wrap	IdeamWindow		Wrap
 Revert	SettingsWindow		Ripristina
 Save position	SettingsWindow		Salva posizione
 Set buffer read-only	IdeamWindow		Imposta il buffer a sola lettura
@@ -88,6 +98,7 @@ Ignore	IdeamWindow		Ignora
 closed	IdeamWindow		chiuso
 Indexed File list	IdeamWindow		Lista dei File indicizzata
 Copy	IdeamWindow		Copia
+Overwrite	IdeamWindow		Sovrascrivi
 This is the font size preview	SettingsWindow		This is the font size preview
 Save all	IdeamWindow		Salva tutti
 Cancel	Editor		Cancella
@@ -97,19 +108,26 @@ Browse…	SettingsWindow		Browse…
 Show edge line	SettingsWindow		Mostra margine
 Save all Files	IdeamWindow		Salva tutti i File
 File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?	IdeamWindow		Il File \"%file%\" è stato spostato da altra applicazione,\nvuoi ignorarlo, chiuderlo o ricaricarlo?
+ replacements done: 	IdeamWindow		 sostituzioni fatte: 
 Notifications	SettingsWindow		Notifiche
 Exit	SettingsWindow		Esci
 Reload	IdeamWindow		Ricarica
  times	SettingsWindow		 volte
+Mark all	IdeamWindow		Segna tutti
+Find in files	IdeamWindow		Trova nei file
 Settings	IdeamWindow		Impostazioni
 Enable Brace matching	SettingsWindow		Abilita corrispondenza parentesi
+Whole word	IdeamWindow		Parola intera
 Close all	IdeamWindow		Chiudi tutti
+Replace selection	IdeamWindow		Sostituisci selezione
 Set for app ver: 	SettingsWindow		Per la versione: 
 Close	IdeamWindow		Chiudi
 Enable Syntax highlighting	SettingsWindow		Abilita colorazione sintassi
 Visual	SettingsWindow		Visuale
 Save as…	IdeamWindow		Salva con nome…
+Replace and find previous	IdeamWindow		Sostituisci e trova precedente
 Go to previous	IdeamWindow		Vai al precedente
+Find previous	IdeamWindow		Trova precedente
 Edit	IdeamWindow		Modifica
 NULL editor pointer	IdeamWindow		puntatore dell' editor NULL
 Toggle	IdeamWindow		Toggle
@@ -117,6 +135,7 @@ Settings file is corrupted or deleted,\ndo You want to ignore, review or load to
  Controls loaded.	SettingsWindow		 Controlli caricati.
 Mark caret line	SettingsWindow		Evidenzia linea del cursore
 Save changes to file	Editor		Salva i cambiamenti su file
+Replace all	IdeamWindow		Sostituisci tutti
 Cancel	IdeamWindow		Cancella
 Enable folding	SettingsWindow		Abilita folding
 Tab width:  	SettingsWindow		Tabulazioni: 
@@ -125,6 +144,7 @@ Projects	IdeamWindow		Progetti
 Projects directory:	SettingsWindow		Directory dei Progetti:
 General	SettingsWindow		Generale
  bytes written	IdeamWindow		 byte scritti
+ occurrences found: 	IdeamWindow		 occurrenze trovate: 
  uses:	IdeamApp		 utilizza:
 Toggle white spaces	IdeamWindow		Mostra gli spazi bianchi
 Keep	IdeamWindow		Mantieni

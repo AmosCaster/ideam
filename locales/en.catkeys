@@ -1,6 +1,8 @@
-1	English	application/x-vnd.Ideam-Ideam	3227796257
+1	English	application/x-vnd.Ideam-Ideam	3214833171
 tuned 	SettingsWindow		tuned 
+Find	IdeamWindow		Find
 Load	IdeamApp		Load
+Replace toggle (leaves Find bar open)	IdeamWindow		Replace toggle (leaves Find bar open)
 opened with index	IdeamWindow		opened with index
 Index 	IdeamWindow		Index 
 Search	IdeamWindow		Search
@@ -8,16 +10,21 @@ Toggle Projects panes	IdeamWindow		Toggle Projects panes
 : NULL editor pointer	IdeamWindow		: NULL editor pointer
 Startup	SettingsWindow		Startup
 length: 	IdeamWindow		length: 
+Find Next	IdeamWindow		Find Next
 Help	IdeamWindow		Help
 About…	IdeamWindow		About…
 Show/Hide Output split	IdeamWindow		Show/Hide Output split
  time	SettingsWindow		 time
 Show ToolBar	SettingsWindow		Show ToolBar
+Replace	IdeamWindow		Replace
 Go to line…	IdeamWindow		Go to line…
 Save current File	IdeamWindow		Save current File
 Project	IdeamWindow		Project
+Match case	IdeamWindow		Match case
+Replace and find next	IdeamWindow		Replace and find next
 Reload files	SettingsWindow		Reload files
 Save changes to file \"%file%\"	IdeamWindow		Save changes to file \"%file%\"
+Replace:	IdeamWindow		Replace:
 Cut	IdeamWindow		Cut
 Editor	SettingsWindow		Editor
 Select all	IdeamWindow		Select all
@@ -41,13 +48,16 @@ Save caret position	SettingsWindow		Save caret position
 New	IdeamWindow		New
 There are modified files, do you want to save changes before quitting?	IdeamWindow		There are modified files, do you want to save changes before quitting?
 Redo	IdeamWindow		Redo
+Find:	IdeamWindow		Find:
 Build	SettingsWindow		Build
 Interface	IdeamWindow		Interface
 Toggle Output panes	IdeamWindow		Toggle Output panes
+Find toggle (closes Replace bar if open)	IdeamWindow		Find toggle (closes Replace bar if open)
 Paste	IdeamWindow		Paste
 Discard	IdeamWindow		Discard
 Window	IdeamWindow		Window
 Edge column:	SettingsWindow		Edge column:
+Wrap	IdeamWindow		Wrap
 Revert	SettingsWindow		Revert
 Save position	SettingsWindow		Save position
 Set buffer read-only	IdeamWindow		Set buffer read-only
@@ -88,6 +98,7 @@ Ignore	IdeamWindow		Ignore
 closed	IdeamWindow		closed
 Indexed File list	IdeamWindow		Indexed File list
 Copy	IdeamWindow		Copy
+Overwrite	IdeamWindow		Overwrite
 This is the font size preview	SettingsWindow		This is the font size preview
 Save all	IdeamWindow		Save all
 Cancel	Editor		Cancel
@@ -97,19 +108,26 @@ Browse…	SettingsWindow		Browse…
 Show edge line	SettingsWindow		Show edge line
 Save all Files	IdeamWindow		Save all Files
 File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?	IdeamWindow		File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?
+ replacements done: 	IdeamWindow		 replacements done: 
 Notifications	SettingsWindow		Notifications
 Exit	SettingsWindow		Exit
 Reload	IdeamWindow		Reload
  times	SettingsWindow		 times
+Mark all	IdeamWindow		Mark all
+Find in files	IdeamWindow		Find in files
 Settings	IdeamWindow		Settings
 Enable Brace matching	SettingsWindow		Enable Brace matching
+Whole word	IdeamWindow		Whole word
 Close all	IdeamWindow		Close all
+Replace selection	IdeamWindow		Replace selection
 Set for app ver: 	SettingsWindow		Set for app ver: 
 Close	IdeamWindow		Close
 Enable Syntax highlighting	SettingsWindow		Enable Syntax highlighting
 Visual	SettingsWindow		Visual
 Save as…	IdeamWindow		Save as…
+Replace and find previous	IdeamWindow		Replace and find previous
 Go to previous	IdeamWindow		Go to previous
+Find previous	IdeamWindow		Find previous
 Edit	IdeamWindow		Edit
 NULL editor pointer	IdeamWindow		NULL editor pointer
 Toggle	IdeamWindow		Toggle
@@ -117,6 +135,7 @@ Settings file is corrupted or deleted,\ndo You want to ignore, review or load to
  Controls loaded.	SettingsWindow		 Controls loaded.
 Mark caret line	SettingsWindow		Mark caret line
 Save changes to file	Editor		Save changes to file
+Replace all	IdeamWindow		Replace all
 Cancel	IdeamWindow		Cancel
 Enable folding	SettingsWindow		Enable folding
 Tab width:  	SettingsWindow		Tab width:  
@@ -125,6 +144,7 @@ Projects	IdeamWindow		Projects
 Projects directory:	SettingsWindow		Projects directory:
 General	SettingsWindow		General
  bytes written	IdeamWindow		 bytes written
+ occurrences found: 	IdeamWindow		 occurrences found: 
  uses:	IdeamApp		 uses:
 Toggle white spaces	IdeamWindow		Toggle white spaces
 Keep	IdeamWindow		Keep

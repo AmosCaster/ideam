@@ -6,6 +6,7 @@
 #define IDEAMWINDOW_H
 
 #include <Bitmap.h>
+#include <CheckBox.h>
 #include <ColumnListView.h>
 #include <ColumnTypes.h>
 #include <FilePanel.h>
@@ -50,8 +51,14 @@ private:
 			void				_FileSaveAll();
 			status_t			_FileSaveAs(int32 selection, BMessage* message);
 			bool				_FilesNeedSave();
+			void				_FindGroupShow();
+			void				_FindGroupToggled();
+			int32				_FindMarkAll(const BString text);
+			void				_FindNext(const BString& strToFind, bool backwards);
+
 			int32				_GetEditorIndex(entry_ref* ref);
 			int32				_GetEditorIndex(node_ref* nref);
+			void				_GetFocusAndSelection(BTextControl* control);
 			void				_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRef);
 			void				_HandleExternalRemoveModification(int32 index);
 			void				_HandleExternalStatModification(int32 index);
@@ -61,10 +68,17 @@ private:
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
 									int32 resIndex, bool enabled, const char* tooltip);
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);
+			int					_Replace(int what);
+			bool				_ReplaceAllow();
+			void				_ReplaceGroupShow();
+			void				_ReplaceGroupToggled();
 			void				_SendNotification(BString message, BString type);
+			void				_UpdateFindMenuItems(const BString& text);
 			status_t			_UpdateLabel(int32 index, bool isModified);
+			void				_UpdateReplaceMenuItems(const BString& text);
 			void				_UpdateSelectionChange(int32 index);
 			void				_UpdateStatusBarText(int line, int column);
+			void				_UpdateStatusBarTrailing(int32 index);
 private:
 			BMenuBar*			fMenuBar;
 			BMenuItem*			fFileNewMenuItem;
@@ -80,8 +94,11 @@ private:
 			BMenuItem*			fPasteMenuItem;
 			BMenuItem*			fDeleteMenuItem;
 			BMenuItem*			fSelectAllMenuItem;
+			BMenuItem*			fOverwiteItem;
 			BMenuItem*			fToggleWhiteSpacesItem;
 			BMenuItem*			fToggleLineEndingsItem;
+			BMenuItem*			fFindItem;
+			BMenuItem*			fReplaceItem;
 			BMenuItem*			fGoToLineItem;
 			BMenuItem*			fBookmarkToggleItem;
 			BMenuItem*			fBookmarkClearAllItem;
@@ -94,6 +111,9 @@ private:
 
 			BIconButton*		fProjectsButton;
 			BIconButton*		fOutputButton;
+			BIconButton*		fFindButton;
+			BIconButton*		fReplaceButton;
+			BIconButton*		fFindinFilesButton;
 			BIconButton*		fUndoButton;
 			BIconButton*		fRedoButton;
 			BIconButton*		fFileSaveButton;
@@ -105,11 +125,29 @@ private:
 			BIconButton*		fFileMenuButton;
 			BTextControl*		fGotoLine;
 
+			BIconButton*		fFindPreviousButton;
+			BIconButton*		fFindNextButton;
+			BIconButton*		fFindMarkAllButton;
+			BIconButton*		fReplaceOneButton;
+			BIconButton*		fReplaceAndFindNextButton;
+			BIconButton*		fReplaceAndFindPrevButton;
+			BIconButton*		fReplaceAllButton;
+
 			BTabView*	  		fProjectsTabView;
 			BOutlineListView*	fProjectsOutline;
 			BScrollView*		fProjectsScroll;
 
 			TabManager*			fTabManager;
+
+			BGroupLayout*		fFindGroup;
+			BGroupLayout*		fReplaceGroup;
+			BMenuField*			fFindMenuField;
+			BMenuField*			fReplaceMenuField;
+			BTextControl*		fFindTextControl;
+			BTextControl*		fReplaceTextControl;
+			BCheckBox*			fFindCaseSensitiveCheck;
+			BCheckBox*			fFindWholeWordCheck;
+			BCheckBox*			fFindWrapCheck;
 
 		BObjectList<Editor>*	fEditorObjectList;
 			Editor*				fEditor;

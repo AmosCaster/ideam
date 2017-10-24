@@ -117,6 +117,16 @@ legenda:
 -] Scintilla does not scroll on mouse selection
  ] Bookmarks seems to leak
 --------------------------------------------------------------------------------
+
+0.1.1) Integrate Scintilla
+
++) Find interface
++) Replace interface
++) Overwrite
+
+
+] Overwrite shortcut violates rules and displays wrong (none) key
+] Scintilla goes Overwrite when Insert key pressed
 ________________________________________________________________________________
 ________________________________________________________________________________
 

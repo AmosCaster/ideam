@@ -878,7 +878,16 @@ TabManager::SelectTab(const BView* containedView)
 int32
 TabManager::SelectedTabIndex() const
 {
-	return fCardLayout->VisibleIndex();
+//	return fCardLayout->VisibleIndex();
+
+	int32 index = fCardLayout->VisibleIndex();
+
+//	if (index < 0)
+//		throw std::out_of_range("Negative index");
+	if (index >= fCardLayout->CountItems())
+		throw std::out_of_range("Overflown index");
+
+	return index;
 }
 
 
