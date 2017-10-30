@@ -720,6 +720,7 @@ std::cerr << "TABMANAGER_TAB_CHANGED " << "NULL on index: " << index << std::end
 					fEditor->EnsureVisiblePolicy();
 
 std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index << std::endl;
+				fEditor->SendCurrentPosition();
 				_UpdateSelectionChange(index);
 				_UpdateStatusBarTrailing(index);
 			}
