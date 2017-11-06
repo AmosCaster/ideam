@@ -49,7 +49,9 @@ static constexpr auto kCaretLineBackColor = 0xF8EFE9;
 static constexpr auto kEdgeColor = 0xE0E0E0;
 static constexpr auto kBookmarkColor = 0x3030C0;
 
-
+constexpr auto kNoBrace = 0;
+constexpr auto kBraceMatch = 1;
+constexpr auto kBraceBad = 2;
 
 
 class Editor : public BScintillaView {
@@ -86,6 +88,7 @@ public:
 			int32				GetCurrentPosition();
 			void				GoToLine(int32 line);
 			void				GrabFocus();
+			bool				IsFoldingAvailable() { return fFoldingAvailable; }
 			bool				IsModified() { return fModified; }
 			bool				IsOverwrite();
 			bool				IsReadOnly();
@@ -120,9 +123,20 @@ public:
 			void				SetTarget(const BMessenger& target);
 			status_t			StartMonitoring();
 			status_t			StopMonitoring();
+			void				ToggleFolding();
 			void				ToggleLineEndings();
 			void				ToggleWhiteSpaces();
 			void				Undo();
+
+private:
+			void				_ApplyExtensionSettings();
+			void				_AutoIndentLine();
+			void				_CheckForBraceMatching();
+			void				_FoldFile();
+			BString	const		_GetFileExtension();
+			void				_HighlightBraces();
+			void				_HighlightFile();
+			bool				_IsBrace(char character);
 
 private:
 
@@ -132,6 +146,11 @@ private:
 			node_ref			fNodeRef;
 			BMessenger			fTarget;
 
+			int32				fBraceHighlighted;
+			bool				fBracingAvailable;
+			BString				fExtension;
+			bool				fFoldingAvailable;
+			bool				fSyntaxAvailable;
 };
 
 #endif // EDITOR_H

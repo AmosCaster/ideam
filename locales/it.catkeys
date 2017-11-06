@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	3214833171
+1	English	application/x-vnd.Ideam-Ideam	569726133
 tuned 	SettingsWindow		settato
 Find	IdeamWindow		Trova
 Load	IdeamApp		Carica
@@ -130,6 +130,7 @@ Go to previous	IdeamWindow		Vai al precedente
 Find previous	IdeamWindow		Trova precedente
 Edit	IdeamWindow		Modifica
 NULL editor pointer	IdeamWindow		puntatore dell' editor NULL
+Fold	IdeamWindow		Fold
 Toggle	IdeamWindow		Toggle
 Settings file is corrupted or deleted,\ndo You want to ignore, review or load to defaults?	IdeamApp		File Impostazioni corrotto o mancante,\nignora, revisiona o carica i predefiniti?
  Controls loaded.	SettingsWindow		 Controlli caricati.
@@ -138,6 +139,7 @@ Save changes to file	Editor		Salva i cambiamenti su file
 Replace all	IdeamWindow		Sostituisci tutti
 Cancel	IdeamWindow		Cancella
 Enable folding	SettingsWindow		Abilita folding
+Fold toggle	IdeamWindow		Fold toggle
 Tab width:  	SettingsWindow		Tabulazioni: 
 See Credits for a complete list.	IdeamApp		Vedi Credits per una lista completa.
 Projects	IdeamWindow		Progetti

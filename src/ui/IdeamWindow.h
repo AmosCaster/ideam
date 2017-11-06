@@ -87,6 +87,7 @@ private:
 			BMenuItem*			fSaveAllMenuItem;
 			BMenuItem*			fCloseMenuItem;
 			BMenuItem*			fCloseAllMenuItem;
+			BMenuItem*			fFoldMenuItem;
 			BMenuItem*			fUndoMenuItem;
 			BMenuItem*			fRedoMenuItem;
 			BMenuItem*			fCutMenuItem;
@@ -114,6 +115,7 @@ private:
 			BIconButton*		fFindButton;
 			BIconButton*		fReplaceButton;
 			BIconButton*		fFindinFilesButton;
+			BIconButton*		fFoldButton;
 			BIconButton*		fUndoButton;
 			BIconButton*		fRedoButton;
 			BIconButton*		fFileSaveButton;

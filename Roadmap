@@ -7,6 +7,7 @@ legenda:
 - = Partially done
 + = Done
 
+current Scintilla version: 3.7.2
 
 0.0.1) Graphical window with menu
 =================================
@@ -127,6 +128,17 @@ legenda:
 
 ] Overwrite shortcut violates rules and displays wrong (none) key
 ] Scintilla goes Overwrite when Insert key pressed
+--------------------------------------------------------------------------------
+
+0.2.0) Simple Extension management
+
++) Syntax highlight
++) File folding
++) Brace highlight
++) Auto indent
+
+
+] Should be extended to different languages/extensions
 ________________________________________________________________________________
 ________________________________________________________________________________
 

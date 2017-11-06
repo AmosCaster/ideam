@@ -18,6 +18,8 @@ Ideam files
 |	|  --screenshot......................Screenshot images
 |	|	+
 |	|	|  --screenshot-0.0.6-ita.png....
+|	|	|  --screenshot-0.0.9-eng.png....
+|	|	|  --screenshot-0.2.0-ita.png....
 |
 |  --locales.............................Localization files
 |	+
@@ -36,6 +38,7 @@ Ideam files
 |	|	|  --TitleItem.h.................OutlineListView title class
 |	|	|  --TPreferences.cpp............Settings storage helper class
 |	|	|  --TPreferences.h..............Settings storage helper header
+|	|	|  --keywords.h..................Keywords for syntax highlighting
 |	|	|
 |	|	|  --tabview.....................Tabview classes
 |	|	|	+

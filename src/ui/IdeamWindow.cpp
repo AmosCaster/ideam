@@ -61,6 +61,7 @@ enum {
 	MSG_FILE_SAVE_ALL			= 'fsal',
 	MSG_FILE_CLOSE				= 'ficl',
 	MSG_FILE_CLOSE_ALL			= 'fcal',
+	MSG_FILE_FOLD_TOGGLE		= 'fifo',
 
 	// Edit menu
 	MSG_TEXT_DELETE				= 'tede',
@@ -463,6 +464,15 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		case MSG_FILE_CLOSE_ALL:
 			_FileCloseAll();
 			break;
+		case MSG_FILE_FOLD_TOGGLE: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->ToggleFolding();
+			}
+			break;
+		}
 		case MSG_FILE_MENU_SHOW: {
 			/* Adapted from tabview */
 				BPopUpMenu* tabMenu = new BPopUpMenu("filetabmenu", true, false);
@@ -1533,11 +1543,16 @@ IdeamWindow::_InitMenu()
 		new BMessage(MSG_FILE_CLOSE_ALL), 'W', B_SHIFT_KEY));
 	fFileNewMenuItem->SetEnabled(false);
 
+	menu->AddSeparatorItem();
+	menu->AddItem(fFoldMenuItem = new BMenuItem(B_TRANSLATE("Fold"),
+		new BMessage(MSG_FILE_FOLD_TOGGLE)));
+
 	fSaveMenuItem->SetEnabled(false);
 	fSaveAsMenuItem->SetEnabled(false);
 	fSaveAllMenuItem->SetEnabled(false);
 	fCloseMenuItem->SetEnabled(false);
 	fCloseAllMenuItem->SetEnabled(false);
+	fFoldMenuItem->SetEnabled(false);
 
 	fMenuBar->AddItem(menu);
 
@@ -1566,7 +1581,7 @@ IdeamWindow::_InitMenu()
 	menu->AddSeparatorItem();
 	menu->AddItem(fToggleWhiteSpacesItem = new BMenuItem(B_TRANSLATE("Toggle white spaces"),
 		new BMessage(MSG_WHITE_SPACES_TOGGLE)));
-	menu->AddItem(fToggleLineEndingsItem =new BMenuItem(B_TRANSLATE("Toggle line endings"),
+	menu->AddItem(fToggleLineEndingsItem = new BMenuItem(B_TRANSLATE("Toggle line endings"),
 		new BMessage(MSG_LINE_ENDINGS_TOGGLE)));
 
 	fUndoMenuItem->SetEnabled(false);
@@ -1652,6 +1667,8 @@ IdeamWindow::_InitWindow()
 	fFindinFilesButton = _LoadIconButton("FindinFiles", MSG_FIND_IN_FILES, 201, false,
 						B_TRANSLATE("Find in files"));
 
+	fFoldButton = _LoadIconButton("Fold", MSG_FILE_FOLD_TOGGLE, 213, false,
+						B_TRANSLATE("Fold toggle"));
 	fUndoButton = _LoadIconButton("UndoButton", B_UNDO, 204, false,
 						B_TRANSLATE("Undo"));
 	fRedoButton = _LoadIconButton("RedoButton", B_REDO, 205, false,
@@ -1689,6 +1706,7 @@ IdeamWindow::_InitWindow()
 			.Add(fProjectsButton)
 			.Add(fOutputButton)
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
+			.Add(fFoldButton)
 			.Add(fUndoButton)
 			.Add(fRedoButton)
 			.Add(fFileSaveButton)
@@ -2074,6 +2092,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 		fFindGroup->SetVisible(false);
 		fReplaceButton->SetEnabled(false);
 		fReplaceGroup->SetVisible(false);
+		fFoldButton->SetEnabled(false);
 		fUndoButton->SetEnabled(false);
 		fRedoButton->SetEnabled(false);
 		fFileSaveButton->SetEnabled(false);
@@ -2089,6 +2108,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 		fSaveAsMenuItem->SetEnabled(false);
 		fSaveAllMenuItem->SetEnabled(false);
 		fCloseMenuItem->SetEnabled(false);
+		fFoldMenuItem->SetEnabled(false);
 		fCloseAllMenuItem->SetEnabled(false);
 		fUndoMenuItem->SetEnabled(false);
 		fRedoMenuItem->SetEnabled(false);
@@ -2121,6 +2141,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 	// ToolBar Items
 	fFindButton->SetEnabled(true);
 	fReplaceButton->SetEnabled(true);
+	fFoldButton->SetEnabled(fEditor->IsFoldingAvailable());
 	fUndoButton->SetEnabled(fEditor->CanUndo());
 	fRedoButton->SetEnabled(fEditor->CanRedo());
 	fFileSaveButton->SetEnabled(fEditor->IsModified());
@@ -2147,6 +2168,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 	fSaveAsMenuItem->SetEnabled(true);
 	fCloseMenuItem->SetEnabled(true);
 	fCloseAllMenuItem->SetEnabled(true);
+	fFoldMenuItem->SetEnabled(fEditor->IsFoldingAvailable());
 	fUndoMenuItem->SetEnabled(fEditor->CanUndo());
 	fRedoMenuItem->SetEnabled(fEditor->CanRedo());
 	fCutMenuItem->SetEnabled(fEditor->CanCut());

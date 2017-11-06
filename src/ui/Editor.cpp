@@ -11,12 +11,14 @@
 #include <Control.h>
 #include <NodeMonitor.h>
 #include <Path.h>
+#include <SciLexer.h>
 #include <Volume.h>
 
 #include <iostream>
 #include <sstream>
 
 #include "IdeamNamespace.h"
+#include "keywords.h"
 
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "Editor"
@@ -33,6 +35,10 @@ Editor::Editor(entry_ref* ref, const BMessenger& target)
 	BScintillaView(ref->name, 0, true, true, B_NO_BORDER)
 	, fFileRef(*ref)
 	, fModified(false)
+	, fBraceHighlighted(kNoBrace)
+	, fBracingAvailable(false)
+	, fFoldingAvailable(false)
+	, fSyntaxAvailable(false)
 {
 	fName = BString(ref->name);
 	SetTarget(target);
@@ -101,6 +107,15 @@ Editor::ApplySettings()
 	SendMessage(SCI_STYLESETSIZE, STYLE_DEFAULT, Settings.edit_fontsize);
 	SendMessage(SCI_STYLECLEARALL, UNSET, UNSET);
 
+	// Highlighting
+	if (Settings.syntax_highlight == B_CONTROL_ON) {
+		_ApplyExtensionSettings();
+		_HighlightFile();
+	}
+	// Brace match
+	if (Settings.brace_match == B_CONTROL_ON)
+		_HighlightBraces();
+
 	// Caret line visible
 	if (Settings.mark_caretline == true) {
 		SendMessage(SCI_SETCARETLINEVISIBLE, 1, UNSET);
@@ -138,6 +153,10 @@ Editor::ApplySettings()
 	SendMessage(SCI_MARKERDEFINE, sci_BOOKMARK, SC_MARK_BOOKMARK);
 //	SendMessage(SCI_MARKERSETFORE, sci_BOOKMARK, 0x3030C0);
 	SendMessage(SCI_MARKERSETBACK, sci_BOOKMARK, kBookmarkColor);
+
+	// Folding
+	if (Settings.enable_folding == B_CONTROL_ON)
+		_FoldFile();
 }
 
 void
@@ -531,6 +550,8 @@ Editor::LoadFromFile()
 	// Monitor node
 	StartMonitoring();
 
+	fExtension = _GetFileExtension();
+
 	return B_OK;
 }
 
@@ -540,6 +561,14 @@ Editor::NotificationReceived(SCNotification* notification)
 	Sci_NotifyHeader* pNmhdr = &notification->nmhdr;
 
 	switch (pNmhdr->code) {
+		// Auto-indent
+		case SCN_CHARADDED: {
+			if (notification->ch == '\n' ||
+					(notification->ch == '\r' &&
+					SendMessage(SCI_GETEOLMODE, UNSET, UNSET) == SC_EOL_CR))
+				_AutoIndentLine(); // TODO asociate extensions?
+			break;
+		}
 		// Bookmark toggle
 		case SCN_MARGINCLICK: {
 			if (notification->margin == sci_BOOKMARK_MARGIN)
@@ -565,6 +594,11 @@ std::cerr << "SCN_NEEDSHOWN " << std::endl;
 			break;
 		}
 		case SCN_UPDATEUI: {
+
+			// Do not trigger brace match on selection
+			// as it flickers more on line selection
+			if (IsTextSelected() == false  && fBracingAvailable == true)
+				_CheckForBraceMatching();
 
 			// Selection/Position has changed
 			if (notification->updated & SC_UPDATE_SELECTION) {
@@ -942,6 +976,12 @@ Editor::StopMonitoring()
 }
 
 void
+Editor::ToggleFolding()
+{
+	SendMessage(SCI_FOLDALL, SC_FOLDACTION_TOGGLE, UNSET);
+}
+
+void
 Editor::ToggleLineEndings()
 {
 	if (SendMessage(SCI_GETVIEWEOL, UNSET, UNSET) == false)
@@ -963,4 +1003,267 @@ void
 Editor::Undo()
 {
 	SendMessage(SCI_UNDO, UNSET, UNSET);
+}
+
+
+void
+Editor::_ApplyExtensionSettings()
+{
+	if (fExtension == "c++") {
+		fSyntaxAvailable = true;
+		fFoldingAvailable = true;
+		fBracingAvailable = true;
+		SendMessage(SCI_SETLEXER, SCLEX_CPP, UNSET);
+		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)cppKeywords);
+		SendMessage(SCI_SETKEYWORDS, 1, (sptr_t)haikuClasses);
+	} else if (fExtension == "make") {
+		fSyntaxAvailable = true;
+		fBracingAvailable = true;
+		SendMessage(SCI_SETLEXER, SCLEX_MAKEFILE, UNSET);
+	}
+}
+
+/*
+ * TODO: tune better and extensions management
+ *
+ */
+void
+Editor::_AutoIndentLine()
+{
+	auto tabInsertions = 0;
+	auto charInsertions = 0;
+
+	// Get current line number
+	int32 position = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
+
+	int32 currentLine = SendMessage(SCI_LINEFROMPOSITION, position, UNSET);
+
+	int end = SendMessage(SCI_GETLINEENDPOSITION, currentLine -1, UNSET);
+	int start = SendMessage(SCI_POSITIONFROMLINE, currentLine -1, UNSET);
+	// Empty line, return
+	if (end == start)
+		return;
+
+	char previousLine[end - start + 1];
+	SendMessage(SCI_GETLINE, currentLine -1, (sptr_t)previousLine);
+
+	previousLine[end - start] =  '\0';
+
+	BString lineStart;
+	std::string previousString(previousLine);
+
+	// Last line char is '{', indent
+	if (previousString.back() == '{') {
+		lineStart << '\t';
+		tabInsertions++;
+	}
+	// TODO maybe
+	else if (previousString.back() == ')') {
+		lineStart << '\t';
+		tabInsertions++;
+	}
+	// Last line char is ';', parse a little
+	else if (previousString.back() == ';') {
+		// If last word is: break, return, continue
+		// deindent if possible (tab check only)
+		std::size_t found = previousString.find_last_of("\t");
+		if (previousString.substr(found + 1) == "break;"
+			|| previousString.substr(found + 1) == "return;"
+			|| previousString.substr(found + 1) == "continue;")
+			tabInsertions--;
+		// TODO
+		// Non void return
+
+		// If previous line last char was ')'
+		// deindent if possible
+	}
+	for (int pos = 0; previousLine[pos] != '\0'; pos++) {
+		if (previousLine[pos] == '\t') {
+			lineStart << previousLine[pos];
+			tabInsertions++;
+		} else if (previousLine[pos] == ' ') {
+			lineStart << previousLine[pos];
+			charInsertions++;
+		} else
+			break;
+	}
+	auto insertions = tabInsertions + charInsertions;
+	// TODO check negative tab/char insertions
+	if (insertions < 1)
+		return;
+
+	SendMessage(SCI_INSERTTEXT, position, (sptr_t)lineStart.String());
+	SendMessage(SCI_GOTOPOS, position + insertions, UNSET);
+}
+
+/*
+ * TODO oneline 'if' indentation guide not highlighted
+ */
+void
+Editor::_CheckForBraceMatching()
+{
+	char charBefore;
+	char charAfter;
+	int32 positionMatch;
+
+	int32 caretPosition = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
+	int32 positionBefore = SendMessage(SCI_POSITIONBEFORE, caretPosition, UNSET);
+
+	charBefore = SendMessage(SCI_GETCHARAT, positionBefore, UNSET);
+	charAfter = SendMessage(SCI_GETCHARAT, caretPosition, UNSET);
+
+	// No brace, return
+	if (!_IsBrace(charBefore) && !_IsBrace(charAfter)) {
+		// If there's nothing to do don't even waste a cycle
+		if (fBraceHighlighted == kNoBrace) {
+			return;
+		} else if (fBraceHighlighted == kBraceMatch) {
+			SendMessage(SCI_BRACEHIGHLIGHT, INVALID_POSITION, INVALID_POSITION);
+			SendMessage(SCI_SETHIGHLIGHTGUIDE, 0, UNSET);
+		} else if (fBraceHighlighted == kBraceBad)
+			SendMessage(SCI_BRACEBADLIGHT, INVALID_POSITION, UNSET);
+
+		fBraceHighlighted = kNoBrace;
+
+		return;
+	}
+	// Found a brace, see if it's matched or not
+	// Found before
+	if (_IsBrace(charBefore) == true) {
+		positionMatch = SendMessage(SCI_BRACEMATCH, positionBefore, UNUSED);
+		// No match found, highlight brace bad
+		if (positionMatch == -1) {
+			SendMessage(SCI_BRACEBADLIGHT, positionBefore, UNSET);
+			fBraceHighlighted = kBraceBad;
+		}
+		// Match found, highlight braces and guides
+		else if (positionMatch != -1) {
+			int maxPosition = MAX(positionBefore, positionMatch);
+			int column = SendMessage(SCI_GETCOLUMN, maxPosition, UNSET);
+			SendMessage(SCI_SETHIGHLIGHTGUIDE, column, UNSET);
+			SendMessage(SCI_BRACEHIGHLIGHT, positionBefore, positionMatch);
+			fBraceHighlighted = kBraceMatch;
+		}
+		return;
+	}
+	// Found after
+	else if (_IsBrace(charAfter) == true) {
+		positionMatch = SendMessage(SCI_BRACEMATCH, caretPosition, UNUSED);
+		// No match found, highlight brace bad
+		if (positionMatch == -1) {
+			SendMessage(SCI_BRACEBADLIGHT, caretPosition, UNSET);
+			fBraceHighlighted = kBraceBad;
+		}
+		// Match found, highlight braces and guides
+		else if (positionMatch != -1) {
+			int maxPosition = MAX(caretPosition, positionMatch);
+			int column = SendMessage(SCI_GETCOLUMN, maxPosition, UNSET);
+			SendMessage(SCI_SETHIGHLIGHTGUIDE, column, UNSET);
+			SendMessage(SCI_BRACEHIGHLIGHT, caretPosition, positionMatch);
+			fBraceHighlighted = kBraceMatch;
+		}
+	}
+}
+
+void
+Editor::_FoldFile()
+{
+	if (IsFoldingAvailable() == true) {
+		SendMessage(SCI_SETPROPERTY, (sptr_t) "fold", (sptr_t) "1");
+		SendMessage(SCI_SETPROPERTY, (sptr_t) "fold.comment", (sptr_t) "1");
+
+		SendMessage(SCI_SETMARGINTYPEN, sci_FOLD_MARGIN, SC_MARGIN_SYMBOL);
+		SendMessage(SCI_SETMARGINMASKN, sci_FOLD_MARGIN, SC_MASK_FOLDERS);
+		SendMessage(SCI_SETMARGINWIDTHN, sci_FOLD_MARGIN, 16);
+		SendMessage(SCI_SETMARGINSENSITIVEN, sci_FOLD_MARGIN, 1);
+
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER);
+		SendMessage(SCI_SETFOLDFLAGS, SC_FOLDFLAG_LINEAFTER_CONTRACTED, 0);
+
+		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW, 1);
+		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE, 4);
+		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CLICK, 2);
+	}
+}
+
+BString const
+Editor::_GetFileExtension()
+{
+	BString extension;
+
+	if (fName.FindFirst("Jamfile") >= 0) {
+		return "jam";
+	}
+	if (fName.IFindFirst("Makefile") >= 0) {
+		return "make";
+	}
+
+	fName.CopyInto(extension, fName.FindLast('.') + 1, fName.Length());
+
+	if (extension == "cpp" || extension == "cxx" || extension == "cc"
+			 || extension == "h" || extension == "c")
+		return "c++";
+
+	return "";
+}
+
+
+void
+Editor::_HighlightBraces()
+{
+	if (fBracingAvailable == true) {
+		SendMessage(SCI_STYLESETFORE, STYLE_BRACELIGHT, 0xFF0000);
+		SendMessage(SCI_STYLESETBOLD, STYLE_BRACELIGHT, 1);
+		SendMessage(SCI_STYLESETFORE, STYLE_BRACEBAD, 0x0000FF);
+		SendMessage(SCI_STYLESETBOLD, STYLE_BRACEBAD, 1);
+		// Indentation guides
+		SendMessage(SCI_STYLESETFORE, STYLE_INDENTGUIDE, 0xA0A0A0);
+		SendMessage(SCI_SETINDENTATIONGUIDES, SC_IV_REAL, UNSET);
+	}
+}
+
+void
+Editor::_HighlightFile()
+{
+	if (fSyntaxAvailable == true) {
+		SendMessage(SCI_STYLESETFORE, SCE_C_DEFAULT, 0x000000);
+		SendMessage(SCI_STYLESETFORE, SCE_C_COMMENT, 0xAA0000);
+	//	SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTLINE, 0x007F00);
+		SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTLINE, 0x007F3F);
+		SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTDOC, 0x3F703F);
+		SendMessage(SCI_STYLESETFORE, SCE_C_NUMBER, 0x3030C0);
+		SendMessage(SCI_STYLESETFORE, SCE_C_WORD, 0x7F0000);
+		SendMessage(SCI_STYLESETBOLD, SCE_C_WORD, 1);
+		SendMessage(SCI_STYLESETFORE, SCE_C_STRING, 0x7F007F);
+		SendMessage(SCI_STYLESETFORE, SCE_C_CHARACTER, 0x7F007F);
+		SendMessage(SCI_STYLESETFORE, SCE_C_UUID, 0x804080);
+		SendMessage(SCI_STYLESETFORE, SCE_C_PREPROCESSOR, 0x1E6496); //0x10C0D0 //0x37B0B0 0x007F7F);
+	//	SendMessage(SCI_STYLESETFORE, SCE_C_OPERATOR, 0x007F00);
+	//	SendMessage(SCI_STYLESETBOLD, SCE_C_OPERATOR, 1);
+	//	SendMessage(SCI_STYLESETFORE, SCE_C_IDENTIFIER, 0x808080);
+		SendMessage(SCI_STYLESETFORE, SCE_C_WORD2, 0x986633);
+	//	SendMessage(SCI_STYLESETBOLD, SCE_C_WORD2, 1);SCE_C_PREPROCESSORCOMMENT
+		SendMessage(SCI_STYLESETFORE, SCE_C_PREPROCESSORCOMMENT, 0x808080);
+		SendMessage(SCI_STYLESETFORE, SCE_C_GLOBALCLASS, 0x808080);
+	}
+}
+
+bool
+Editor::_IsBrace(char character)
+{
+	return character == '('
+			|| character == ')'
+			|| character == '{'
+			|| character == '}'
+			|| character == '['
+			|| character == ']';
+// TODO !c++ lang add
+//			|| character == '<'
+//			|| character == '>';
 }
