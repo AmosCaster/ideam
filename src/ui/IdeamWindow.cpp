@@ -363,7 +363,9 @@ IdeamWindow::MessageReceived(BMessage* message)
 					_UpdateSelectionChange(index);
 					if (message->FindInt32("line", &line) == B_OK
 						&& message->FindInt32("column", &column) == B_OK)
-						_UpdateStatusBarText(line, column);
+						// Do not leave garbage on last file closed
+						if (fTabManager->CountTabs() > 0)
+							_UpdateStatusBarText(line, column);
 				}
 			}
 			break;
@@ -2129,8 +2131,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 		fBookmarkGoToPreviousItem->SetEnabled(false);
 
 		// Clean Status bar
-		fStatusBar->SetText("");
-		fStatusBar->SetTrailingText("");
+		fStatusBar->Reset();
 
 		if (IdeamNames::Settings.fullpath_title == true)
 			SetTitle(IdeamNames::kApplicationName);
