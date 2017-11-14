@@ -22,6 +22,7 @@
 #include <sstream>
 
 #include "IdeamNamespace.h"
+#include "NewProjectWindow.h"
 #include "TPreferences.h"
 #include "SettingsWindow.h"
 
@@ -53,6 +54,9 @@ static float kOutputWeight  = 0.4f;
 BRect dirtyFrameHack;
 
 enum {
+	// Project menu
+	MSG_PROJECT_NEW				= 'prne',
+
 	// File menu
 	MSG_FILE_NEW				= 'fine',
 	MSG_FILE_OPEN				= 'fiop',
@@ -588,6 +592,11 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			fGotoLine->Show();
 			fGotoLine->MakeFocus();
 			break;
+		case MSG_PROJECT_NEW: {
+			NewProjectWindow *wnd = new NewProjectWindow();
+			wnd->Show();
+			break;
+		}
 		case MSG_REPLACE_GROUP_SHOW:
 			_ReplaceGroupShow();
 			break;
@@ -714,6 +723,12 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			SettingsWindow *window = new SettingsWindow();
 			window->Show();
 
+			break;
+		}
+		case NEWPROJECTWINDOW_PROJECT_OPEN_NEW: {
+			BString fileName;
+			if (message->FindString("project_filename", &fileName) == B_OK)
+				_ProjectOpen(fileName);
 			break;
 		}
 		case TABMANAGER_TAB_CHANGED: {
@@ -1519,6 +1534,8 @@ IdeamWindow::_InitMenu()
 	fMenuBar = new BMenuBar("menubar");
 
 	BMenu* menu = new BMenu(B_TRANSLATE("Project"));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("New"),
+		new BMessage(MSG_PROJECT_NEW), 'N', B_OPTION_KEY));
 	menu->AddItem(new BMenuItem(B_TRANSLATE("Quit"),
 		new BMessage(B_QUIT_REQUESTED), 'Q'));
 	fMenuBar->AddItem(menu);
@@ -1891,6 +1908,14 @@ IdeamWindow::_LoadSizedVectorIcon(int32 resourceID, int32 size)
 	assert(status == B_OK);
 
 	return bitmap;
+}
+
+void
+IdeamWindow::_ProjectOpen(BString projectName)
+{
+	BString notification;
+	notification << B_TRANSLATE("Project opened: ") << projectName;
+	_SendNotification(notification, "PROJ_OPEN");
 }
 
 int

@@ -68,6 +68,7 @@ private:
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
 									int32 resIndex, bool enabled, const char* tooltip);
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);
+			void				_ProjectOpen(BString projectName);
 			int					_Replace(int what);
 			bool				_ReplaceAllow();
 			void				_ReplaceGroupShow();

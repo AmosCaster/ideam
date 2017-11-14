@@ -19,6 +19,7 @@ SRCS +=  src/IdeamNamespace.cpp
 SRCS +=  src/ui/Editor.cpp
 SRCS +=  src/ui/IdeamWindow.cpp
 SRCS +=  src/ui/SettingsWindow.cpp
+SRCS +=  src/project/NewProjectWindow.cpp
 SRCS +=  src/helpers/TPreferences.cpp
 SRCS +=  src/helpers/tabview/TabContainerView.cpp
 SRCS +=  src/helpers/tabview/TabManager.cpp

@@ -139,11 +139,20 @@ current Scintilla version: 3.7.2
 
 
 ] Should be extended to different languages/extensions
+--------------------------------------------------------------------------------
+
+0.3.0) New Project management
+
++) Project creation
++) Project import
+
+] Leak analyzer marks as leaks undeleted BStringItems
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
 
 
-0.3.0) Project class & settings
+
 
 0.4.0) Build/Run/Debug interface
 

@@ -60,7 +60,10 @@ TPreferences::TPreferences(const BString filename, const BString directory,
 //
 TPreferences::~TPreferences() {
 
-	if (what == 'IDSE')
+	// IDSE = Ideam Settings
+	// UISE = UI Settings
+	// PRSE = Project Settings
+	if (what == '__SE')
 		PrintToStream();
 
 	BFile file;

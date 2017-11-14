@@ -1016,6 +1016,13 @@ Editor::_ApplyExtensionSettings()
 		SendMessage(SCI_SETLEXER, SCLEX_CPP, UNSET);
 		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)cppKeywords);
 		SendMessage(SCI_SETKEYWORDS, 1, (sptr_t)haikuClasses);
+	} else if (fExtension == "rust") {
+		fSyntaxAvailable = true;
+		fFoldingAvailable = true;
+		fBracingAvailable = true;
+		SendMessage(SCI_SETLEXER, SCLEX_RUST, UNSET);
+//		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)rustKeywords);
+//		SendMessage(SCI_SETKEYWORDS, 1, (sptr_t)haikuClasses);
 	} else if (fExtension == "make") {
 		fSyntaxAvailable = true;
 		fBracingAvailable = true;
@@ -1209,6 +1216,8 @@ Editor::_GetFileExtension()
 	if (extension == "cpp" || extension == "cxx" || extension == "cc"
 			 || extension == "h" || extension == "c")
 		return "c++";
+	else if (extension == "rs")
+		return "rust";
 
 	return "";
 }
