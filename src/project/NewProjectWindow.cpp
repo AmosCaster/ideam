@@ -414,7 +414,7 @@ NewProjectWindow::_CreateProject()
 	BPath dirPath(fProjectsDirectoryTC->Text());
 	dirPath.Append(fProjectNameTC->Text());
 	BEntry entry(dirPath.Path());
-	if (entry.Exists()) {
+	if (entry.Exists() && fCurrentItem != existingItem) {
 		fProjectDescription->SetText(B_TRANSLATE("ERROR: Project directory exists!"));
 		return B_ERROR;
 	}
