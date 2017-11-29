@@ -14,6 +14,7 @@ namespace IdeamNames
 	const BString kApplicationSignature("application/x-vnd.Ideam-Ideam");
 	const BString kSettingsFileName("ideam.settings");
 	const BString kSettingsFilesToReopen("files_to_reopen.settings");
+	const BString kSettingsProjectsToReopen("projects_to_reopen.settings");
 	const BString kUISettingsFileName("ui.settings");
 	BString const kProjectExtension(".idmpro");
 
@@ -26,6 +27,7 @@ namespace IdeamNames
 	typedef struct {
 		BString projects_directory;
 		int fullpath_title;
+		int reopen_projects;
 		int reopen_files;
 		int show_projects;
 		int show_output;

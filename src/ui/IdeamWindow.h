@@ -15,6 +15,7 @@
 #include <MenuBar.h>
 #include <ObjectList.h>
 #include <OutlineListView.h>
+#include <PopUpMenu.h>
 #include <ScrollView.h>
 #include <StatusBar.h>
 #include <TabView.h>
@@ -23,7 +24,9 @@
 #include <Window.h>
 
 #include "Editor.h"
+#include "Project.h"
 #include "TabManager.h"
+#include "TPreferences.h"
 
 enum {
 	kTimeColumn = 0,
@@ -44,6 +47,8 @@ public:
 private:
 
 			status_t			_AddEditorTab(entry_ref* ref, int32 index);
+	static	int					_CompareListItems(const BListItem* a,
+									const BListItem* b);
 			status_t			_FileClose(int32 index, bool ignoreModifications = false);
 			void				_FileCloseAll();
 			status_t			_FileOpen(BMessage* msg);
@@ -68,7 +73,18 @@ private:
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
 									int32 resIndex, bool enabled, const char* tooltip);
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);
-			void				_ProjectOpen(BString projectName);
+			void				_ProjectActivate();
+			void				_ProjectClose();
+			void				_ProjectDelete(BString name, bool sourcesToo);
+			void				_ProjectFileAdd();
+			void				_ProjectFileDelete();
+			void				_ProjectFileExclude();
+			BString				_ProjectFileFullPath();
+			void				_ProjectFileOpen();
+			void				_ProjectItemChosen();
+			void				_ProjectOpen(BString const& projectName, bool activate);
+			void				_ProjectOutlineDepopulate(Project* project);
+			void				_ProjectOutlinePopulate(Project* project);
 			int					_Replace(int what);
 			bool				_ReplaceAllow();
 			void				_ReplaceGroupShow();
@@ -140,6 +156,23 @@ private:
 			BOutlineListView*	fProjectsOutline;
 			BScrollView*		fProjectsScroll;
 
+			BPopUpMenu*			fProjectMenu;
+			BMenuItem*			fCloseProjectMenuItem;
+			BMenuItem*			fDeleteProjectMenuItem;
+			BMenuItem*			fSetActiveProjectMenuItem;
+			BMenuItem*			fAddFileProjectMenuItem;
+			BMenuItem*			fExcludeFileProjectMenuItem;
+			BMenuItem*			fDeleteFileProjectMenuItem;
+			BMenuItem*			fOpenFileProjectMenuItem;
+
+			Project*			fActiveProject;
+			BString				fSelectedProjectName;
+			BStringItem*		fSelectedProjectItem;
+			BString				fSelectedProjectItemName;
+		BObjectList<Project>*	fProjectObjectList;
+			BStringItem*		fSourcesItem;
+			BStringItem*		fFilesItem;
+
 			TabManager*			fTabManager;
 
 			BGroupLayout*		fFindGroup;
@@ -158,10 +191,10 @@ private:
 			BStatusBar*			fStatusBar;
 			BFilePanel*			fOpenPanel;
 			BFilePanel*			fSavePanel;
+			BFilePanel*			fOpenProjectPanel;
 
 			BTabView*			fOutputTabView;
 			BColumnListView*	fNotificationsListView;
-
 };
 
 #endif //IDEAMWINDOW_H

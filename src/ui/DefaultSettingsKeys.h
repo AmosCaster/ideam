@@ -12,6 +12,7 @@
 const BString kSKProjectsDirectory {"/boot/home/workspace"};// "projects_directory"
 constexpr int32 kSKFullPathTitle {B_CONTROL_ON};// "fullpath_title"
 
+const int32 kSKReopenProjects = B_CONTROL_ON; // "reopen_projects"
 const int32 kSKReopenFiles = B_CONTROL_ON; // "reopen_files"
 const int32 kSKShowProjects = B_CONTROL_ON; // "show_projects"
 const int32 kSKShowOutput = B_CONTROL_ON; // "show_output"

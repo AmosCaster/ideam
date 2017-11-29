@@ -44,7 +44,7 @@ static constexpr auto kGotolineMaxBytes = 6;
 // Find group
 static constexpr auto kFindReplaceMaxBytes = 50;
 static constexpr auto kFindReplaceMinBytes = 32;
-static constexpr float kFindReplaceOPSize = 120.0;
+static constexpr float kFindReplaceOPSize = 120.0f;
 static constexpr auto kFindReplaceMenuItems = 10;
 
 
@@ -55,7 +55,10 @@ BRect dirtyFrameHack;
 
 enum {
 	// Project menu
+	MSG_PROJECT_CLOSE			= 'prcl',
 	MSG_PROJECT_NEW				= 'prne',
+	MSG_PROJECT_OPEN			= 'prop',
+	MSG_PROJECT_SET_ACTIVE		= 'psac',
 
 	// File menu
 	MSG_FILE_NEW				= 'fine',
@@ -95,6 +98,16 @@ enum {
 	MSG_WINDOW_SETTINGS			= 'wise',
 	MSG_TOGGLE_TOOLBAR			= 'toto',
 
+	// Projects outline
+	MSG_PROJECT_MENU_ITEM_CHOSEN	= 'pmic',
+	MSG_PROJECT_MENU_CLOSE			= 'pmcl',
+	MSG_PROJECT_MENU_DELETE			= 'pmde',
+	MSG_PROJECT_MENU_SET_ACTIVE		= 'pmsa',
+	MSG_PROJECT_MENU_ADD_FILE		= 'pmaf',
+	MSG_PROJECT_MENU_DELETE_FILE	= 'pmdf',
+	MSG_PROJECT_MENU_EXCLUDE_FILE	= 'pmef',
+	MSG_PROJECT_MENU_OPEN_FILE		= 'pmof',
+
 	// Toolbar
 	MSG_BUFFER_LOCK				= 'bulo',
 	MSG_FILE_MENU_SHOW			= 'fmsh',
@@ -110,10 +123,26 @@ enum {
 	MSG_SELECT_TAB				= 'seta'
 };
 
+class ProjectRefFilter : public BRefFilter {
+
+public:
+//	virtual ~ProjectRefFilter()
+//	{
+//	}
+
+	virtual bool Filter(const entry_ref* ref, BNode* node,
+		struct stat_beos* stat, const char* filetype)
+	{
+		BString name(ref->name);
+		return name.EndsWith(IdeamNames::kProjectExtension); // ".idmpro"
+	}
+};
+
 IdeamWindow::IdeamWindow(BRect frame)
 	:
 	BWindow(frame, "Ideam", B_TITLED_WINDOW, B_ASYNCHRONOUS_CONTROLS |
 												B_QUIT_ON_WINDOW_CLOSE)
+	, fActiveProject(nullptr)
 {
 	_InitMenu();
 
@@ -160,10 +189,27 @@ IdeamWindow::IdeamWindow(BRect frame)
 	if (IdeamNames::Settings.show_toolbar == false)
 		fToolBar->View()->Hide();
 
+	// Reopen projects
+	if (IdeamNames::Settings.reopen_projects == true) {
+
+		TPreferences* projects = new TPreferences(IdeamNames::kSettingsProjectsToReopen,
+												IdeamNames::kApplicationName, 'PRRE');
+
+		if (!projects->IsEmpty()) {
+			BString projectName, activeProject = "";
+
+			projects->FindString("active_project", &activeProject);
+			for (auto count = 0; projects->FindString("project_to_reopen",
+													count, &projectName) == B_OK; count++)
+					_ProjectOpen(projectName, projectName == activeProject);
+		}
+
+		delete projects;
+	}
 	// Reopen files
 	if (IdeamNames::Settings.reopen_files == true) {
 		TPreferences* files = new TPreferences(IdeamNames::kSettingsFilesToReopen,
-												IdeamNames::kApplicationName, 'FRSE');
+												IdeamNames::kApplicationName, 'FIRE');
 		if (!files->IsEmpty()) {
 			entry_ref ref;
 			int32 index = -1, count;
@@ -187,6 +233,9 @@ IdeamWindow::~IdeamWindow()
 {
 	delete fEditorObjectList;
 	delete fTabManager;
+
+	delete fProjectObjectList;
+	delete fProjectMenu;
 
 	delete fOpenPanel;
 	delete fSavePanel;
@@ -592,9 +641,74 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			fGotoLine->Show();
 			fGotoLine->MakeFocus();
 			break;
+		case MSG_PROJECT_CLOSE: {
+			_ProjectClose();
+			break;
+		}
+		case MSG_PROJECT_MENU_CLOSE: {
+			_ProjectClose();
+			break;
+		}
+		case MSG_PROJECT_MENU_DELETE: {
+
+			BString text;
+			text << B_TRANSLATE("\nDeleting project: ") << "\"" << fSelectedProjectName << "\""
+				 << B_TRANSLATE("\nDo you want to delete project sources too?\n");
+
+			BAlert* alert = new BAlert(B_TRANSLATE("Delete project dialog"),
+				text.String(),
+				B_TRANSLATE("Cancel"), B_TRANSLATE("Sources too"), B_TRANSLATE("Project only"),
+				B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+
+			// Maybe disable sources for haiku project
+			BButton* sourcesButton;
+			sourcesButton = alert->ButtonAt(1);
+			sourcesButton->SetEnabled(false);
+
+			alert->SetShortcut(0, B_ESCAPE);
+
+			int32 choice = alert->Go();
+
+			if (choice == 0)
+				break;
+			else if (choice == 1)
+				_ProjectDelete(fSelectedProjectName, true);
+			else if (choice == 2)
+				_ProjectDelete(fSelectedProjectName, false);
+
+			break;
+		}
+		case MSG_PROJECT_MENU_ADD_FILE: {
+
+			break;
+		}
+		case MSG_PROJECT_MENU_DELETE_FILE: {
+
+			break;
+		}
+		case MSG_PROJECT_MENU_EXCLUDE_FILE: {
+			_ProjectFileExclude();
+			break;
+		}
+		case MSG_PROJECT_MENU_ITEM_CHOSEN: {
+			_ProjectItemChosen();
+			break;
+		}
+		case MSG_PROJECT_MENU_OPEN_FILE: {
+			_ProjectFileOpen();
+			break;
+		}
+		case MSG_PROJECT_MENU_SET_ACTIVE: {
+			_ProjectActivate();
+			break;
+		}
 		case MSG_PROJECT_NEW: {
 			NewProjectWindow *wnd = new NewProjectWindow();
 			wnd->Show();
+			break;
+		}
+		case MSG_PROJECT_OPEN: {
+			fOpenProjectPanel->Show();
 			break;
 		}
 		case MSG_REPLACE_GROUP_SHOW:
@@ -728,7 +842,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		case NEWPROJECTWINDOW_PROJECT_OPEN_NEW: {
 			BString fileName;
 			if (message->FindString("project_filename", &fileName) == B_OK)
-				_ProjectOpen(fileName);
+				_ProjectOpen(fileName, true);
 			break;
 		}
 		case TABMANAGER_TAB_CHANGED: {
@@ -802,8 +916,9 @@ IdeamWindow::QuitRequested()
 
 	// Files to reopen
 	if (IdeamNames::Settings.reopen_files == true) {
+
 		TPreferences* files = new TPreferences(IdeamNames::kSettingsFilesToReopen,
-												IdeamNames::kApplicationName, 'FRSE');
+												IdeamNames::kApplicationName, 'FIRE');
 		// Just empty it for now TODO check if equal
 		files->MakeEmpty();
 			// Save if there is an opened file
@@ -818,6 +933,24 @@ IdeamWindow::QuitRequested()
 				}
 			}
 		delete files;
+	}
+
+	// Projects to reopen
+	if (IdeamNames::Settings.reopen_projects == true) {
+
+		TPreferences* projects = new TPreferences(IdeamNames::kSettingsProjectsToReopen,
+												IdeamNames::kApplicationName, 'PRRE');
+
+		projects->MakeEmpty();
+
+		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+			Project * project = fProjectObjectList->ItemAt(index);
+			projects->AddString("project_to_reopen", project->Name());
+			if (project->IsActive())
+				projects->AddString("active_project", project->Name());
+		}
+
+		delete projects;
 	}
 
 	be_app->PostMessage(B_QUIT_REQUESTED);
@@ -846,6 +979,28 @@ IdeamWindow::_AddEditorTab(entry_ref* ref, int32 index)
 	assert(added == true);
 
 	return B_OK;
+}
+
+/*static*/ int
+IdeamWindow::_CompareListItems(const BListItem* a, const BListItem* b)
+{
+	if (a == b)
+		return 0;
+
+	const BStringItem* A = dynamic_cast<const BStringItem*>(a);
+	const BStringItem* B = dynamic_cast<const BStringItem*>(b);
+	const char* nameA = A->Text();
+	const char* nameB = B->Text();
+
+	// Or use strcasecmp?
+	if (nameA != NULL && nameB != NULL)
+		return strcmp(nameA, nameB);
+	if (nameA != NULL)
+		return 1;
+	if (nameB != NULL)
+		return -1;
+
+	return (addr_t)a > (addr_t)b ? 1 : -1;
 }
 
 /*
@@ -944,6 +1099,13 @@ IdeamWindow::_FileOpen(BMessage* msg)
 		nextIndex = fTabManager->CountTabs();
 
 	while (msg->FindRef("refs", refsCount, &ref) == B_OK) {
+
+		// If it's a project, just open that
+		BString const name(ref.name);
+		if (name.EndsWith(IdeamNames::kProjectExtension)) { // ".idmpro"
+			_ProjectOpen(name, false);
+			return B_OK;
+		}
 
 		refsCount++;
 
@@ -1536,8 +1698,14 @@ IdeamWindow::_InitMenu()
 	BMenu* menu = new BMenu(B_TRANSLATE("Project"));
 	menu->AddItem(new BMenuItem(B_TRANSLATE("New"),
 		new BMessage(MSG_PROJECT_NEW), 'N', B_OPTION_KEY));
+	menu->AddItem(new BMenuItem(B_TRANSLATE("Open"),
+		new BMessage(MSG_PROJECT_OPEN), 'O', B_OPTION_KEY));
+//	menu->AddItem(fProjectCloseMenuItem = new BMenuItem(B_TRANSLATE("Close"),
+//		new BMessage(MSG_PROJECT_CLOSE), 'C', B_OPTION_KEY));
+	menu->AddSeparatorItem();
 	menu->AddItem(new BMenuItem(B_TRANSLATE("Quit"),
 		new BMessage(B_QUIT_REQUESTED), 'Q'));
+
 	fMenuBar->AddItem(menu);
 
 	menu = new BMenu(B_TRANSLATE("File"));
@@ -1595,7 +1763,6 @@ IdeamWindow::_InitMenu()
 	menu->AddSeparatorItem();
 	menu->AddItem(fOverwiteItem = new BMenuItem(B_TRANSLATE("Overwrite"),
 		new BMessage(MSG_TEXT_OVERWRITE), B_INSERT));
-
 
 	menu->AddSeparatorItem();
 	menu->AddItem(fToggleWhiteSpacesItem = new BMenuItem(B_TRANSLATE("Toggle white spaces"),
@@ -1755,6 +1922,36 @@ IdeamWindow::_InitWindow()
 		fProjectsOutline, B_FRAME_EVENTS | B_WILL_DRAW, true, true, B_NO_BORDER);
 	fProjectsTabView->AddTab(fProjectsScroll);
 
+	fProjectsOutline->SetSelectionMessage(new BMessage(MSG_PROJECT_MENU_ITEM_CHOSEN));
+	fProjectsOutline->SetInvocationMessage(new BMessage(MSG_PROJECT_MENU_OPEN_FILE));
+
+	fProjectMenu = new BPopUpMenu("ProjectMenu", false, false);
+
+	fCloseProjectMenuItem = new BMenuItem(B_TRANSLATE("Close project"),
+		new BMessage(MSG_PROJECT_MENU_CLOSE));
+	fDeleteProjectMenuItem = new BMenuItem(B_TRANSLATE("Delete project"),
+		new BMessage(MSG_PROJECT_MENU_DELETE));
+	fSetActiveProjectMenuItem = new BMenuItem(B_TRANSLATE("Set Active"),
+		new BMessage(MSG_PROJECT_MENU_SET_ACTIVE));
+	fAddFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Add file"),
+		new BMessage(MSG_PROJECT_MENU_ADD_FILE));
+	fDeleteFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Delete file"),
+		new BMessage(MSG_PROJECT_MENU_DELETE_FILE));
+	fExcludeFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Exclude file"),
+		new BMessage(MSG_PROJECT_MENU_EXCLUDE_FILE));
+	fOpenFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Open file"),
+		new BMessage(MSG_PROJECT_MENU_OPEN_FILE));
+
+	fProjectMenu->AddItem(fCloseProjectMenuItem);
+	fProjectMenu->AddItem(fDeleteProjectMenuItem);
+	fProjectMenu->AddItem(fSetActiveProjectMenuItem);
+	fProjectMenu->AddSeparatorItem();
+	fProjectMenu->AddItem(fAddFileProjectMenuItem);
+	fProjectMenu->AddItem(fDeleteFileProjectMenuItem);
+	fProjectMenu->AddItem(fExcludeFileProjectMenuItem);
+	fProjectMenu->AddItem(fOpenFileProjectMenuItem);
+	fProjectMenu->SetTargetForItems(this);
+
 	// Find group
 	fFindMenuField = new BMenuField("FindMenuField", NULL, new BMenu(B_TRANSLATE("Find:")));
 	fFindMenuField->SetExplicitMaxSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
@@ -1843,6 +2040,9 @@ IdeamWindow::_InitWindow()
 
 	dirtyFrameHack = fTabManager->TabGroup()->Frame();
 
+	// Project list
+	fProjectObjectList = new BObjectList<Project>();
+
 	// Status Bar
 	fStatusBar = new BStatusBar("StatusBar");
 	fStatusBar->SetBarHeight(1.0);
@@ -1860,8 +2060,27 @@ IdeamWindow::_InitWindow()
 	;
 
 	// Panels
-	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), nullptr, B_FILE_NODE, true);
-	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), nullptr, B_FILE_NODE, false);
+	TPreferences* prefs = new TPreferences(IdeamNames::kSettingsFileName,
+											IdeamNames::kApplicationName, 'PRSE');
+
+	BEntry entry(prefs->GetString("projects_directory"), true);
+
+	entry_ref ref;
+	entry.GetRef(&ref);
+	// TODO if active project open that dir
+	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), &ref, B_FILE_NODE, true);
+	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), &ref, B_FILE_NODE, false);
+
+	BPath path;
+	find_directory(B_USER_SETTINGS_DIRECTORY, &path);
+	path.Append(IdeamNames::kApplicationName);
+	entry.SetTo(path.Path());
+	entry.GetRef(&ref);
+	fOpenProjectPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), &ref, B_FILE_NODE,
+							false, nullptr, new ProjectRefFilter());
+
+	// No longer needed now
+	delete prefs;
 
 	// Output
 	fOutputTabView = new BTabView("OutputTabview");
@@ -1910,12 +2129,324 @@ IdeamWindow::_LoadSizedVectorIcon(int32 resourceID, int32 size)
 	return bitmap;
 }
 
+/*
+ * Creating a new project activates it, opening a project does not.
+ * An active project closed does not activate one.
+ * Reopen project at startup keeps active flag.
+ */
 void
-IdeamWindow::_ProjectOpen(BString projectName)
+IdeamWindow::_ProjectActivate()
 {
+	// There is no active project
+	if (fActiveProject == nullptr) {
+		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+			Project * project = fProjectObjectList->ItemAt(index);
+			if (project->Name() == fSelectedProjectName) {
+				fActiveProject = project;
+				fActiveProject->Activate();
+			}
+		}
+	}
+	else {
+		// There was an active project already
+		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+			Project * project = fProjectObjectList->ItemAt(index);
+			if (project->Name() == fSelectedProjectName) {
+				fActiveProject->Deactivate();
+				fActiveProject = project;
+				fActiveProject->Activate();
+			}
+		}
+	}
+}
+
+void
+IdeamWindow::_ProjectClose()
+{
+	BString closed(B_TRANSLATE("Project closed:"));
+	BString name = fSelectedProjectName;
+
+	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+		Project *project = fProjectObjectList->ItemAt(index);
+		if (project->Name() == fSelectedProjectName) {
+			if (project == fActiveProject) {
+				fActiveProject = nullptr;
+				closed = B_TRANSLATE("Active project closed:");
+			}
+			_ProjectOutlineDepopulate(project);
+			fProjectObjectList->RemoveItem(project);
+			BString notification;
+			notification << closed << " "  << name;
+			_SendNotification(notification, "PROJ_CLOSE");
+			break;
+		}
+	}
+}
+
+void
+IdeamWindow::_ProjectDelete(BString name, bool sourcesToo)
+{
+	BString text;
+	BPath projectPath;
+
+	if ((find_directory(B_USER_SETTINGS_DIRECTORY, &projectPath)) != B_OK) {
+		text << B_TRANSLATE("ERROR: Settings directory not found");
+		_SendNotification( text.String(), "PROJ_DELETE");
+		return;
+	}
+
+	_ProjectClose();
+
+	projectPath.Append(IdeamNames::kApplicationName);
+	projectPath.Append(name);
+	BEntry entry(projectPath.Path());
+
+	if (entry.Exists()) {
+		entry.Remove();
+		text << B_TRANSLATE("Project deleted: ")  << name.String();
+		_SendNotification( text.String(), "PROJ_DELETE");
+	}
+
+	if (sourcesToo == true) {
+
+	}
+}
+
+void
+IdeamWindow::_ProjectFileAdd()
+{
+}
+
+void
+IdeamWindow::_ProjectFileDelete()
+{
+}
+
+void
+IdeamWindow::_ProjectFileExclude()
+{
+	TPreferences* idmproFile  = new TPreferences(fSelectedProjectName,
+											IdeamNames::kApplicationName, 'PRSE');
+
+	int32 index = 0;
+	BString superItem(""), file;
+	BStringItem *itemType;
+	BListItem *item = fSelectedProjectItem, *parent;
+
+	while ((parent = fProjectsOutline->Superitem(item)) != nullptr) {
+		itemType = dynamic_cast<BStringItem*>(parent);
+		superItem = itemType->Text();
+		if (superItem == B_TRANSLATE("Project Files")
+			|| superItem == B_TRANSLATE("Project Sources"))
+			break;
+
+		item = parent;
+	}
+
+	if (superItem == B_TRANSLATE("Project Sources"))
+		superItem = "project_source";
+	else if (superItem == B_TRANSLATE("Project Files"))
+		superItem = "project_file";
+
+	while ((idmproFile->FindString(superItem, index, &file)) != B_BAD_INDEX) {
+		if (_ProjectFileFullPath() == file) {
+			idmproFile->RemoveData(superItem, index);
+			fProjectsOutline->RemoveItem(fSelectedProjectItem);
+			break;
+		}
+		index++;
+	}
+
+	delete idmproFile;
+}
+
+BString
+IdeamWindow::_ProjectFileFullPath()
+{
+	BString	selectedFileFullpath;
+	// Selected File Full Path
+	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+		Project * project = fProjectObjectList->ItemAt(index);
+		if (project->Name() == fSelectedProjectName) {
+			selectedFileFullpath = project->BasePath();
+			selectedFileFullpath.Append("/");
+			selectedFileFullpath.Append(fSelectedProjectItem->Text());
+		}
+	}
+	return selectedFileFullpath;
+}
+
+void
+IdeamWindow::_ProjectFileOpen()
+{
+	BEntry entry(_ProjectFileFullPath());
+	entry_ref ref;
+	entry.GetRef(&ref);
+	BMessage msg(B_REFS_RECEIVED);
+	msg.AddRef("refs", &ref);
+	_FileOpen(&msg);
+}
+
+void
+IdeamWindow::_ProjectItemChosen()
+{
+	// TODO return while building
+
+	fCloseProjectMenuItem->SetEnabled(false);
+	fDeleteProjectMenuItem->SetEnabled(false);
+	fSetActiveProjectMenuItem->SetEnabled(false);
+	fAddFileProjectMenuItem->SetEnabled(false);
+	fDeleteFileProjectMenuItem->SetEnabled(false);
+	fExcludeFileProjectMenuItem->SetEnabled(false);
+	fOpenFileProjectMenuItem->SetEnabled(false);
+
+	int32 selection = fProjectsOutline->CurrentSelection();
+
+	if (selection < 0)
+		return;
+
+	fSelectedProjectItem = dynamic_cast<BStringItem*>(fProjectsOutline->ItemAt(selection));
+	fSelectedProjectItemName = fSelectedProjectItem->Text();
+
+	bool isProject = fSelectedProjectItemName.EndsWith(IdeamNames::kProjectExtension);
+
+	// If a project was chosen fill string name otherwise do some calculations
+	if (isProject) {
+		fSelectedProjectName = fSelectedProjectItemName;
+	} else if (fSelectedProjectItemName == B_TRANSLATE("Project Files")
+			|| fSelectedProjectItemName == B_TRANSLATE("Project Sources")) {
+		// Nothing to do
+		return;
+	}  else {
+		// Find the project selected file belongs to
+		BListItem *item = fSelectedProjectItem, *parent;
+
+		while ((parent = fProjectsOutline->Superitem(item)) != nullptr)
+			item = parent;
+		BStringItem *projectItem = dynamic_cast<BStringItem*>(item);
+		// Project name
+		fSelectedProjectName = projectItem->Text();
+	}
+
+	bool isActive = (fActiveProject != nullptr
+				  && fSelectedProjectItem == fActiveProject->Title());
+
+	// Context menu conditional enabling
+	if (isProject) {
+		fCloseProjectMenuItem->SetEnabled(true);
+		fDeleteProjectMenuItem->SetEnabled(true);
+		if (!isActive)
+			fSetActiveProjectMenuItem->SetEnabled(true);
+	} else if (fSelectedProjectName == B_TRANSLATE("Project Files")
+			|| fSelectedProjectName == B_TRANSLATE("Project Sources")) {
+		// Not getting here but leave it
+		;
+	} else {
+//		fAddFileProjectMenuItem->SetEnabled(true);
+//		fDeleteFileProjectMenuItem->SetEnabled(true);
+		fExcludeFileProjectMenuItem->SetEnabled(true);
+		fOpenFileProjectMenuItem->SetEnabled(true);
+	}
+
+	BPoint where;
+	uint32 buttons;
+	fProjectsScroll->GetMouse(&where, &buttons);
+
+	if (buttons & B_SECONDARY_MOUSE_BUTTON) {
+		fProjectMenu->Go(fProjectsScroll->ConvertToScreen(where), true);
+	}
+
+	fProjectsOutline->Invalidate();
+}
+
+void
+IdeamWindow::_ProjectOpen(BString const& projectName, bool activate)
+{
+	BString opened(B_TRANSLATE("Project opened:"));
+	int32 items;
+
+	Project* currentProject = new Project(projectName);
+
+	// Check if already open
+	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+		Project * pProject = fProjectObjectList->ItemAt(index);
+		if (pProject->Name() == currentProject->Name())
+				return;
+	}
+
+	if (currentProject->Open(activate) != B_OK) {
+		BString notification;
+		notification << B_TRANSLATE("Project opened failed: ")  << projectName;
+		_SendNotification( notification.String(), "PROJ_OPEN_FAILED");
+		delete currentProject;
+
+		return;
+	}
+
+	fProjectObjectList->AddItem(currentProject);
+
+	if (activate == true) {
+		if ((items = fProjectObjectList->CountItems()) > 1) {
+			// Deactivate active project if different
+			if (fActiveProject != nullptr && fActiveProject->Name() != currentProject->Name()) {
+				fActiveProject->Deactivate();
+				// TODO invalidate single item OR elsewhere
+				fProjectsOutline->Invalidate();
+			}
+		}
+		fActiveProject = currentProject;
+		opened = B_TRANSLATE("Active project opened:");
+	}
+
+	_ProjectOutlinePopulate(currentProject);
+
 	BString notification;
-	notification << B_TRANSLATE("Project opened: ") << projectName;
+	notification << opened << " " << projectName;
 	_SendNotification(notification, "PROJ_OPEN");
+}
+
+void
+IdeamWindow::_ProjectOutlinePopulate(Project* project)
+{
+	BString basepath(project->BasePath());
+	basepath.Append("/");
+	BString cutpath;
+	int32 count;
+
+	fProjectsOutline->AddItem(project->Title());
+
+	// WARNING: names used in context menu file exclusion
+	fSourcesItem = new BStringItem(B_TRANSLATE("Project Sources"), 1, false);
+	fProjectsOutline->AddUnder(fSourcesItem, project->Title());
+
+	fFilesItem = new BStringItem(B_TRANSLATE("Project Files"), 1, false);
+	fProjectsOutline->AddUnder(fFilesItem, project->Title());
+
+
+	count = project->SourcesList().size();
+	for (int32 index = count - 1; index >= 0 ; index--) {
+		cutpath = project->SourcesList().at(index);
+		cutpath.RemoveFirst(basepath);
+
+		BStringItem* item = new BStringItem(cutpath);
+		fProjectsOutline->AddUnder(item, fSourcesItem);
+	}
+	count = project->FilesList().size();
+	for (int32 index = count - 1; index >= 0 ; index--) {
+		cutpath = project->FilesList().at(index);
+		cutpath.RemoveFirst(basepath);
+		BStringItem* item = new BStringItem(cutpath);
+		fProjectsOutline->AddUnder(item, fFilesItem);
+	}
+
+	fProjectsOutline->SortItemsUnder(fSourcesItem, true, IdeamWindow::_CompareListItems);
+	fProjectsOutline->SortItemsUnder(fFilesItem, true, IdeamWindow::_CompareListItems);
+}
+
+void
+IdeamWindow::_ProjectOutlineDepopulate(Project* project)
+{
+	fProjectsOutline->RemoveItem(project->Title());
 }
 
 int
@@ -2042,7 +2573,6 @@ IdeamWindow::_SendNotification(BString message, BString type)
 	if (IdeamNames::Settings.enable_notifications == false)
 		return;
 
-	// TODO bring to front
        BRow* fRow = new BRow();
        time_t now =  static_cast<bigtime_t>(real_time_clock());
 

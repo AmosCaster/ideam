@@ -59,6 +59,7 @@ enum {
 	MSG_MARK_CARET_LINE_TOGGLED				= 'mcli',
 	MSG_PAGE_CHOSEN							= 'page',
 	MSG_PROJECT_DIRECTORY_EDITED			= 'prdi',
+	MSG_REOPEN_PROJECTS_TOGGLED				= 'repr',
 	MSG_REOPEN_FILES_TOGGLED				= 'refi',
 	MSG_SAVE_CARET_TOGGLED					= 'sace',
 	MSG_SHOW_EDGE_LINE_TOGGLED				= 'seli',
@@ -237,6 +238,12 @@ SettingsWindow::MessageReceived(BMessage *msg)
 					fWindowSettingsFile->FindString("projects_directory")) != 0;
 				_ManageModifications(fProjectsDirectory, modified);
 
+			break;
+		}
+		case MSG_REOPEN_PROJECTS_TOGGLED: {
+			bool modified = fReopenProjects->Value() !=
+								fWindowSettingsFile->FindInt32("reopen_projects");
+				_ManageModifications(fReopenProjects, modified);
 			break;
 		}
 		case MSG_REOPEN_FILES_TOGGLED: {
@@ -530,6 +537,15 @@ SettingsWindow::_LoadFromFile(BControl* control, bool loadAll /*= false*/)
 			fOrphansList->AddItem(fFullPathWindowTitle);
 	}
 	// General Startup Page
+	if (control == fReopenProjects || loadAll == true) {
+		status = fWindowSettingsFile->FindInt32("reopen_projects", &intVal);
+		fControlsCount += loadAll == true;
+		if (status == B_OK) {
+			fReopenProjects->SetValue(intVal);
+			fControlsDone += loadAll == true;
+		} else
+			fOrphansList->AddItem(fReopenProjects);
+	}
 	if (control == fReopenFiles || loadAll == true) {
 		status = fWindowSettingsFile->FindInt32("reopen_files", &intVal);
 		fControlsCount += loadAll == true;
@@ -922,6 +938,9 @@ SettingsWindow::_PageGeneralViewStartup()
 	fGeneralStartupBox = new BBox("GeneralStartupBox");
 	fGeneralStartupBox->SetLabel(B_TRANSLATE("Startup"));
 
+	fReopenProjects = new BCheckBox("ReopenProjects",
+		B_TRANSLATE("Reload projects"), new BMessage(MSG_REOPEN_PROJECTS_TOGGLED));
+
 	fReopenFiles = new BCheckBox("ReopenFiles",
 		B_TRANSLATE("Reload files"), new BMessage(MSG_REOPEN_FILES_TOGGLED));
 
@@ -936,7 +955,8 @@ SettingsWindow::_PageGeneralViewStartup()
 
 	BView* view = BGroupLayoutBuilder(B_VERTICAL, 0)
 		.Add(BLayoutBuilder::Grid<>(fGeneralStartupBox)
-		.Add(fReopenFiles, 0, 1)
+		.Add(fReopenProjects, 0, 1)
+		.Add(fReopenFiles, 1, 1)
 		.Add(fShowProjectsPanes, 0, 2)		
 		.Add(fShowOutputPanes, 1, 2)
 		.Add(fShowToolBar, 2, 2)
@@ -1062,6 +1082,8 @@ SettingsWindow::_StoreToFile(BControl* control)
 	else if (control == fFullPathWindowTitle)
 		status = fWindowSettingsFile->SetInt32("fullpath_title", fFullPathWindowTitle->Value());
 	// General Startup Page
+	else if (control == fReopenProjects)
+		status = fWindowSettingsFile->SetInt32("reopen_projects", fReopenProjects->Value());
 	else if (control == fReopenFiles)
 		status = fWindowSettingsFile->SetInt32("reopen_files", fReopenFiles->Value());
 	else if (control == fShowProjectsPanes)
@@ -1118,6 +1140,7 @@ SettingsWindow::_StoreToFileDefaults()
 	fWindowSettingsFile->SetInt32("fullpath_title", kSKFullPathTitle);
 
 	// General Startup Page
+	fWindowSettingsFile->SetInt32("reopen_projects", kSKReopenProjects);
 	fWindowSettingsFile->SetInt32("reopen_files", kSKReopenFiles);
 	fWindowSettingsFile->SetInt32("show_projects", kSKShowProjects);
 	fWindowSettingsFile->SetInt32("show_output", kSKShowOutput);

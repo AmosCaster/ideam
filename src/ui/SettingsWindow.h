@@ -92,6 +92,7 @@ typedef std::map<BStringItem*, BString>::const_iterator ViewPageIterator;
 
 			// GeneralStartup page
 			BBox*				fGeneralStartupBox;
+			BCheckBox*			fReopenProjects;
 			BCheckBox*			fReopenFiles;
 			BCheckBox*			fShowToolBar;
 			BCheckBox*			fShowProjectsPanes;

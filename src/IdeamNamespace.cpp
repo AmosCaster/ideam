@@ -101,6 +101,7 @@ LoadSettingsVars()
 
 	status += file.FindString("projects_directory",	&Settings.projects_directory);
 	status += file.FindInt32("fullpath_title", &Settings.fullpath_title);
+	status += file.FindInt32("reopen_projects", &Settings.reopen_projects);
 	status += file.FindInt32("reopen_files", &Settings.reopen_files);
 	status += file.FindInt32("show_projects", &Settings.show_projects);
 	status += file.FindInt32("show_output", &Settings.show_output);

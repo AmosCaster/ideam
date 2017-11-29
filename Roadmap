@@ -148,12 +148,24 @@ current Scintilla version: 3.7.2
 
 ] Leak analyzer marks as leaks undeleted BStringItems
 --------------------------------------------------------------------------------
+
+0.4.0) Project management
+
+) Project list view
+) Project menu
+) Project context menu
+) Project reopen at startup
+
+] Context menu not working for already selected items
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
 
 
+0.5.0) Project management
 
+) Project build, run, debug
+) Project settings
+) Build log
 
-0.4.0) Build/Run/Debug interface
-
-0.5.0) Classes parser
+]

@@ -772,7 +772,10 @@ NewProjectWindow::_GetSourcesFiles(const char* dirpath)
 			else if (name.StartsWith("objects.")) {
 				;
 			}
-			// TODO: exclude app dir if any
+			// Exclude app dir if any
+			else if (name == "app") {
+				;
+			}
 			else {
 				BString newPath(dirpath);
 				newPath << "/" << entry.Name();

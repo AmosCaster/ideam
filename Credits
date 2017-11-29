@@ -4,5 +4,6 @@
 - tabview interface taken from Haiku apps/webpositive app
 - Scintilla lib by Neil Hodgson
 - Scintilla for Haiku  by Andrea Anzani, Kacper Kasper
-- TitleItem	class taken from Haiku preferences/network
+- TitleItem/ProjectTitleItem classes taken from Haiku preferences/network
 - Editor::ReplaceAll adapted from Koder
+- IdeamWindow::_CompareListItems taken from Haiku preferences/network

@@ -60,10 +60,12 @@ TPreferences::TPreferences(const BString filename, const BString directory,
 //
 TPreferences::~TPreferences() {
 
+	// FIRE = Files to Reopen
+	// PRRE = Projects to Reopen
 	// IDSE = Ideam Settings
 	// UISE = UI Settings
 	// PRSE = Project Settings
-	if (what == '__SE')
+	if (what == 'XXXX')
 		PrintToStream();
 
 	BFile file;
