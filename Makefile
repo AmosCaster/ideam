@@ -21,6 +21,7 @@ SRCS +=  src/ui/IdeamWindow.cpp
 SRCS +=  src/ui/SettingsWindow.cpp
 SRCS +=  src/project/NewProjectWindow.cpp
 SRCS +=  src/project/Project.cpp
+SRCS +=  src/helpers/ShellView.cpp
 SRCS +=  src/helpers/TPreferences.cpp
 SRCS +=  src/helpers/tabview/TabContainerView.cpp
 SRCS +=  src/helpers/tabview/TabManager.cpp

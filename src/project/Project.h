@@ -23,7 +23,7 @@ public:
 			void				Close();
 			void				Deactivate();
 			bool				IsActive() { return isActive; }
-			BString				Name() const { return fName; }
+			BString	const		Name() const { return fName; }
 			status_t			Open(bool activate);
 			BString 			Target() const { return fTarget; }
 			ProjectTitleItem*	Title() const { return fProjectTitle; }

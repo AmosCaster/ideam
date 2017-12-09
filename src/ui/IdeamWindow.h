@@ -25,6 +25,7 @@
 
 #include "Editor.h"
 #include "Project.h"
+#include "ShellView.h"
 #include "TabManager.h"
 #include "TPreferences.h"
 
@@ -32,6 +33,11 @@ enum {
 	kTimeColumn = 0,
 	kMessageColumn,
 	kTypeColumn
+};
+
+enum {
+	kNotificationLog = 0,
+	kBuildLog,
 };
 
 class IdeamWindow : public BWindow
@@ -47,8 +53,12 @@ public:
 private:
 
 			status_t			_AddEditorTab(entry_ref* ref, int32 index);
+			void				_BuildDone(BMessage* msg);
+			status_t			_BuildProject();
+			status_t			_CleanProject();
 	static	int					_CompareListItems(const BListItem* a,
 									const BListItem* b);
+			status_t			_DebugProject();
 			status_t			_FileClose(int32 index, bool ignoreModifications = false);
 			void				_FileCloseAll();
 			status_t			_FileOpen(BMessage* msg);
@@ -73,7 +83,9 @@ private:
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
 									int32 resIndex, bool enabled, const char* tooltip);
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);
-			void				_ProjectActivate();
+			void				_MakeBindcatalogs();
+			void				_MakeCatkeys();
+			void				_ProjectActivate(BString const& projectName);
 			void				_ProjectClose();
 			void				_ProjectDelete(BString name, bool sourcesToo);
 			void				_ProjectFileAdd();
@@ -89,9 +101,12 @@ private:
 			bool				_ReplaceAllow();
 			void				_ReplaceGroupShow();
 			void				_ReplaceGroupToggled();
+			void				_RunTarget();
 			void				_SendNotification(BString message, BString type);
+			void				_ShowLog(int32 index);
 			void				_UpdateFindMenuItems(const BString& text);
 			status_t			_UpdateLabel(int32 index, bool isModified);
+			void				_UpdateProjectActivation(bool active);
 			void				_UpdateReplaceMenuItems(const BString& text);
 			void				_UpdateSelectionChange(int32 index);
 			void				_UpdateStatusBarText(int line, int column);
@@ -122,6 +137,12 @@ private:
 			BMenuItem*			fBookmarkClearAllItem;
 			BMenuItem*			fBookmarkGoToNextItem;
 			BMenuItem*			fBookmarkGoToPreviousItem;
+			BMenuItem*			fBuildItem;
+			BMenuItem*			fCleanItem;
+			BMenuItem*			fRunItem;
+			BMenuItem*			fDebugItem;
+			BMenuItem*			fMakeCatkeysItem;
+			BMenuItem*			fMakeBindcatalogsItem;
 
 			BGroupLayout*		fRootLayout;
 			BGroupLayout* 		fToolBar;
@@ -137,6 +158,9 @@ private:
 			BIconButton*		fRedoButton;
 			BIconButton*		fFileSaveButton;
 			BIconButton*		fFileSaveAllButton;
+			BIconButton*		fBuildButton;
+			BIconButton*		fRunButton;
+			BIconButton*		fDebugButton;
 			BIconButton*		fFileUnlockedButton;
 			BIconButton*		fFilePreviousButton;
 			BIconButton*		fFileNextButton;
@@ -166,6 +190,7 @@ private:
 			BMenuItem*			fOpenFileProjectMenuItem;
 
 			Project*			fActiveProject;
+			bool				fIsBuilding;
 			BString				fSelectedProjectName;
 			BStringItem*		fSelectedProjectItem;
 			BString				fSelectedProjectItemName;
@@ -195,6 +220,7 @@ private:
 
 			BTabView*			fOutputTabView;
 			BColumnListView*	fNotificationsListView;
+			ShellView*			fBuildLog;
 };
 
 #endif //IDEAMWINDOW_H

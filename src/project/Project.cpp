@@ -47,35 +47,32 @@ Project::Open(bool activate)
 		throw std::logic_error("Empty name");
 
 	fIdmproFile = new TPreferences(fName, IdeamNames::kApplicationName, 'PRSE');
-
+/*
 	BString filename;
-	if (fIdmproFile->FindString("project_filename", &filename) != B_OK)
+	if (fIdmproFile->FindString("project_filename", &filename) != B_OK) {
+		delete fIdmproFile;
 		return B_ERROR;
-
+	}
+*/
 	isActive = activate;
 
 	fProjectTitle = new ProjectTitleItem(fName.String(), activate);
 
 	// Update project data
-	BString buildCommand;
-	if (fIdmproFile->FindString("project_build_command", &buildCommand) == B_OK)
-		fBuildCommand = buildCommand;
+	if (fIdmproFile->FindString("project_build_command", &fBuildCommand) != B_OK)
+		fBuildCommand = "";
 
-	BString cleanCommand;
-	if (fIdmproFile->FindString("project_clean_command", &cleanCommand) == B_OK)
-		fCleanCommand = cleanCommand;
+	if (fIdmproFile->FindString("project_clean_command", &fCleanCommand) != B_OK)
+		fCleanCommand = "";
 
-	BString filepath;
-	if (fIdmproFile->FindString("project_directory", &filepath) == B_OK)
-		fProjectDirectory = filepath;
+	if (fIdmproFile->FindString("project_directory", &fProjectDirectory) != B_OK)
+		fProjectDirectory = "";
 
-	BString target;
-	if (fIdmproFile->FindString("project_target", &target) == B_OK)
-		fTarget = target;
+	if (fIdmproFile->FindString("project_target", &fTarget) != B_OK)
+		fTarget = "";
 
-//	BString scm;
-//	if (fIdmproFile->FindString("project_scm", &scm) == B_OK)
-//		fScm = scm;
+//	if (fIdmproFile->FindString("project_scm", &fScm) != B_OK)
+//		fScm = "";
 
 	// Source files
 	int32 refsCount = 0;

@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	2726405293
+1	English	application/x-vnd.Ideam-Ideam	3494879638
 tuned 	SettingsWindow		tuned 
 A C command line \"Hello World!\" application	NewProject Window		A C command line \"Hello World!\" application
 Find	IdeamWindow		Find
@@ -25,6 +25,7 @@ Reload projects	SettingsWindow		Reload projects
 C Hello World!	NewProject Window		C Hello World!
 Show/Hide Output split	IdeamWindow		Show/Hide Output split
 Empty Project	NewProject Window		Empty Project
+Run target	IdeamWindow		Run target
 Programming: Principles and Practice using C++ (2nd edition)\n\n\n	NewProject Window		Programming: Principles and Practice using C++ (2nd edition)\n\n\n
 Please fill \"Haiku app dir\" field	NewProject Window		Please fill \"Haiku app dir\" field
 Browse…	NewProject Window		Browse…
@@ -70,20 +71,25 @@ Notifications	IdeamWindow		Notifications
 Don't save	Editor		Don't save
 Default	SettingsWindow		Default
 Ignore	IdeamApp		Ignore
+Build Project	IdeamWindow		Build Project
 Time	IdeamWindow		Time
 Toggle ToolBar	IdeamWindow		Toggle ToolBar
 Font size:	SettingsWindow		Font size:
 applied 	SettingsWindow		applied 
+Clean started	IdeamWindow		Clean started
 available under the MIT license.\n\n	IdeamApp		available under the MIT license.\n\n
 Select previous File	IdeamWindow		Select previous File
 Save caret position	SettingsWindow		Save caret position
 New	IdeamWindow		New
 There are modified files, do you want to save changes before quitting?	IdeamWindow		There are modified files, do you want to save changes before quitting?
+Build	IdeamWindow		Build
 Redo	IdeamWindow		Redo
 Find:	IdeamWindow		Find:
+Build Log	IdeamWindow		Build Log
 Build	SettingsWindow		Build
 Interface	IdeamWindow		Interface
 Project Files	IdeamWindow		Project Files
+Build finished	IdeamWindow		Build finished
 Toggle Output panes	IdeamWindow		Toggle Output panes
 Find toggle (closes Replace bar if open)	IdeamWindow		Find toggle (closes Replace bar if open)
 Paste	IdeamWindow		Paste
@@ -94,6 +100,7 @@ Window	IdeamWindow		Window
 Set Active	IdeamWindow		Set Active
 Edge column:	SettingsWindow		Edge column:
 Wrap	IdeamWindow		Wrap
+Debug Project	IdeamWindow		Debug Project
 ) Select your Haiku app dir (from src/apps) or write full path in text control\n	NewProject Window		) Select your Haiku app dir (from src/apps) or write full path in text control\n
 Revert	SettingsWindow		Revert
 ERROR: empty \"NAME\" in Makefile	NewProject Window		ERROR: empty \"NAME\" in Makefile
@@ -101,6 +108,7 @@ Save position	SettingsWindow		Save position
 Set buffer read-only	IdeamWindow		Set buffer read-only
  modified externally	IdeamWindow		 modified externally
 Open file	IdeamWindow		Open file
+Clean started: 	IdeamWindow		Clean started: 
 File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost	IdeamWindow		File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost
 Show Output panes	SettingsWindow		Show Output panes
  removed externally	IdeamWindow		 removed externally
@@ -135,6 +143,7 @@ Exclude file	IdeamWindow		Exclude file
 Show/Hide Projects split	IdeamWindow		Show/Hide Projects split
 Toggle line endings	IdeamWindow		Toggle line endings
 Open	IdeamWindow		Open
+Run Project	IdeamWindow		Run Project
 File	IdeamWindow		File
 Show line number	SettingsWindow		Show line number
 Run in\nTerminal	NewProject Window		Run in\nTerminal
@@ -157,6 +166,7 @@ Overwrite	IdeamWindow		Overwrite
 This is the font size preview	SettingsWindow		This is the font size preview
 Project name:	NewProject Window		Project name:
 Project only	IdeamWindow		Project only
+Clean finished	IdeamWindow		Clean finished
 Save all	IdeamWindow		Save all
 Cancel	Editor		Cancel
 Don't save	IdeamWindow		Don't save
@@ -173,6 +183,7 @@ Notifications	SettingsWindow		Notifications
 Exit	SettingsWindow		Exit
 Reload	IdeamWindow		Reload
 Projects dir:	NewProject Window		Projects dir:
+Clean Project	IdeamWindow		Clean Project
 Please fill \"Add file\" field	NewProject Window		Please fill \"Add file\" field
  times	SettingsWindow		 times
 Mark all	IdeamWindow		Mark all
@@ -221,6 +232,7 @@ See Credits for a complete list.	IdeamApp		See Credits for a complete list.
 ) Click \"Create\" button\n\n\n	NewProject Window		) Click \"Create\" button\n\n\n
 Projects	IdeamWindow		Projects
 Projects directory:	SettingsWindow		Projects directory:
+Build started	IdeamWindow		Build started
 General	SettingsWindow		General
  bytes written	IdeamWindow		 bytes written
  occurrences found: 	IdeamWindow		 occurrences found: 

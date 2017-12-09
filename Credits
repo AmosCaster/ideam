@@ -7,3 +7,5 @@
 - TitleItem/ProjectTitleItem classes taken from Haiku preferences/network
 - Editor::ReplaceAll adapted from Koder
 - IdeamWindow::_CompareListItems taken from Haiku preferences/network
+- ShellView class adapted from Heidi project
+- Build icons taken from Heidi project

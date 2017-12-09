@@ -15,6 +15,7 @@
 #include <PopUpMenu.h>
 #include <RecentItems.h>
 #include <Resources.h>
+#include <Roster.h>
 #include <SeparatorView.h>
 
 #include <cassert>
@@ -94,6 +95,17 @@ enum {
 	MSG_BOOKMARK_GOTO_PREVIOUS	= 'bgpr',
 	MSG_BOOKMARK_TOGGLE			= 'book',
 
+	// Build menu
+	MSG_BUILD_PROJECT			= 'bupr',
+	MSG_BUILD_PROJECT_STOP		= 'bpst',
+	MSG_CLEAN_PROJECT			= 'clpr',
+	MSG_RUN_TARGET				= 'ruta',
+	MSG_DEBUG_PROJECT			= 'depr',
+	MSG_MAKE_CATKEYS			= 'maca',
+	MSG_MAKE_BINDCATALOGS		= 'mabi',
+
+	MSG_BUILD_DONE				= 'budo',
+
 	// Window menu
 	MSG_WINDOW_SETTINGS			= 'wise',
 	MSG_TOGGLE_TOOLBAR			= 'toto',
@@ -143,6 +155,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 	BWindow(frame, "Ideam", B_TITLED_WINDOW, B_ASYNCHRONOUS_CONTROLS |
 												B_QUIT_ON_WINDOW_CLOSE)
 	, fActiveProject(nullptr)
+	, fIsBuilding(false)
 {
 	_InitMenu();
 
@@ -513,6 +526,22 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			}
 			break;
 		}
+		case MSG_BUILD_DONE: {
+			_BuildDone(message);
+			break;
+		}
+		case MSG_BUILD_PROJECT: {
+			_BuildProject();
+			break;
+		}
+		case MSG_CLEAN_PROJECT: {
+			_CleanProject();
+			break;
+		}
+		case MSG_DEBUG_PROJECT: {
+			_DebugProject();
+			break;
+		}
 		case MSG_FILE_CLOSE:
 			_FileClose(fTabManager->SelectedTabIndex());
 			break;
@@ -607,10 +636,11 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 
 			if (!textToFind.IsEmpty()) {
 				int32 counts = _FindMarkAll(textToFind);
-				BString text;
-				text << "\"" << textToFind << "\""
+				_ShowLog(kNotificationLog);
+				BString notification;
+				notification << "\"" << textToFind << "\""
 					<< B_TRANSLATE(" occurrences found: ") << counts;
-				_SendNotification( text.String(), "BOOKMARKS");
+				_SendNotification( notification, "BOOKMARKS");
 			}
 			break;
 		}
@@ -641,6 +671,14 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			fGotoLine->Show();
 			fGotoLine->MakeFocus();
 			break;
+		case MSG_MAKE_BINDCATALOGS: {
+			_MakeBindcatalogs();
+			break;
+		}
+		case MSG_MAKE_CATKEYS: {
+			_MakeCatkeys();
+			break;
+		}
 		case MSG_PROJECT_CLOSE: {
 			_ProjectClose();
 			break;
@@ -699,7 +737,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			break;
 		}
 		case MSG_PROJECT_MENU_SET_ACTIVE: {
-			_ProjectActivate();
+			_ProjectActivate(fSelectedProjectName);
 			break;
 		}
 		case MSG_PROJECT_NEW: {
@@ -740,6 +778,9 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			break;
 		case MSG_REPLACE_PREVIOUS:
 			_Replace(REPLACE_PREVIOUS);
+			break;
+		case MSG_RUN_TARGET:
+			_RunTarget();
 			break;
 		case MSG_SELECT_TAB: {
 			int32 index;
@@ -948,6 +989,9 @@ IdeamWindow::QuitRequested()
 			projects->AddString("project_to_reopen", project->Name());
 			if (project->IsActive())
 				projects->AddString("active_project", project->Name());
+			// Avoiding leaks
+			_ProjectOutlineDepopulate(project);
+			delete project;
 		}
 
 		delete projects;
@@ -981,6 +1025,112 @@ IdeamWindow::_AddEditorTab(entry_ref* ref, int32 index)
 	return B_OK;
 }
 
+void
+IdeamWindow::_BuildDone(BMessage* msg)
+{
+	BString command;
+
+	if (msg->FindString("command", &command) == B_OK) {
+		if (command == fActiveProject->BuildCommand()) {
+			BString buildBanner;
+			buildBanner << "------------------------------   "
+						<< B_TRANSLATE("Build finished")
+						<< "   -----------------------------";
+			fBuildLog->Insert(buildBanner);
+			_UpdateProjectActivation(true);
+		} else if (command == fActiveProject->CleanCommand()) {
+			BString cleanBanner;
+			cleanBanner << "------------------------------   "
+						<< B_TRANSLATE("Clean finished")
+						<< "   ----------------------------";
+			fBuildLog->Insert(cleanBanner);
+			_UpdateProjectActivation(true);
+		} else if (command == "make catkeys"
+				|| command == "make bindcatalogs")
+			;
+	}
+
+	fIsBuilding = false;
+}
+
+status_t
+IdeamWindow::_BuildProject()
+{
+	status_t status;
+
+	// Should not happen
+	if (fActiveProject == nullptr)
+		return B_ERROR;
+
+	_UpdateProjectActivation(false);
+
+	_ShowLog(kBuildLog);
+
+	BString text;
+	text << "Build started: "  << fActiveProject->Name();
+	_SendNotification(text, "PROJ_BUILD");
+
+	fBuildLog->Clear();
+	BString buildBanner;
+	buildBanner << "------------------------------   "
+				<< B_TRANSLATE("Build started")
+				<< "   ------------------------------\n";
+	fBuildLog->Insert(buildBanner);
+
+	BString command = fActiveProject->BuildCommand();
+	BString execDirectory;
+	BPath path;
+	BEntry entry(fActiveProject->BasePath());
+	entry.GetPath(&path);
+	execDirectory = path.Path();
+	execDirectory += "/";
+
+	fIsBuilding = true;
+	status = fBuildLog->Exec(command, execDirectory);
+
+	return status;
+}
+
+status_t
+IdeamWindow::_CleanProject()
+{
+	status_t status;
+
+	// Should not happen
+	if (fActiveProject == nullptr)
+		return B_ERROR;
+
+	_UpdateProjectActivation(false);
+
+	_ShowLog(kBuildLog);
+
+	BString text;
+	text << B_TRANSLATE("Clean started: ") << fActiveProject->Name();
+	_SendNotification( text.String(), "PROJ_BUILD");
+
+	fBuildLog->Clear();
+	BString cleanBanner;
+	cleanBanner << "------------------------------   "
+				<< B_TRANSLATE("Clean started")
+				<< "   ------------------------------\n";
+	fBuildLog->Insert(cleanBanner);
+
+
+	BString command = fActiveProject->CleanCommand();
+
+	BString execDirectory;
+	BPath path;
+	BEntry entry(fActiveProject->BasePath());
+	entry.GetPath(&path);
+	execDirectory = path.Path();
+	execDirectory += "/";
+
+	fIsBuilding = true;
+	status = fBuildLog->Exec(command, execDirectory);
+
+	return status;
+}
+
 /*static*/ int
 IdeamWindow::_CompareListItems(const BListItem* a, const BListItem* b)
 {
@@ -1001,6 +1151,25 @@ IdeamWindow::_CompareListItems(const BListItem* a, const BListItem* b)
 		return -1;
 
 	return (addr_t)a > (addr_t)b ? 1 : -1;
+}
+
+status_t
+IdeamWindow::_DebugProject()
+{
+	// Should not happen
+	if (fActiveProject == nullptr)
+		return B_ERROR;
+
+	// If in release mode warn
+
+	// TODO: args
+	const char *args[] = { fActiveProject->Target(), 0};
+
+	return be_roster->Launch("application/x-vnd.Haiku-Debugger",
+						1,
+						const_cast<char**>(args));
+
+	return B_OK;
 }
 
 /*
@@ -1101,7 +1270,7 @@ IdeamWindow::_FileOpen(BMessage* msg)
 	while (msg->FindRef("refs", refsCount, &ref) == B_OK) {
 
 		// If it's a project, just open that
-		BString const name(ref.name);
+		BString name(ref.name);
 		if (name.EndsWith(IdeamNames::kProjectExtension)) { // ".idmpro"
 			_ProjectOpen(name, false);
 			return B_OK;
@@ -1813,6 +1982,31 @@ IdeamWindow::_InitMenu()
 	menu->AddItem(submenu);
 	fMenuBar->AddItem(menu);
 
+	menu = new BMenu(B_TRANSLATE("Build"));
+	menu->AddItem(fBuildItem = new BMenuItem (B_TRANSLATE("Build Project"),
+		new BMessage(MSG_BUILD_PROJECT), 'B'));
+	menu->AddItem(fCleanItem = new BMenuItem (B_TRANSLATE("Clean Project"),
+		new BMessage(MSG_CLEAN_PROJECT)));
+	menu->AddItem(fRunItem = new BMenuItem (B_TRANSLATE("Run target"),
+		new BMessage(MSG_RUN_TARGET)));
+	menu->AddSeparatorItem();
+	menu->AddItem(fDebugItem = new BMenuItem (B_TRANSLATE("Debug Project"),
+		new BMessage(MSG_DEBUG_PROJECT)));
+	menu->AddSeparatorItem();
+	menu->AddItem(fMakeCatkeysItem = new BMenuItem ("make catkeys",
+		new BMessage(MSG_MAKE_CATKEYS)));
+	menu->AddItem(fMakeBindcatalogsItem = new BMenuItem ("make bindcatalogs",
+		new BMessage(MSG_MAKE_BINDCATALOGS)));
+
+	fBuildItem->SetEnabled(false);
+	fCleanItem->SetEnabled(false);
+	fRunItem->SetEnabled(false);
+	fDebugItem->SetEnabled(false);
+	fMakeCatkeysItem->SetEnabled(false);
+	fMakeBindcatalogsItem->SetEnabled(false);
+
+	fMenuBar->AddItem(menu);
+
 	menu = new BMenu(B_TRANSLATE("Window"));
 	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
 		new BMessage(MSG_WINDOW_SETTINGS), 'P', B_OPTION_KEY));
@@ -1843,6 +2037,12 @@ IdeamWindow::_InitWindow()
 						111, true, B_TRANSLATE("Show/Hide Projects split"));
 	fOutputButton = _LoadIconButton("OutputButton", MSG_SHOW_HIDE_OUTPUT,
 						115, true, B_TRANSLATE("Show/Hide Output split"));
+	fBuildButton = _LoadIconButton("Build", MSG_BUILD_PROJECT,
+						112, false, B_TRANSLATE("Build Project"));
+	fRunButton = _LoadIconButton("Run", MSG_RUN_TARGET,
+						113, false, B_TRANSLATE("Run Project"));
+	fDebugButton = _LoadIconButton("Debug", MSG_DEBUG_PROJECT,
+						114, false, B_TRANSLATE("Debug Project"));
 
 	fFindButton = _LoadIconButton("Find", MSG_FIND_GROUP_TOGGLED, 199, false,
 						B_TRANSLATE("Find toggle (closes Replace bar if open)"));
@@ -1897,6 +2097,10 @@ IdeamWindow::_InitWindow()
 			.Add(fRedoButton)
 			.Add(fFileSaveButton)
 			.Add(fFileSaveAllButton)
+			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
+			.Add(fBuildButton)
+			.Add(fRunButton)
+			.Add(fDebugButton)
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
 			.Add(fFindButton)
 			.Add(fReplaceButton)
@@ -2067,7 +2271,7 @@ IdeamWindow::_InitWindow()
 
 	entry_ref ref;
 	entry.GetRef(&ref);
-	// TODO if active project open that dir
+
 	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), &ref, B_FILE_NODE, true);
 	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), &ref, B_FILE_NODE, false);
 
@@ -2084,6 +2288,7 @@ IdeamWindow::_InitWindow()
 
 	// Output
 	fOutputTabView = new BTabView("OutputTabview");
+	fBuildLog = new ShellView(B_TRANSLATE("Build Log"), BMessenger(this), MSG_BUILD_DONE);
 
 	fNotificationsListView = new BColumnListView(B_TRANSLATE("Notifications"),
 									B_NAVIGABLE, B_PLAIN_BORDER, true);
@@ -2095,6 +2300,7 @@ IdeamWindow::_InitWindow()
 								140.0, 140.0, 140.0, 0), kTypeColumn);
 
 	fOutputTabView->AddTab(fNotificationsListView);
+	fOutputTabView->AddTab(fBuildLog->ScrollView());
 }
 
 BIconButton*
@@ -2129,21 +2335,66 @@ IdeamWindow::_LoadSizedVectorIcon(int32 resourceID, int32 size)
 	return bitmap;
 }
 
+void
+IdeamWindow::_MakeCatkeys()
+{
+	// Should not happen
+	if (fActiveProject == nullptr)
+		return;
+
+	_ShowLog(kBuildLog);
+
+	fBuildLog->Clear();
+
+	BString execDirectory;
+	BPath path;
+	BEntry entry(fActiveProject->BasePath());
+	entry.GetPath(&path);
+	execDirectory = path.Path();
+	execDirectory += "/";
+
+	fBuildLog->Exec("make catkeys", execDirectory);
+}
+
+void
+IdeamWindow::_MakeBindcatalogs()
+{
+	// Should not happen
+	if (fActiveProject == nullptr)
+		return;
+
+	_ShowLog(kBuildLog);
+
+	fBuildLog->Clear();
+
+	BString command = "make bindcatalogs";
+	BString execDirectory;
+	BPath path;
+	BEntry entry(fActiveProject->BasePath());
+	entry.GetPath(&path);
+	execDirectory = path.Path();
+	execDirectory += "/";
+
+	fBuildLog->Exec(command, execDirectory);
+}
+
 /*
  * Creating a new project activates it, opening a project does not.
  * An active project closed does not activate one.
  * Reopen project at startup keeps active flag.
+ * Activation could be set/changed in projects outline context menu.
  */
 void
-IdeamWindow::_ProjectActivate()
+IdeamWindow::_ProjectActivate(BString const& projectName)
 {
 	// There is no active project
 	if (fActiveProject == nullptr) {
 		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 			Project * project = fProjectObjectList->ItemAt(index);
-			if (project->Name() == fSelectedProjectName) {
+			if (project->Name() == projectName) {
 				fActiveProject = project;
 				fActiveProject->Activate();
+				_UpdateProjectActivation(true);
 			}
 		}
 	}
@@ -2151,13 +2402,17 @@ IdeamWindow::_ProjectActivate()
 		// There was an active project already
 		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 			Project * project = fProjectObjectList->ItemAt(index);
-			if (project->Name() == fSelectedProjectName) {
+			if (project->Name() == projectName) {
 				fActiveProject->Deactivate();
 				fActiveProject = project;
 				fActiveProject->Activate();
+				_UpdateProjectActivation(true);
 			}
 		}
 	}
+
+	fProjectsOutline->Invalidate();
+
 }
 
 void
@@ -2172,9 +2427,12 @@ IdeamWindow::_ProjectClose()
 			if (project == fActiveProject) {
 				fActiveProject = nullptr;
 				closed = B_TRANSLATE("Active project closed:");
+				_UpdateProjectActivation(false);
 			}
 			_ProjectOutlineDepopulate(project);
 			fProjectObjectList->RemoveItem(project);
+//			delete project; // scan-build claims as released
+
 			BString notification;
 			notification << closed << " "  << name;
 			_SendNotification(notification, "PROJ_CLOSE");
@@ -2290,8 +2548,6 @@ IdeamWindow::_ProjectFileOpen()
 void
 IdeamWindow::_ProjectItemChosen()
 {
-	// TODO return while building
-
 	fCloseProjectMenuItem->SetEnabled(false);
 	fDeleteProjectMenuItem->SetEnabled(false);
 	fSetActiveProjectMenuItem->SetEnabled(false);
@@ -2337,6 +2593,10 @@ IdeamWindow::_ProjectItemChosen()
 		fDeleteProjectMenuItem->SetEnabled(true);
 		if (!isActive)
 			fSetActiveProjectMenuItem->SetEnabled(true);
+		else
+			// Active building project: return
+			if (fIsBuilding)
+				return;
 	} else if (fSelectedProjectName == B_TRANSLATE("Project Files")
 			|| fSelectedProjectName == B_TRANSLATE("Project Sources")) {
 		// Not getting here but leave it
@@ -2362,9 +2622,6 @@ IdeamWindow::_ProjectItemChosen()
 void
 IdeamWindow::_ProjectOpen(BString const& projectName, bool activate)
 {
-	BString opened(B_TRANSLATE("Project opened:"));
-	int32 items;
-
 	Project* currentProject = new Project(projectName);
 
 	// Check if already open
@@ -2385,16 +2642,9 @@ IdeamWindow::_ProjectOpen(BString const& projectName, bool activate)
 
 	fProjectObjectList->AddItem(currentProject);
 
+	BString opened(B_TRANSLATE("Project opened:"));
 	if (activate == true) {
-		if ((items = fProjectObjectList->CountItems()) > 1) {
-			// Deactivate active project if different
-			if (fActiveProject != nullptr && fActiveProject->Name() != currentProject->Name()) {
-				fActiveProject->Deactivate();
-				// TODO invalidate single item OR elsewhere
-				fProjectsOutline->Invalidate();
-			}
-		}
-		fActiveProject = currentProject;
+		_ProjectActivate(projectName);
 		opened = B_TRANSLATE("Active project opened:");
 	}
 
@@ -2568,6 +2818,25 @@ IdeamWindow::_ReplaceGroupToggled()
 }
 
 void
+IdeamWindow::_RunTarget()
+{
+	// Should not happen
+	if (fActiveProject == nullptr)
+		return;
+
+	// If there's no app just return, should not happen
+	BEntry entry(fActiveProject->Target());
+	if (!entry.Exists())
+		return;
+
+	// TODO: run args
+	entry_ref ref;
+	entry.SetTo(fActiveProject->Target());
+	entry.GetRef(&ref);
+	be_roster->Launch(&ref, 1, NULL);
+}
+
+void
 IdeamWindow::_SendNotification(BString message, BString type)
 {
 	if (IdeamNames::Settings.enable_notifications == false)
@@ -2581,6 +2850,16 @@ IdeamWindow::_SendNotification(BString message, BString type)
        fRow->SetField(new BStringField(type), kTypeColumn);
        fNotificationsListView->AddRow(fRow, 0);
 }
+
+void
+IdeamWindow::_ShowLog(int32 index)
+{
+	if (fOutputTabView->IsHidden())
+		fOutputTabView ->Show();
+
+	fOutputTabView->Select(index);
+}
+
 
 void
 IdeamWindow::_UpdateFindMenuItems(const BString& text)
@@ -2616,6 +2895,42 @@ IdeamWindow::_UpdateLabel(int32 index, bool isModified)
 	return B_ERROR;
 }
 
+void
+IdeamWindow::_UpdateProjectActivation(bool active)
+{
+	if (active == true) {
+		fBuildButton->SetEnabled(true);
+		fBuildItem->SetEnabled(true);
+		fCleanItem->SetEnabled(true);
+		fMakeCatkeysItem->SetEnabled(true);
+		fMakeBindcatalogsItem->SetEnabled(true);
+		// Target exists: enable run button
+		BEntry entry(fActiveProject->Target());
+		// TODO: Enable debug button in debug mode only
+		if (entry.Exists()) {
+			fRunButton->SetEnabled(true);
+			fDebugButton->SetEnabled(true);
+			fRunItem->SetEnabled(true);
+			fDebugItem->SetEnabled(true);
+
+		} else {
+			fRunButton->SetEnabled(false);
+			fDebugButton->SetEnabled(false);
+			fRunItem->SetEnabled(false);
+			fDebugItem->SetEnabled(false);
+		}
+	} else {
+		fBuildButton->SetEnabled(false);
+		fRunButton->SetEnabled(false);
+		fDebugButton->SetEnabled(false);
+		fBuildItem->SetEnabled(false);
+		fCleanItem->SetEnabled(false);
+		fRunItem->SetEnabled(false);
+		fDebugItem->SetEnabled(false);
+		fMakeCatkeysItem->SetEnabled(false);
+		fMakeBindcatalogsItem->SetEnabled(false);
+	}
+}
 
 void
 IdeamWindow::_UpdateReplaceMenuItems(const BString& text)
