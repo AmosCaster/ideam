@@ -128,6 +128,7 @@ public:
 	}
 };
 
+#if 0
 class NewTabButton : public TabButton {
 public:
 	NewTabButton(BMessage* message)
@@ -155,6 +156,7 @@ public:
 			frame.right - inset, frame.bottom), 1, 1);
 	}
 };
+#endif
 
 class TabMenuTabButton : public TabButton {
 public:

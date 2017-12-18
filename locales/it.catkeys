@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	3494879638
+1	English	application/x-vnd.Ideam-Ideam	3520029382
 tuned 	SettingsWindow		settato
 A C command line \"Hello World!\" application	NewProject Window		Applicazione C \"Hello World!\" da linea di comando
 Find	IdeamWindow		Trova
@@ -73,6 +73,7 @@ Default	SettingsWindow		Default
 Ignore	IdeamApp		Ignora
 Build Project	IdeamWindow		Build Project
 Time	IdeamWindow		Data
+Choose Project:	ProjectSettingsWindow		Choose Project:
 Toggle ToolBar	IdeamWindow		On/Off barra Strumenti
 Font size:	SettingsWindow		Dimensione Font:
 applied 	SettingsWindow		applicati 
@@ -99,9 +100,11 @@ ERROR: Project directory exists!	NewProject Window		ERROR: Project directory exi
 Window	IdeamWindow		Finestra
 Set Active	IdeamWindow		Set Active
 Edge column:	SettingsWindow		Colonna di margine a:
+Run args:	ProjectSettingsWindow		Run args:
 Wrap	IdeamWindow		Wrap
 Debug Project	IdeamWindow		Debug Project
 ) Select your Haiku app dir (from src/apps) or write full path in text control\n	NewProject Window		) Select your Haiku app dir (from src/apps) or write full path in text control\n
+Source control:	ProjectSettingsWindow		Source control:
 Revert	SettingsWindow		Ripristina
 ERROR: empty \"NAME\" in Makefile	NewProject Window		ERROR: empty \"NAME\" in Makefile
 Save position	SettingsWindow		Salva posizione
@@ -124,6 +127,7 @@ Active project closed:	IdeamWindow		Active project closed:
  moved externally to 	IdeamWindow		 spostato da altra applicazione in
 File full path in window title	SettingsWindow		Percorso del File nel titolo
 File \"%file%\" was modified externally, reload it?	IdeamWindow		Il File \"%file%\" è stato modificato da un altra applicazione, lo ricarico?
+Project target:	ProjectSettingsWindow		Project target:
  e.g. /boot/home/repodir/haiku/src/apps/clock\n\n	NewProject Window		 es. /boot/home/repodir/haiku/src/apps/clock\n\n
 A GUI application with menu bar and localization	NewProject Window		A GUI application with menu bar and localization
 Project opened:	IdeamWindow		Project opened:
@@ -144,6 +148,7 @@ Show/Hide Projects split	IdeamWindow		Mostra/Nascondi split dei Progetti
 Toggle line endings	IdeamWindow		Mostra i fine riga
 Open	IdeamWindow		Apri
 Run Project	IdeamWindow		Run Project
+Exit	ProjectSettingsWindow		Exit
 File	IdeamWindow		File
 Show line number	SettingsWindow		Mostra numeri di linea
 Run in\nTerminal	NewProject Window		Run in\nTerminal
@@ -158,6 +163,7 @@ ERROR: Project 	NewProject Window		ERROR: Project
 Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?	IdeamApp		File di Impostazioni per versione precedente,\nignora, revisiona o carica predefiniti?
 Open recent…	IdeamWindow		File recenti…
 Ideam	System name		Ideam
+Clean comand:	ProjectSettingsWindow		Clean comand:
 Ignore	IdeamWindow		Ignora
 closed	IdeamWindow		chiuso
 Indexed File list	IdeamWindow		Lista dei File indicizzata
@@ -197,6 +203,7 @@ Replace selection	IdeamWindow		Sostituisci selezione
 Once done get back here and:\n\n	NewProject Window		Once done get back here and:\n\n
 Set for app ver: 	SettingsWindow		Per la versione: 
 Close	IdeamWindow		Chiudi
+Build comand:	ProjectSettingsWindow		Build comand:
 Enable Syntax highlighting	SettingsWindow		Abilita colorazione sintassi
 Visual	SettingsWindow		Visuale
 Delete project dialog	IdeamWindow		Delete project dialog
@@ -228,6 +235,7 @@ Enable folding	SettingsWindow		Abilita folding
 \nRemoving stale project file: 	NewProject Window		\nRemoving stale project file: 
 Fold toggle	IdeamWindow		Fold toggle
 Tab width:  	SettingsWindow		Tabulazioni: 
+Project:	ProjectSettingsWindow		Project:
 See Credits for a complete list.	IdeamApp		Vedi Credits per una lista completa.
 ) Click \"Create\" button\n\n\n	NewProject Window		) Click \"Create\" button\n\n\n
 Projects	IdeamWindow		Progetti

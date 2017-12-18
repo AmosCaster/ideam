@@ -24,8 +24,9 @@
 
 #include "IdeamNamespace.h"
 #include "NewProjectWindow.h"
-#include "TPreferences.h"
+#include "ProjectSettingsWindow.h"
 #include "SettingsWindow.h"
+#include "TPreferences.h"
 
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "IdeamWindow"
@@ -59,7 +60,8 @@ enum {
 	MSG_PROJECT_CLOSE			= 'prcl',
 	MSG_PROJECT_NEW				= 'prne',
 	MSG_PROJECT_OPEN			= 'prop',
-	MSG_PROJECT_SET_ACTIVE		= 'psac',
+	MSG_PROJECT_SET_ACTIVE		= 'psac',	// TODO
+	MSG_PROJECT_SETTINGS		= 'prse',
 
 	// File menu
 	MSG_FILE_NEW				= 'fine',
@@ -747,6 +749,14 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		}
 		case MSG_PROJECT_OPEN: {
 			fOpenProjectPanel->Show();
+			break;
+		}
+		case MSG_PROJECT_SETTINGS: {
+			BString name("");
+			if (fActiveProject != nullptr)
+				name = fActiveProject->Name();
+			ProjectSettingsWindow *window = new ProjectSettingsWindow(name);
+			window->Show();
 			break;
 		}
 		case MSG_REPLACE_GROUP_SHOW:
@@ -1871,6 +1881,9 @@ IdeamWindow::_InitMenu()
 		new BMessage(MSG_PROJECT_OPEN), 'O', B_OPTION_KEY));
 //	menu->AddItem(fProjectCloseMenuItem = new BMenuItem(B_TRANSLATE("Close"),
 //		new BMessage(MSG_PROJECT_CLOSE), 'C', B_OPTION_KEY));
+	menu->AddSeparatorItem();
+	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
+		new BMessage(MSG_PROJECT_SETTINGS)));
 	menu->AddSeparatorItem();
 	menu->AddItem(new BMenuItem(B_TRANSLATE("Quit"),
 		new BMessage(B_QUIT_REQUESTED), 'Q'));

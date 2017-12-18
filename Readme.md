@@ -19,7 +19,7 @@ Compiling
 * Follow instructions there and Build it
 * Place `libscintilla.a` in:
   `/boot/home/config/non-packaged/develop/lib`
-* Place `Sci_Position.h`, `SciLexer.h`, `Scintilla.h`, `ScintillaView.h` in:
+* Place `Sci_Position.h`, `SciLexer.h`, `Scintilla.h`, `ScintillaView.h` in: 
   `/boot/home/config/non-packaged/develop/headers/scintilla`
 * Download Ideam sources
 * Execute `make` in Ideam's top directory

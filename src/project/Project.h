@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Your Name <your@email.address>
+ * Copyright 2017 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 #ifndef PROJECT_H
@@ -38,6 +38,7 @@ private:
 			BString				fCleanCommand;
 			BString				fProjectDirectory;
 			BString				fTarget;
+			BString				fScm;
 		std::vector<BString>	fFilesList;
 		std::vector<BString>	fSourcesList;
 			bool				isActive;

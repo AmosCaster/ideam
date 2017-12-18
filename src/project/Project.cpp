@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Your Name <your@email.address>
+ * Copyright 2017  A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -71,8 +71,8 @@ Project::Open(bool activate)
 	if (fIdmproFile->FindString("project_target", &fTarget) != B_OK)
 		fTarget = "";
 
-//	if (fIdmproFile->FindString("project_scm", &fScm) != B_OK)
-//		fScm = "";
+	if (fIdmproFile->FindString("project_scm", &fScm) != B_OK)
+		fScm = "";
 
 	// Source files
 	int32 refsCount = 0;
