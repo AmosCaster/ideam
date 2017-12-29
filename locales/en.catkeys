@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	3520029382
+1	English	application/x-vnd.Ideam-Ideam	1658029926
 tuned 	SettingsWindow		tuned 
 A C command line \"Hello World!\" application	NewProject Window		A C command line \"Hello World!\" application
 Find	IdeamWindow		Find
@@ -39,6 +39,7 @@ Replace	IdeamWindow		Replace
 \nRemoving stale project dir: 	NewProject Window		\nRemoving stale project dir: 
 Go to line…	IdeamWindow		Go to line…
 Project opened failed: 	IdeamWindow		Project opened failed: 
+Set to Unix	IdeamWindow		Set to Unix
 Save current File	IdeamWindow		Save current File
 Sources too	IdeamWindow		Sources too
 Add header	NewProject Window		Add header
@@ -79,12 +80,15 @@ Font size:	SettingsWindow		Font size:
 applied 	SettingsWindow		applied 
 Clean started	IdeamWindow		Clean started
 available under the MIT license.\n\n	IdeamApp		available under the MIT license.\n\n
+Set to Mac	IdeamWindow		Set to Mac
 Select previous File	IdeamWindow		Select previous File
 Save caret position	SettingsWindow		Save caret position
 New	IdeamWindow		New
 There are modified files, do you want to save changes before quitting?	IdeamWindow		There are modified files, do you want to save changes before quitting?
+Convert to Dos	IdeamWindow		Convert to Dos
 Build	IdeamWindow		Build
 Redo	IdeamWindow		Redo
+Convert to Mac	IdeamWindow		Convert to Mac
 Find:	IdeamWindow		Find:
 Build Log	IdeamWindow		Build Log
 Build	SettingsWindow		Build
@@ -103,6 +107,7 @@ Edge column:	SettingsWindow		Edge column:
 Run args:	ProjectSettingsWindow		Run args:
 Wrap	IdeamWindow		Wrap
 Debug Project	IdeamWindow		Debug Project
+Set to Dos	IdeamWindow		Set to Dos
 ) Select your Haiku app dir (from src/apps) or write full path in text control\n	NewProject Window		) Select your Haiku app dir (from src/apps) or write full path in text control\n
 Source control:	ProjectSettingsWindow		Source control:
 Revert	SettingsWindow		Revert
@@ -194,6 +199,7 @@ Please fill \"Add file\" field	NewProject Window		Please fill \"Add file\" field
  times	SettingsWindow		 times
 Mark all	IdeamWindow		Mark all
 Find in files	IdeamWindow		Find in files
+Line endings	IdeamWindow		Line endings
 Settings	IdeamWindow		Settings
 Enable Brace matching	SettingsWindow		Enable Brace matching
 An application from Haiku sources repo.\n\n	NewProject Window		An application from Haiku sources repo.\n\n
@@ -247,6 +253,7 @@ General	SettingsWindow		General
  uses:	IdeamApp		 uses:
 Toggle white spaces	IdeamWindow		Toggle white spaces
  exists!	NewProject Window		 exists!
+Convert to Unix	IdeamWindow		Convert to Unix
 Add file:	NewProject Window		Add file:
 Haiku app dir:	NewProject Window		Haiku app dir:
 Keep	IdeamWindow		Keep

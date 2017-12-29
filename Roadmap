@@ -7,7 +7,7 @@ legenda:
 - = Partially done
 + = Done
 
-current Scintilla version: 3.7.2
+current Scintilla version: HaikuPorts version
 
 0.0.1) Graphical window with menu
 =================================
@@ -171,7 +171,13 @@ current Scintilla version: 3.7.2
 
 +) Project settings
 
+--------------------------------------------------------------------------------
 
+0.5.2) Line ending management
+
++) Set/Convert line endings
+
+] Is there a Haiku file attrs standard?
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

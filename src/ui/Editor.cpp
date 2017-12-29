@@ -30,6 +30,8 @@ using namespace IdeamNames;
 #define UNSET 0
 #define UNUSED 0
 
+//#define USE_LINEBREAKS_ATTRS
+
 Editor::Editor(entry_ref* ref, const BMessenger& target)
 	:
 	BScintillaView(ref->name, 0, true, true, B_NO_BORDER)
@@ -294,6 +296,33 @@ Editor::Cut()
 	SendMessage(SCI_CUT, UNSET, UNSET);
 }
 
+BString const
+Editor::EndOfLineString()
+{
+	int32 eolMode = _EndOfLine();
+
+	switch (eolMode) {
+		case SC_EOL_CRLF:
+			return "CRLF";
+		case SC_EOL_CR:
+			return "CR";
+		case SC_EOL_LF:
+			return "LF";
+		default:
+			return "";
+	}
+}
+
+void
+Editor::EndOfLineConvert(int32 eolMode)
+{
+	// Should not happen
+	if (IsReadOnly() == true)
+		return;
+
+	SendMessage(SCI_CONVERTEOLS, eolMode, UNSET);
+}
+
 void
 Editor::EnsureVisiblePolicy()
 {
@@ -473,6 +502,15 @@ Editor::IsOverwrite()
 	return SendMessage(SCI_GETOVERTYPE, UNSET, UNSET);
 }
 
+BString const
+Editor::IsOverwriteString()
+{
+	if (SendMessage(SCI_GETOVERTYPE, UNSET, UNSET) == true)
+		return "OVR";
+
+	return "INS";
+}
+
 bool
 Editor::IsReadOnly()
 {
@@ -533,6 +571,14 @@ Editor::LoadFromFile()
 	buffer[size] = '\0';
 
 	SendMessage(SCI_SETTEXT, 0, (sptr_t) buffer);
+
+	// Check the first newline only
+	int32 lineLength = SendMessage(SCI_LINELENGTH, 0, UNSET);
+	char *lineBuffer = new char[lineLength];
+	SendMessage(SCI_GETLINE, 0, (sptr_t)lineBuffer);
+	_EndOfLineAssign(lineBuffer, lineLength);
+	delete[] lineBuffer;
+
 	delete[] buffer;
 
 	if (len != size)
@@ -618,8 +664,6 @@ std::cerr << "SCN_NEEDSHOWN " << std::endl;
 				// Send position to main window so it can update status bar
 				SendCurrentPosition();
 			}
-
-
 
 			break;
 		}
@@ -865,6 +909,20 @@ Editor::SendCurrentPosition()
 	message.AddInt32("line", line);
 	message.AddInt32("column", column);
 	fTarget.SendMessage(&message);
+}
+
+void
+Editor::SetEndOfLine(int32 eolFormat)
+{
+	if (IsReadOnly() == true)
+		return;
+
+	SendMessage(SCI_SETEOLMODE, eolFormat, UNSET);
+
+#ifdef USE_LINEBREAKS_ATTRS
+	BNode node(&fFileRef);
+	node.WriteAttr("be:line_breaks", B_INT32_TYPE, 0, &eolFormat, sizeof(eolFormat));
+#endif
 }
 
 status_t
@@ -1170,6 +1228,48 @@ Editor::_CheckForBraceMatching()
 			fBraceHighlighted = kBraceMatch;
 		}
 	}
+}
+
+int32
+Editor::_EndOfLine()
+{
+	return SendMessage(SCI_GETEOLMODE, UNSET, UNSET);
+}
+
+void
+Editor::_EndOfLineAssign(char *buffer, int32 size)
+{
+#ifdef USE_LINEBREAKS_ATTRS
+	BNode node(&fFileRef);
+	if (node.ReadAttr("be:line_breaks", B_INT32_TYPE, 0, &eol, sizeof(eol)) > 0) {
+		SendMessage(SCI_SETEOLMODE, eol, UNSET);
+		return;
+	}
+#endif
+
+	// Empty file, use default LF
+	if (size == 0) {
+		SendMessage(SCI_SETEOLMODE, SC_EOL_LF, UNSET);
+		return;
+	}
+
+	int32 eol;
+	switch (buffer[size - 1]) {
+		case '\n':
+			if (size > 1 && buffer[size - 2] == '\r')
+				eol = SC_EOL_CRLF;
+			else
+				eol = SC_EOL_LF;
+			break;
+		case '\r':
+			eol = SC_EOL_CR;
+			break;
+		default:
+			eol = SC_EOL_LF;
+			break;
+	}
+
+	SendMessage(SCI_SETEOLMODE, eol, UNSET);
 }
 
 void

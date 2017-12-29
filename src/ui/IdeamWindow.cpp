@@ -78,6 +78,13 @@ enum {
 	MSG_TEXT_OVERWRITE			= 'teov',
 	MSG_WHITE_SPACES_TOGGLE		= 'whsp',
 	MSG_LINE_ENDINGS_TOGGLE		= 'lien',
+	MSG_EOL_CONVERT_TO_UNIX		= 'ectu',
+	MSG_EOL_CONVERT_TO_DOS		= 'ectd',
+	MSG_EOL_CONVERT_TO_MAC		= 'ectm',
+	MSG_EOL_SET_TO_UNIX			= 'estu',
+	MSG_EOL_SET_TO_DOS			= 'estd',
+	MSG_EOL_SET_TO_MAC			= 'estm',
+
 
 	// Search menu & group
 	MSG_FIND_GROUP_SHOW			= 'figs',
@@ -542,6 +549,57 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		}
 		case MSG_DEBUG_PROJECT: {
 			_DebugProject();
+			break;
+		}
+		case MSG_EOL_CONVERT_TO_UNIX: {
+			int32 index =  fTabManager->SelectedTabIndex();
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->EndOfLineConvert(SC_EOL_LF);
+			}
+			break;
+		}
+		case MSG_EOL_CONVERT_TO_DOS: {
+			int32 index =  fTabManager->SelectedTabIndex();
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->EndOfLineConvert(SC_EOL_CRLF);
+			}
+			break;
+		}
+		case MSG_EOL_CONVERT_TO_MAC: {
+			int32 index =  fTabManager->SelectedTabIndex();
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->EndOfLineConvert(SC_EOL_CR);
+			}
+			break;
+		}
+		case MSG_EOL_SET_TO_UNIX: {
+			int32 index =  fTabManager->SelectedTabIndex();
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->SetEndOfLine(SC_EOL_LF);
+				_UpdateStatusBarTrailing(index);
+			}
+			break;
+		}
+		case MSG_EOL_SET_TO_DOS: {
+			int32 index =  fTabManager->SelectedTabIndex();
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->SetEndOfLine(SC_EOL_CRLF);
+				_UpdateStatusBarTrailing(index);
+			}
+			break;
+		}
+		case MSG_EOL_SET_TO_MAC: {
+			int32 index =  fTabManager->SelectedTabIndex();
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->SetEndOfLine(SC_EOL_CR);
+				_UpdateStatusBarTrailing(index);
+			}
 			break;
 		}
 		case MSG_FILE_CLOSE:
@@ -1952,6 +2010,21 @@ IdeamWindow::_InitMenu()
 	menu->AddItem(fToggleLineEndingsItem = new BMenuItem(B_TRANSLATE("Toggle line endings"),
 		new BMessage(MSG_LINE_ENDINGS_TOGGLE)));
 
+	menu->AddSeparatorItem();
+	fLineEndingsMenu = new BMenu(B_TRANSLATE("Line endings"));
+	fLineEndingsMenu->AddItem(new BMenuItem(B_TRANSLATE("Set to Unix"),
+		new BMessage(MSG_EOL_SET_TO_UNIX)));
+	fLineEndingsMenu->AddItem(new BMenuItem(B_TRANSLATE("Set to Dos"),
+		new BMessage(MSG_EOL_SET_TO_DOS)));
+	fLineEndingsMenu->AddItem(new BMenuItem(B_TRANSLATE("Set to Mac"),
+		new BMessage(MSG_EOL_SET_TO_MAC)));
+	fLineEndingsMenu->AddItem(new BMenuItem(B_TRANSLATE("Convert to Unix"),
+		new BMessage(MSG_EOL_CONVERT_TO_UNIX)));
+	fLineEndingsMenu->AddItem(new BMenuItem(B_TRANSLATE("Convert to Dos"),
+		new BMessage(MSG_EOL_CONVERT_TO_DOS)));
+	fLineEndingsMenu->AddItem(new BMenuItem(B_TRANSLATE("Convert to Mac"),
+		new BMessage(MSG_EOL_CONVERT_TO_MAC)));
+
 	fUndoMenuItem->SetEnabled(false);
 	fRedoMenuItem->SetEnabled(false);
 	fCutMenuItem->SetEnabled(false);
@@ -1962,7 +2035,9 @@ IdeamWindow::_InitMenu()
 	fOverwiteItem->SetEnabled(false);
 	fToggleWhiteSpacesItem->SetEnabled(false);
 	fToggleLineEndingsItem->SetEnabled(false);
+	fLineEndingsMenu->SetEnabled(false);
 
+	menu->AddItem(fLineEndingsMenu);
 	fMenuBar->AddItem(menu);
 
 	menu = new BMenu(B_TRANSLATE("Search"));
@@ -3005,6 +3080,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 		fOverwiteItem->SetEnabled(false);
 		fToggleWhiteSpacesItem->SetEnabled(false);
 		fToggleLineEndingsItem->SetEnabled(false);
+		fLineEndingsMenu->SetEnabled(false);
 		fFindItem->SetEnabled(false);
 		fReplaceItem->SetEnabled(false);
 		fGoToLineItem->SetEnabled(false);
@@ -3064,6 +3140,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 //fOverwiteItem->SetMarked(fEditor->IsOverwrite());
 	fToggleWhiteSpacesItem->SetEnabled(true);
 	fToggleLineEndingsItem->SetEnabled(true);
+	fLineEndingsMenu->SetEnabled(!fEditor->IsReadOnly());
 	fFindItem->SetEnabled(true);
 	fReplaceItem->SetEnabled(true);
 	fGoToLineItem->SetEnabled(true);
@@ -3110,24 +3187,12 @@ IdeamWindow::_UpdateStatusBarText(int line, int column)
 void
 IdeamWindow::_UpdateStatusBarTrailing(int32 index)
 {
-	BString trailing;
-
 	fEditor = fEditorObjectList->ItemAt(index);
 
-	if (fEditor->IsOverwrite())
-		trailing << "OVR";
-	else
-		trailing << "INS";
-/*
-	trailing << '\t' << fEditor->EndOfLineString();
+	BString trailing;
+	trailing << fEditor->IsOverwriteString();
+	trailing << '\t' << fEditor->EndOfLineString() << '\t';
+	//trailing << '\t' << fEditor->EncodingString() << '\t';
 
-	switch (fEditor->Encoding()) {
-		case B_UNICODE_UTF8:
-			trailing << '\t' << "UTF-8" << '\t';
-			break;
-		default:
-			break;
-	}
-*/
 	fStatusBar->SetTrailingText(trailing.String());
 }

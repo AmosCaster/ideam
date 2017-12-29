@@ -130,6 +130,7 @@ private:
 			BMenuItem*			fOverwiteItem;
 			BMenuItem*			fToggleWhiteSpacesItem;
 			BMenuItem*			fToggleLineEndingsItem;
+			BMenu*				fLineEndingsMenu;
 			BMenuItem*			fFindItem;
 			BMenuItem*			fReplaceItem;
 			BMenuItem*			fGoToLineItem;

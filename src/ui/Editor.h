@@ -77,6 +77,8 @@ public:
 			void				Copy();
 			int32				CountLines();
 			void				Cut();
+			BString	const		EndOfLineString();
+			void				EndOfLineConvert(int32 eolMode);
 			void				EnsureVisiblePolicy();
 		const BString			FilePath() const;
 			entry_ref*			FileRef() { return &fFileRef; }
@@ -91,6 +93,7 @@ public:
 			bool				IsFoldingAvailable() { return fFoldingAvailable; }
 			bool				IsModified() { return fModified; }
 			bool				IsOverwrite();
+			BString const		IsOverwriteString();
 			bool				IsReadOnly();
 			bool				IsSearchSelected(const BString& search, int flags);
 			bool				IsTextSelected();
@@ -115,6 +118,7 @@ public:
 			void				SelectAll();
 	const 	BString				Selection();
 			void				SendCurrentPosition();
+			void				SetEndOfLine(int32 eolFormat);
 			status_t			SetFileRef(entry_ref* ref);
 			void				SetReadOnly();
 			status_t			SetSavedCaretPosition();
@@ -132,6 +136,8 @@ private:
 			void				_ApplyExtensionSettings();
 			void				_AutoIndentLine();
 			void				_CheckForBraceMatching();
+			int32				_EndOfLine();
+			void				_EndOfLineAssign(char *buffer, int32 size);
 			void				_FoldFile();
 			BString	const		_GetFileExtension();
 			void				_HighlightBraces();

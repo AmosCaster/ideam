@@ -142,6 +142,8 @@ UpdateSettingsFile()
 	if (settings.FindInt32("fullpath_title", &intVal) != B_OK)
 		settings.SetInt32("fullpath_title", kSKFullPathTitle);
 	// General Startup Page
+	if (settings.FindInt32("reopen_projects", &intVal) != B_OK)
+		settings.SetInt32("reopen_projects", kSKReopenProjects);
 	if (settings.FindInt32("reopen_files", &intVal) != B_OK)
 		settings.SetInt32("reopen_files", kSKReopenFiles);
 	if (settings.FindInt32("show_projects", &intVal) != B_OK)
