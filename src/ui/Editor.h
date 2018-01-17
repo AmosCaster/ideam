@@ -82,7 +82,7 @@ public:
 			void				EnsureVisiblePolicy();
 		const BString			FilePath() const;
 			entry_ref*			FileRef() { return &fFileRef; }
-			int					Find(const BString&  text, int flags, bool backwards = false);
+			int32				Find(const BString&  text, int flags, bool backwards = false);
 			int					FindInTarget(const BString& search, int flags, int startPosition, int endPosition);
 			int32				FindMarkAll(const BString& text, int flags);
 			int					FindNext(const BString& search, int flags, bool wrap);

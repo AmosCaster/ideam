@@ -448,6 +448,16 @@ NewProjectWindow::_CreateProject()
 		return B_ERROR;
 	}
 
+	// Create projects directory if not existing
+	BPath projectsPath(fProjectsDirectoryTC->Text());
+	BEntry projectsEntry(projectsPath.Path());
+	if (!projectsEntry.Exists()) {
+		status = create_directory(projectsPath.Path(), 0755);
+		if (status != B_OK)
+			return status;
+	}
+
+
 	// Get year
 	time_t time = ::time(NULL);
 	struct tm* tm = localtime(&time);

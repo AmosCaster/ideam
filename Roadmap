@@ -179,6 +179,12 @@ current Scintilla version: HaikuPorts version
 
 ] Is there a Haiku file attrs standard?
 --------------------------------------------------------------------------------
+
+0.5.3) Fix nonexistent Project Directory bug
+
++] Create Project Directory (as in Settings->General) if not existent
+
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
 
