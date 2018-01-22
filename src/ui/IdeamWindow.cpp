@@ -1313,7 +1313,7 @@ IdeamWindow::_FileCloseAll()
 	// If there is something to close
 	if (tabsCount > 0) {
 		// Don't lose time in changing selection on removal
-		fTabManager->SelectTab(0L);
+		fTabManager->SelectTab(int32(0));
 
 		for (int32 index = tabsCount - 1; index >= 0; index--) {
 			fTabManager->CloseTab(index);
@@ -2937,7 +2937,7 @@ IdeamWindow::_SendNotification(BString message, BString type)
        fRow->SetField(new BDateField(&now), kTimeColumn);
        fRow->SetField(new BStringField(message), kMessageColumn);
        fRow->SetField(new BStringField(type), kTypeColumn);
-       fNotificationsListView->AddRow(fRow, 0L);
+       fNotificationsListView->AddRow(fRow, int32(0));
 }
 
 void

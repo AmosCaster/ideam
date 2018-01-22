@@ -8,7 +8,7 @@ Introducing
 
 Ideam is an IDE for [Haiku](https://www.haiku-os.org).
 The editor is based on [Scintilla for Haiku](https://sourceforge.net/p/scintilla/haiku/ci/default/tree/).  
-From version 0.5.4 onwards it is developed and tested on both x86 variants.
+From version 0.5.5 onwards it is developed and tested on both x86 variants.
 
 
 Compiling
