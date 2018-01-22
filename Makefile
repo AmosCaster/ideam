@@ -3,8 +3,15 @@
 ##
 
 arch := $(shell getarch)
+platform := $(shell uname -p)
 
-#CXX	:= clang++
+ifeq ($(arch), x86_gcc2)
+CC   := gcc-x86
+CXX  := g++-x86
+#CXX  := clang++
+else
+#CXX  := clang++
+endif
 
 NAME := Ideam
 
@@ -35,21 +42,31 @@ RDEFS := Ideam.rdef
 LIBS = be shared translation localestub $(STDCPPLIBS)
 LIBS += scintilla columnlistview tracker
 
-# Include libraries based on arch
-#ifeq ($(arch), x86_gcc2)
-#LIBS +=	/boot/system/develop/lib/x86/libcolumnlistview.a
-#else
-#LIBS +=	/boot/system/develop/lib/libcolumnlistview.a
-#endif
-
-LIBPATHS = $(shell findpaths -a "$(arch)" B_FIND_PATH_DEVELOP_LIB_DIRECTORY)
+LIBPATHS = $(shell findpaths -a $(platform) B_FIND_PATH_DEVELOP_LIB_DIRECTORY)
 #$(info LIBPATHS="$(LIBPATHS)")
 
 SYSTEM_INCLUDE_PATHS = \
-	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/shared) \
 	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/interface) \
-	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY scintilla)
+	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/shared) \
+	$(shell findpaths -a $(platform) -e B_FIND_PATH_HEADERS_DIRECTORY scintilla)
 
+################################################################################
+## clang++ headers hack
+ifeq ($(platform), x86)
+######## x86 clang++ build (mind scan-build too) ###############################
+ifneq ($(CXX), g++-x86)
+SYSTEM_INCLUDE_PATHS += /boot/system/lib/x86/clang/5.0.0/include \
+	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/5.4.0/include/c++ \
+	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/5.4.0/include/c++/i586-pc-haiku
+endif
+else
+######## x86_64 clang++ build (mind scan-build too) ############################
+ifneq ($(CXX), g++)
+SYSTEM_INCLUDE_PATHS += \
+	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++ \
+	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++/x86_64-unknown-haiku
+endif
+endif
 
 OPTIMIZE := FULL
 
@@ -61,18 +78,13 @@ LOCALES := en it
 
 DEBUGGER := TRUE
 
-## Useful for scan-build too
-ifneq ($(CXX), g++)
-SYSTEM_INCLUDE_PATHS += /system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++/ \
-	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++/x86_64-unknown-haiku/
-
-CFLAGS +=  -fPIC
-endif
 
 ## Include the Makefile-Engine
 DEVEL_DIRECTORY := \
 	$(shell findpaths -r "makefile_engine" B_FIND_PATH_DEVELOP_DIRECTORY)
  include $(DEVEL_DIRECTORY)/etc/makefile-engine
 
+## CXXFLAGS rule
 $(OBJ_DIR)/%.o : %.cpp
 	$(CXX) -c $< $(INCLUDES) $(CFLAGS) $(CXXFLAGS) -o "$@"
+

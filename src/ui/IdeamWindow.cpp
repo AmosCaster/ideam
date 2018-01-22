@@ -398,7 +398,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 				if (index == fTabManager->SelectedTabIndex()) {
 					fEditor = fEditorObjectList->ItemAt(index);
 
-					int line;
+					int32 line;
 					if (message->FindInt32("line", &line) == B_OK) {
 						BString text;
 						text << fEditor->Name() << " :" << line;
@@ -414,7 +414,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index =  _GetEditorIndex(&ref);
 				if (index == fTabManager->SelectedTabIndex()) {
-					int line, column;
+					int32 line, column;
 					BString selection, replacement;
 					if (message->FindInt32("line", &line) == B_OK
 						&& message->FindInt32("column", &column) == B_OK
@@ -434,7 +434,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index =  _GetEditorIndex(&ref);
 				if (index == fTabManager->SelectedTabIndex()) {
-					int line, column;
+					int32 line, column;
 					_UpdateSelectionChange(index);
 					if (message->FindInt32("line", &line) == B_OK
 						&& message->FindInt32("column", &column) == B_OK)
@@ -1154,6 +1154,7 @@ IdeamWindow::_BuildProject()
 	execDirectory += "/";
 
 	fIsBuilding = true;
+
 	status = fBuildLog->Exec(command, execDirectory);
 
 	return status;
@@ -1312,7 +1313,7 @@ IdeamWindow::_FileCloseAll()
 	// If there is something to close
 	if (tabsCount > 0) {
 		// Don't lose time in changing selection on removal
-		fTabManager->SelectTab(0);
+		fTabManager->SelectTab(0L);
 
 		for (int32 index = tabsCount - 1; index >= 0; index--) {
 			fTabManager->CloseTab(index);
@@ -2936,7 +2937,7 @@ IdeamWindow::_SendNotification(BString message, BString type)
        fRow->SetField(new BDateField(&now), kTimeColumn);
        fRow->SetField(new BStringField(message), kMessageColumn);
        fRow->SetField(new BStringField(type), kTypeColumn);
-       fNotificationsListView->AddRow(fRow, 0);
+       fNotificationsListView->AddRow(fRow, 0L);
 }
 
 void

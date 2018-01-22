@@ -26,23 +26,23 @@ namespace IdeamNames
 
 	typedef struct {
 		BString projects_directory;
-		int fullpath_title;
-		int reopen_projects;
-		int reopen_files;
-		int show_projects;
-		int show_output;
-		int show_toolbar;
-		int edit_fontsize;
-		int syntax_highlight;
-		int tab_width;
-		int brace_match;
-		int save_caret;
-		int show_linenumber;
-		int mark_caretline;
-		int show_edgeline;
+		int32 fullpath_title;
+		int32 reopen_projects;
+		int32 reopen_files;
+		int32 show_projects;
+		int32 show_output;
+		int32 show_toolbar;
+		int32 edit_fontsize;
+		int32 syntax_highlight;
+		int32 tab_width;
+		int32 brace_match;
+		int32 save_caret;
+		int32 show_linenumber;
+		int32 mark_caretline;
+		int32 show_edgeline;
 		BString edgeline_column;
-		int enable_folding;
-		int enable_notifications;
+		int32 enable_folding;
+		int32 enable_notifications;
 
 	} SettingsVars;
 

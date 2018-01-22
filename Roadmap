@@ -185,6 +185,15 @@ current Scintilla version: HaikuPorts version
 +] Create Project Directory (as in Settings->General) if not existent
 
 --------------------------------------------------------------------------------
+
+0.5.4) Enable building in both intel platforms
+
++) Build x86_gcc2 (g++-x86, clang++)
++) Build x86_64   (g++, clang++)
+
+-] clang++ build needs some headers hack
+
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
 

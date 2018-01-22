@@ -1,6 +1,4 @@
 /*
- *
- *
  * Taken from Heidi project
  * Copyright 2014 Augustin Cavalier <waddlesplash>
  * All rights reserved. Distributed under the terms of the MIT license.
@@ -17,7 +15,7 @@
 
 class ExecThread : public BLooper {
 public:
-					ExecThread(BString command, BString dir, BMessenger msnger);
+					ExecThread(BString command, BString dir, const BMessenger& target);
 		void		MessageReceived(BMessage* msg);
 
 private:
@@ -26,11 +24,11 @@ private:
 };
 
 
-ExecThread::ExecThread(BString command, BString dir, BMessenger msnger)
+ExecThread::ExecThread(BString command, BString dir, const BMessenger& target)
 	: BLooper(command.String())
 {
 	fCommand.SetToFormat("cd \"%s\" && %s 2>&1;", dir.String(), command.String());
-	fMessenger = msnger;
+	fMessenger = target;
 }
 
 
@@ -63,13 +61,13 @@ ExecThread::MessageReceived(BMessage* msg)
 
 // #pragma mark - ShellView
 
-ShellView::ShellView(const char* name, BMessenger msngr, uint32 what)
+ShellView::ShellView(const char* name, const BMessenger& messenger, uint32 what)
 	: BTextView(name, be_fixed_font, NULL, B_WILL_DRAW | B_PULSE_NEEDED),
-//	  fExecThread(NULL),
+	fExecThread(nullptr),
 //	  fExecDir("."),
 //	  fCommand(""),
-	  fMessenger(msngr),
-	  fNotifyFinishedWhat(what)
+	fMessenger(messenger),
+	fNotifyFinishedWhat(what)
 {
 	fScrollView = new BScrollView(name, this, B_NAVIGABLE, true, true);
 	MakeEditable(false);

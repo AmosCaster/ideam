@@ -22,7 +22,7 @@ public:
 		SV_DONE	 	= 'svDO'
 	};
 
-					ShellView(const char* name, BMessenger msngr, uint32 what);
+					ShellView(const char* name, const BMessenger& messenger, uint32 what);
 		void		MessageReceived(BMessage* msg);
 
 		BScrollView*	ScrollView() { return fScrollView; }
