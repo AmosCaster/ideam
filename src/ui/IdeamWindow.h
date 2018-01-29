@@ -19,7 +19,6 @@
 #include <ScrollView.h>
 #include <StatusBar.h>
 #include <TabView.h>
-#include <TabView.h>
 #include <TextControl.h>
 #include <Window.h>
 
@@ -55,9 +54,11 @@ private:
 			status_t			_AddEditorTab(entry_ref* ref, int32 index);
 			void				_BuildDone(BMessage* msg);
 			status_t			_BuildProject();
+			status_t			_CargoNew(BString command);
 			status_t			_CleanProject();
 	static	int					_CompareListItems(const BListItem* a,
 									const BListItem* b);
+
 			status_t			_DebugProject();
 			status_t			_FileClose(int32 index, bool ignoreModifications = false);
 			void				_FileCloseAll();
@@ -141,6 +142,8 @@ private:
 			BMenuItem*			fBuildItem;
 			BMenuItem*			fCleanItem;
 			BMenuItem*			fRunItem;
+			BMenuItem*			fReleaseFlagItem;
+			BMenuItem*			fDebugFlagItem;
 			BMenuItem*			fDebugItem;
 			BMenuItem*			fMakeCatkeysItem;
 			BMenuItem*			fMakeBindcatalogsItem;
@@ -162,6 +165,7 @@ private:
 			BIconButton*		fBuildButton;
 			BIconButton*		fRunButton;
 			BIconButton*		fDebugButton;
+			BIconButton*		fBuildFlagButton;
 			BIconButton*		fFileUnlockedButton;
 			BIconButton*		fFilePreviousButton;
 			BIconButton*		fFileNextButton;
@@ -192,6 +196,7 @@ private:
 
 			Project*			fActiveProject;
 			bool				fIsBuilding;
+			bool				fReleaseBuild;
 			BString				fSelectedProjectName;
 			BStringItem*		fSelectedProjectItem;
 			BString				fSelectedProjectItemName;
@@ -222,6 +227,7 @@ private:
 			BTabView*			fOutputTabView;
 			BColumnListView*	fNotificationsListView;
 			ShellView*			fBuildLog;
+
 };
 
 #endif //IDEAMWINDOW_H

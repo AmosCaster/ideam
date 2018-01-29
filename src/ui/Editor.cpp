@@ -136,7 +136,12 @@ Editor::ApplySettings()
 	}
 
 	// Tab width
-	SendMessage(SCI_SETTABWIDTH, Settings.tab_width, UNSET);
+	if (fExtension == "rust") {
+		// Use rust style (4 spaces)
+		SendMessage(SCI_SETTABWIDTH, 4, UNSET);
+		SendMessage(SCI_SETUSETABS, false, UNSET);
+	} else
+		SendMessage(SCI_SETTABWIDTH, Settings.tab_width, UNSET);
 
 	// MARGINS
 	SendMessage(SCI_SETMARGINS, 3, UNSET);
@@ -1079,7 +1084,7 @@ Editor::_ApplyExtensionSettings()
 		fFoldingAvailable = true;
 		fBracingAvailable = true;
 		SendMessage(SCI_SETLEXER, SCLEX_RUST, UNSET);
-//		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)rustKeywords);
+		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)rustKeywords);
 //		SendMessage(SCI_SETKEYWORDS, 1, (sptr_t)haikuClasses);
 	} else if (fExtension == "make") {
 		fSyntaxAvailable = true;
@@ -1097,6 +1102,10 @@ Editor::_AutoIndentLine()
 {
 	auto tabInsertions = 0;
 	auto charInsertions = 0;
+
+	BString lineIndent = "\t";
+	if (fExtension == "rust")
+		lineIndent = "    ";
 
 	// Get current line number
 	int32 position = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
@@ -1119,29 +1128,30 @@ Editor::_AutoIndentLine()
 
 	// Last line char is '{', indent
 	if (previousString.back() == '{') {
-		lineStart << '\t';
-		tabInsertions++;
+		lineStart << lineIndent;
+		tabInsertions += lineIndent.Length();
 	}
 	// TODO maybe
 	else if (previousString.back() == ')') {
-		lineStart << '\t';
-		tabInsertions++;
+		lineStart << lineIndent;
+		tabInsertions += lineIndent.Length();
 	}
 	// Last line char is ';', parse a little
 	else if (previousString.back() == ';') {
 		// If last word is: break, return, continue
 		// deindent if possible (tab check only)
-		std::size_t found = previousString.find_last_of("\t");
+		std::size_t found = previousString.find_last_of(lineIndent);
 		if (previousString.substr(found + 1) == "break;"
 			|| previousString.substr(found + 1) == "return;"
 			|| previousString.substr(found + 1) == "continue;")
-			tabInsertions--;
+			tabInsertions  -= lineIndent.Length();
 		// TODO
 		// Non void return
 
 		// If previous line last char was ')'
 		// deindent if possible
 	}
+
 	for (int pos = 0; previousLine[pos] != '\0'; pos++) {
 		if (previousLine[pos] == '\t') {
 			lineStart << previousLine[pos];
@@ -1154,6 +1164,7 @@ Editor::_AutoIndentLine()
 	}
 	auto insertions = tabInsertions + charInsertions;
 	// TODO check negative tab/char insertions
+
 	if (insertions < 1)
 		return;
 
@@ -1341,25 +1352,54 @@ void
 Editor::_HighlightFile()
 {
 	if (fSyntaxAvailable == true) {
-		SendMessage(SCI_STYLESETFORE, SCE_C_DEFAULT, 0x000000);
-		SendMessage(SCI_STYLESETFORE, SCE_C_COMMENT, 0xAA0000);
-	//	SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTLINE, 0x007F00);
-		SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTLINE, 0x007F3F);
-		SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTDOC, 0x3F703F);
-		SendMessage(SCI_STYLESETFORE, SCE_C_NUMBER, 0x3030C0);
-		SendMessage(SCI_STYLESETFORE, SCE_C_WORD, 0x7F0000);
-		SendMessage(SCI_STYLESETBOLD, SCE_C_WORD, 1);
-		SendMessage(SCI_STYLESETFORE, SCE_C_STRING, 0x7F007F);
-		SendMessage(SCI_STYLESETFORE, SCE_C_CHARACTER, 0x7F007F);
-		SendMessage(SCI_STYLESETFORE, SCE_C_UUID, 0x804080);
-		SendMessage(SCI_STYLESETFORE, SCE_C_PREPROCESSOR, 0x1E6496); //0x10C0D0 //0x37B0B0 0x007F7F);
-	//	SendMessage(SCI_STYLESETFORE, SCE_C_OPERATOR, 0x007F00);
-	//	SendMessage(SCI_STYLESETBOLD, SCE_C_OPERATOR, 1);
-	//	SendMessage(SCI_STYLESETFORE, SCE_C_IDENTIFIER, 0x808080);
-		SendMessage(SCI_STYLESETFORE, SCE_C_WORD2, 0x986633);
-	//	SendMessage(SCI_STYLESETBOLD, SCE_C_WORD2, 1);SCE_C_PREPROCESSORCOMMENT
-		SendMessage(SCI_STYLESETFORE, SCE_C_PREPROCESSORCOMMENT, 0x808080);
-		SendMessage(SCI_STYLESETFORE, SCE_C_GLOBALCLASS, 0x808080);
+		// Rust colors taken from rustbook, second edition
+		if (fExtension == "rust") {
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_DEFAULT, 0x000000);
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_COMMENTBLOCK, 0x6E5B5E);
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_COMMENTBLOCKDOC, 0x6E5B5E);
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_COMMENTLINE, 0x6E5B5E);
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_COMMENTLINEDOC, 0x6E5B5E);
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_NUMBER, 0x3030C0);
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_WORD, 0xB854D4);
+			SendMessage(SCI_STYLESETBOLD, SCE_RUST_WORD, 1);
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_WORD2, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_WORD3, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_WORD4, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_WORD5, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_WORD6, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_WORD7, );
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_STRING, 0x60AC39);
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_STRINGR, 0x60AC39);
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_CHARACTER, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_OPERATOR, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_IDENTIFIER, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_LIFETIME, );
+			SendMessage(SCI_STYLESETFORE, SCE_RUST_MACRO, 0x6684E1);
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_LEXERROR, );
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_BYTESTRING, 0x60AC39);
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_BYTESTRINGR, 0x60AC39);
+//			SendMessage(SCI_STYLESETFORE, SCE_RUST_BYTECHARACTER, );
+		} else {
+			SendMessage(SCI_STYLESETFORE, SCE_C_DEFAULT, 0x000000);
+			SendMessage(SCI_STYLESETFORE, SCE_C_COMMENT, 0xAA0000);
+		//	SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTLINE, 0x007F00);
+			SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTLINE, 0x007F3F);
+			SendMessage(SCI_STYLESETFORE, SCE_C_COMMENTDOC, 0x3F703F);
+			SendMessage(SCI_STYLESETFORE, SCE_C_NUMBER, 0x3030C0);
+			SendMessage(SCI_STYLESETFORE, SCE_C_WORD, 0x7F0000);
+			SendMessage(SCI_STYLESETBOLD, SCE_C_WORD, 1);
+			SendMessage(SCI_STYLESETFORE, SCE_C_STRING, 0x7F007F);
+			SendMessage(SCI_STYLESETFORE, SCE_C_CHARACTER, 0x7F007F);
+			SendMessage(SCI_STYLESETFORE, SCE_C_UUID, 0x804080);
+			SendMessage(SCI_STYLESETFORE, SCE_C_PREPROCESSOR, 0x1E6496); //0x10C0D0 //0x37B0B0 0x007F7F);
+		//	SendMessage(SCI_STYLESETFORE, SCE_C_OPERATOR, 0x007F00);
+		//	SendMessage(SCI_STYLESETBOLD, SCE_C_OPERATOR, 1);
+		//	SendMessage(SCI_STYLESETFORE, SCE_C_IDENTIFIER, 0x808080);
+			SendMessage(SCI_STYLESETFORE, SCE_C_WORD2, 0x986633);
+		//	SendMessage(SCI_STYLESETBOLD, SCE_C_WORD2, 1);SCE_C_PREPROCESSORCOMMENT
+			SendMessage(SCI_STYLESETFORE, SCE_C_PREPROCESSORCOMMENT, 0x808080);
+			SendMessage(SCI_STYLESETFORE, SCE_C_GLOBALCLASS, 0x808080);
+		}
 	}
 }
 

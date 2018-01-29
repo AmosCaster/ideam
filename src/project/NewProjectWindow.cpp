@@ -117,14 +117,11 @@ NewProjectWindow::NewProjectWindow()
 	genericItem = new TitleItem("Generic");
 	genericItem->SetEnabled(false);
 	genericItem->SetExpanded(false);
-
 	fTypeListView->AddItem(genericItem);
-
 	helloCplusItem = new BStringItem(B_TRANSLATE("C++ Hello World!"), 1, true);
 	helloCItem = new BStringItem(B_TRANSLATE("C Hello World!"), 1, true);
 	principlesItem = new BStringItem(B_TRANSLATE("Principles and Practice (2nd)"), 1, true);
 	emptyItem = new BStringItem(B_TRANSLATE("Empty Project"), 1, true);
-
 	fTypeListView->AddItem(helloCplusItem);
 	fTypeListView->AddItem(helloCItem);
 	fTypeListView->AddItem(principlesItem);
@@ -133,24 +130,19 @@ NewProjectWindow::NewProjectWindow()
 	importItem = new TitleItem(B_TRANSLATE("Import"));
 	importItem->SetEnabled(false);
 	importItem->SetExpanded(false);
-
 	fTypeListView->AddItem(importItem);
 	sourcesItem = new BStringItem(B_TRANSLATE("App from Haiku sources"), 1, true);
 	existingItem = new BStringItem(B_TRANSLATE("C/C++ Project with Makefile"), 1, true);
-//	gitItem = new BStringItem(B_TRANSLATE("Git Project (clone)"), 1, true);
-
 	fTypeListView->AddItem(sourcesItem);
 	fTypeListView->AddItem(existingItem);
-//	fTypeListView->AddItem(gitItem);
 
-/*
-	TitleItem* rustItem = new TitleItem("Rust");
+	rustItem = new TitleItem(B_TRANSLATE("Rust"));
 	rustItem->SetEnabled(false);
 	rustItem->SetExpanded(false);
+	cargoItem = new BStringItem(B_TRANSLATE("Cargo project"), 1, true);
 	fTypeListView->AddItem(rustItem);
-	rustSourceItem = new BStringItem(B_TRANSLATE("Rust source"), 1, true);
-	fTypeListView->AddItem(rustSourceItem);
-*/
+	fTypeListView->AddItem(cargoItem);
+
 	// Map Items description
 	_MapItems();
 
@@ -176,10 +168,10 @@ NewProjectWindow::NewProjectWindow()
 	boxLabel << get_primary_architecture() << ")";
 	fProjectBox->SetLabel(B_TRANSLATE(boxLabel));
 
-	fProjectNameTC = new BTextControl("nameTC", B_TRANSLATE("Project name:"), "",
+	fProjectNameText = new BTextControl("nameTC", B_TRANSLATE("Project name:"), "",
 			nullptr); //new BMessage(MSG_PROJECT_NAME));
-	fProjectNameTC->SetModificationMessage(new BMessage(MSG_PROJECT_NAME_EDITED));
-	fProjectNameTC->SetEnabled(false);
+	fProjectNameText->SetModificationMessage(new BMessage(MSG_PROJECT_NAME_EDITED));
+	fProjectNameText->SetEnabled(false);
 
 	fProjectTargetTC = new BTextControl("targetTC", B_TRANSLATE("Project target:"), "",
 			new BMessage(MSG_PROJECT_TARGET));	
@@ -190,14 +182,14 @@ NewProjectWindow::NewProjectWindow()
 	fRunInTeminal->SetEnabled(false);
 	fRunInTeminal->SetValue(B_CONTROL_OFF);
 
-	fProjectsDirectoryTC = new BTextControl("directoryTC", B_TRANSLATE("Projects dir:"), "",
+	fProjectsDirectoryText = new BTextControl("directoryTC", B_TRANSLATE("Projects dir:"), "",
 			new BMessage(MSG_PROJECT_DIRECTORY));
-	fProjectsDirectoryTC->SetEnabled(false);
+	fProjectsDirectoryText->SetEnabled(false);
 
 	// Peep settings
 	TPreferences* prefs = new TPreferences(IdeamNames::kSettingsFileName,
 								IdeamNames::kApplicationName, 'IDSE');
-	fProjectsDirectoryTC->SetText(prefs->GetString("projects_directory"));
+	fProjectsDirectoryText->SetText(prefs->GetString("projects_directory"));
 	delete prefs;
 
 	fAddFileTC = new BTextControl("addfileTC", B_TRANSLATE("Add file:"), "",
@@ -242,6 +234,22 @@ NewProjectWindow::NewProjectWindow()
 								new BMessage(MSG_BROWSE_LOCAL_APP_CLICKED));
 	fBrowseLocalAppButton->SetEnabled(false);
 
+	// Cargo app
+	fCargoPathText = new BTextControl("CargoPathText", B_TRANSLATE("cargo path:"),
+																			"", NULL);
+	fCargoPathText->SetText("/bin/cargo");
+	fCargoPathText->SetEnabled(false);
+
+	fCargoBin = new BCheckBox("CargoBin", "--bin", nullptr);
+	fCargoBin->SetEnabled(false);
+	fCargoBin->SetValue(B_CONTROL_ON);
+	fCargoBin->SetToolTip(B_TRANSLATE("Library target when unchecked"));
+
+	fCargoVcs = new BCheckBox("CargoVcs", "--vcs none", nullptr);
+	fCargoVcs->SetEnabled(false);
+	fCargoVcs->SetValue(B_CONTROL_OFF);
+	fCargoVcs->SetToolTip(B_TRANSLATE("Disables vcs management when checked"));
+
 	// Open panel
 	// TODO read settings file for sources dir
 	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), NULL,
@@ -249,13 +257,13 @@ NewProjectWindow::NewProjectWindow()
 
 	BLayoutBuilder::Grid<>(fProjectBox)
 		.SetInsets(20, 20, 10, 10)
-		.Add(fProjectNameTC->CreateLabelLayoutItem(), 0, 1)
-		.Add(fProjectNameTC->CreateTextViewLayoutItem(), 1, 1, 2)
+		.Add(fProjectNameText->CreateLabelLayoutItem(), 0, 1)
+		.Add(fProjectNameText->CreateTextViewLayoutItem(), 1, 1, 2)
 		.Add(fProjectTargetTC->CreateLabelLayoutItem(), 0, 2)
 		.Add(fProjectTargetTC->CreateTextViewLayoutItem(), 1, 2, 2)
 		.Add(fRunInTeminal, 3, 2)
-		.Add(fProjectsDirectoryTC->CreateLabelLayoutItem(), 0, 3)
-		.Add(fProjectsDirectoryTC->CreateTextViewLayoutItem(), 1, 3, 2)
+		.Add(fProjectsDirectoryText->CreateLabelLayoutItem(), 0, 3)
+		.Add(fProjectsDirectoryText->CreateTextViewLayoutItem(), 1, 3, 2)
 		.Add(fAddFileTC->CreateLabelLayoutItem(), 0, 4)
 		.Add(fAddFileTC->CreateTextViewLayoutItem(), 1, 4, 2)
 		.Add(fAddHeader, 3, 4)
@@ -271,7 +279,11 @@ NewProjectWindow::NewProjectWindow()
 		.Add(fLocalAppDirTC->CreateTextViewLayoutItem(), 1, 8, 2)
 		.Add(fBrowseLocalAppButton, 3, 8)
 		.Add(new BSeparatorView(B_HORIZONTAL), 0, 9, 4)
-		.AddGlue(0, 10)
+		.Add(fCargoPathText->CreateLabelLayoutItem(), 0, 10)
+		.Add(fCargoPathText->CreateTextViewLayoutItem(), 1, 10)
+		.Add(fCargoBin, 2, 10)
+		.Add(fCargoVcs, 3, 10)
+		.AddGlue(0, 12)
 		;
 
 	// Window layout
@@ -316,6 +328,8 @@ NewProjectWindow::QuitRequested()
 	delete importItem;
 	delete sourcesItem;
 	delete existingItem;
+	delete rustItem;
+	delete cargoItem;
 
 	BWindow::Quit();
 		
@@ -394,6 +408,12 @@ NewProjectWindow::MessageReceived(BMessage *msg)
 	}	
 }
 
+/**
+ * When you click 'Create' button you are driven here.
+ * After some validation the _Create... function for the chosen project is called.
+ * Some projects may use common functions (e.g. _CreateSkeleton) 
+ * while others are "stand alone" (e.g. _CreateCargoProject)
+ */
 status_t
 NewProjectWindow::_CreateProject()
 {
@@ -405,14 +425,14 @@ NewProjectWindow::_CreateProject()
 
 	// Little validation for controls
 	// Warn if project name is empty
-	if ((strcmp(fProjectNameTC->Text(), "") == 0)) {
+	if ((strcmp(fProjectNameText->Text(), "") == 0)) {
 		fProjectDescription->SetText(B_TRANSLATE("Please fill \"Project name\" field"));
 		return B_ERROR;
 	}
 
 	// Warn if project directory exists
-	BPath dirPath(fProjectsDirectoryTC->Text());
-	dirPath.Append(fProjectNameTC->Text());
+	BPath dirPath(fProjectsDirectoryText->Text());
+	dirPath.Append(fProjectNameText->Text());
 	BEntry entry(dirPath.Path());
 	if (entry.Exists() && fCurrentItem != existingItem) {
 		fProjectDescription->SetText(B_TRANSLATE("ERROR: Project directory exists!"));
@@ -421,7 +441,7 @@ NewProjectWindow::_CreateProject()
 
 	// Warn if project exists
 	BPath projectPath;
-	BString projectFile(fProjectNameTC->Text());
+	BString projectFile(fProjectNameText->Text());
 	projectFile.Append(IdeamNames::kProjectExtension); // ".idmpro"
 
 	status = find_directory(B_USER_SETTINGS_DIRECTORY, &projectPath);
@@ -449,7 +469,7 @@ NewProjectWindow::_CreateProject()
 	}
 
 	// Create projects directory if not existing
-	BPath projectsPath(fProjectsDirectoryTC->Text());
+	BPath projectsPath(fProjectsDirectoryText->Text());
 	BEntry projectsEntry(projectsPath.Path());
 	if (!projectsEntry.Exists()) {
 		status = create_directory(projectsPath.Path(), 0755);
@@ -497,6 +517,8 @@ NewProjectWindow::_CreateProject()
 		}
 		status = _CreateLocalSourcesProject();
 	}
+	else if (fCurrentItem == cargoItem)
+		status = _CreateCargoProject();
 
 	if (status == B_OK) {
 		// Post a message
@@ -507,7 +529,7 @@ NewProjectWindow::_CreateProject()
 		PostMessage(B_QUIT_REQUESTED);
 	} else {
 		// Delete stale project files if any
-		fProjectDescription->SetText(B_TRANSLATE("\n\nERROR: Project creation failed\n\n"));
+		fProjectDescription->Insert(B_TRANSLATE("\n\nERROR: Project creation failed\n\n"));
 
 		_RemoveStaleEntries(dirPath.Path());
 
@@ -536,8 +558,8 @@ NewProjectWindow::_CreateSkeleton()
 {
 	status_t status;
 
-	BPath path(fProjectsDirectoryTC->Text());
-	path.Append(fProjectNameTC->Text());
+	BPath path(fProjectsDirectoryText->Text());
+	path.Append(fProjectNameText->Text());
 	BDirectory projectDirectory;
 
 	status = projectDirectory.CreateDirectory(path.Path(), NULL);
@@ -560,15 +582,16 @@ NewProjectWindow::_CreateSkeleton()
 		return status;
 
 	// Project file
-	fProjectFilename = fProjectNameTC->Text();
+	fProjectFilename = fProjectNameText->Text();
 	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
 	fProjectFile =  new TPreferences(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
 
 	fProjectFile->SetBString("project_filename", fProjectFilename);
-	fProjectFile->SetString("project_name", fProjectNameTC->Text());
+	fProjectFile->SetString("project_name", fProjectNameText->Text());
 	fProjectFile->SetString("project_directory", path.Path());
 	fProjectFile->SetBString("project_build_command", "make");
 	fProjectFile->SetBString("project_clean_command", "make clean rmapp");
+	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
 
 	// Set project target
 	BString target(appPath.Path());
@@ -612,6 +635,64 @@ NewProjectWindow::_CreateAppMenuProject()
 		return status;
 
 	delete fProjectFile;
+
+	return B_OK;
+}
+
+status_t
+NewProjectWindow::_CreateCargoProject()
+{
+	BPath path(fProjectsDirectoryText->Text());
+
+	// Test cargo presence
+	BEntry entry(fCargoPathText->Text(), true);
+	if (!entry.Exists()) {
+		fProjectDescription->SetText(B_TRANSLATE("cargo binary not found!"));
+		return B_ERROR;
+	}
+
+	BString command, srcFilename("src/lib.rs");
+	command << fProjectNameText->Text();
+	if (fCargoBin->Value() == B_CONTROL_ON) {
+		command << " --bin";
+		srcFilename = "src/main.rs";
+	}
+	if (fCargoVcs->Value() == B_CONTROL_ON)
+		command << " --vcs none";
+
+	// Post a message
+	BMessage message(NEWPROJECTWINDOW_PROJECT_CARGO_NEW);
+	message.AddString("command_string", command);
+	be_app->WindowAt(0)->PostMessage(&message);
+
+	// Project file
+	fProjectFilename = fProjectNameText->Text();
+	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
+	TPreferences projectFile(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
+
+	projectFile.SetBString("project_filename", fProjectFilename);
+	projectFile.SetString("project_name", fProjectNameText->Text());
+	path.Append(fProjectNameText->Text());
+	projectFile.SetString("project_directory", path.Path());
+	projectFile.SetBString("project_build_command", "cargo build");
+	projectFile.SetBString("project_clean_command", "cargo clean");
+	projectFile.SetBool("run_in_terminal", fRunInTeminal->Value());
+
+	// TODO: check if it may be useful somewhere
+	// What about release target?
+	// Set project target
+	BPath targetPath(path);
+	targetPath.Append("target/debug");
+	targetPath.Append(fProjectNameText->Text());
+	projectFile.SetBString("project_target", targetPath.Path());
+	// Cargo specific
+	projectFile.SetBString("project_type", "cargo");
+
+	BPath srcPath(path);
+	path.Append("Cargo.toml");
+	projectFile.AddString("project_file", path.Path());
+	srcPath.Append(srcFilename);
+	projectFile.AddString("project_source", srcPath.Path());
 
 	return B_OK;
 }
@@ -678,8 +759,8 @@ NewProjectWindow::_CreateEmptyProject()
 {
 	status_t status;
 
-	BPath path(fProjectsDirectoryTC->Text());
-	path.Append(fProjectNameTC->Text());
+	BPath path(fProjectsDirectoryText->Text());
+	path.Append(fProjectNameText->Text());
 	BDirectory projectDirectory;
 
 	// TODO manage existing
@@ -688,13 +769,14 @@ NewProjectWindow::_CreateEmptyProject()
 		return status;
 
 	// Project file
-	fProjectFilename = fProjectNameTC->Text();
+	fProjectFilename = fProjectNameText->Text();
 	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
 	fProjectFile =  new TPreferences(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
 
 	fProjectFile->SetBString("project_filename", fProjectFilename);
-	fProjectFile->SetString("project_name", fProjectNameTC->Text());
+	fProjectFile->SetString("project_name", fProjectNameText->Text());
 	fProjectFile->SetString("project_directory", path.Path());
+	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
 
 	delete fProjectFile;
 
@@ -707,16 +789,17 @@ NewProjectWindow::_CreateHaikuSourcesProject()
 	status_t status    = B_OK;
 
 	// Project file
-	fProjectFilename = fProjectNameTC->Text();
+	fProjectFilename = fProjectNameText->Text();
 	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
 	fProjectFile =  new TPreferences(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
 
 	fProjectFile->SetBString("project_filename", fProjectFilename);
-	fProjectFile->SetString("project_name", fProjectNameTC->Text());
+	fProjectFile->SetString("project_name", fProjectNameText->Text());
 	fProjectFile->SetString("project_target", fProjectTargetTC->Text());
 	fProjectFile->SetString("project_directory", fHaikuAppDirTC->Text());
 	fProjectFile->SetBString("project_build_command", "jam -q");
 	fProjectFile->SetBString("project_clean_command", "jam clean");
+	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
 
 	// Scan dir for files
 	_GetSourcesFiles(fHaikuAppDirTC->Text());
@@ -732,16 +815,17 @@ NewProjectWindow::_CreateLocalSourcesProject()
 	status_t status    = B_OK;
 
 	// Project file
-	fProjectFilename = fProjectNameTC->Text();
+	fProjectFilename = fProjectNameText->Text();
 	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
 	fProjectFile =  new TPreferences(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
 
 	fProjectFile->SetBString("project_filename", fProjectFilename);
-	fProjectFile->SetString("project_name", fProjectNameTC->Text());
+	fProjectFile->SetString("project_name", fProjectNameText->Text());
 	fProjectFile->SetString("project_target", fProjectTargetTC->Text());
 	fProjectFile->SetString("project_directory", fLocalAppDirTC->Text());
 	fProjectFile->SetBString("project_build_command", "make");
 	fProjectFile->SetBString("project_clean_command", "make clean");
+	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
 
 	// Scan dir for files
 	_GetSourcesFiles(fLocalAppDirTC->Text());
@@ -885,17 +969,19 @@ NewProjectWindow::_MapItems()
 	projectTypeMap.insert(ProjectTypePair(principlesItem, principlesItemString));
 
 	projectTypeMap.insert(ProjectTypePair(emptyItem,
-		B_TRANSLATE("A project file with an empty project directory\n\n"
+		B_TRANSLATE("A project file with an empty project directory.\n\n"
 		"It may be filled in Project->Settings menu")));
-/*
-	projectTypeMap.insert(ProjectTypePair(gitItem,
-		B_TRANSLATE("Clone a git repo\n\n")));
-*/
+
 	projectTypeMap.insert(ProjectTypePair(existingItem,
-		B_TRANSLATE("Existing project with Makefile\n\n"
+		B_TRANSLATE("Existing project with Makefile.\n\n"
 		"Accord \"Project target:\" if needed\n\n\n"
 //		"NOTE: clean sources before importing\n"
 		"NOTE: sources not copied or moved")));
+
+	projectTypeMap.insert(ProjectTypePair(cargoItem,
+		B_TRANSLATE("A rust cargo project.\n\n"
+		"You should make sure that the rust package (read cargo binary) is installed and working!")));
+
 };
 
 void
@@ -916,7 +1002,7 @@ NewProjectWindow::_OnEditingHaikuAppText()
 	BString target;
 	target << appdir << "/" << appname;
 
-	fProjectNameTC->SetText(appname);
+	fProjectNameText->SetText(appname);
 	fProjectTargetTC->SetText(target);
 }
 
@@ -941,7 +1027,7 @@ NewProjectWindow::_OnEditingLocalAppText()
 		// Target not found, make assumptions
 		targetPath << appdir << "/" << appname;
 
-	fProjectNameTC->SetText(appname);
+	fProjectNameText->SetText(appname);
 	fProjectTargetTC->SetText(targetPath);
 }
 
@@ -1074,6 +1160,11 @@ NewProjectWindow::_ParseMakefile(BString& target, const BEntry* entry)
 	return nameFound;
 }
 
+
+/**
+ * Upon changing project type only relevant controls are enabled.
+ *
+ */
 void
 NewProjectWindow::_UpdateControlsState(int32 selection)
 {
@@ -1090,7 +1181,7 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 	fProjectDescription->SetText(iter->second);
 
 	// Clean controls
-	fProjectNameTC->SetText("");
+	fProjectNameText->SetText("");
 	fProjectTargetTC->SetText("");
 	fRunInTeminal->SetValue(B_CONTROL_OFF);
 	fAddFileTC->SetText("");
@@ -1101,7 +1192,7 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 	fLocalAppDirTC->SetText("");
 
 	// Set controls
-	fProjectNameTC->SetEnabled(true);
+	fProjectNameText->SetEnabled(true);
 	fProjectTargetTC->SetEnabled(true);
 	fRunInTeminal->SetEnabled(false);
 	fAddFileTC->SetEnabled(true);
@@ -1112,6 +1203,9 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 	fBrowseHaikuAppButton->SetEnabled(false);
 	fLocalAppDirTC->SetEnabled(false);
 	fBrowseLocalAppButton->SetEnabled(false);
+	fCargoPathText->SetEnabled(false);
+	fCargoBin->SetEnabled(false);
+	fCargoVcs->SetEnabled(false);
 
 	if (item == appItem) {
 
@@ -1140,6 +1234,7 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 
 	} else if (item == emptyItem) {
 
+		fRunInTeminal->SetEnabled(true);
 		fAddFileTC->SetEnabled(false);
 
 	} else if (item == sourcesItem) {
@@ -1156,8 +1251,16 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 		fLocalAppDirTC->SetEnabled(true);
 		fBrowseLocalAppButton->SetEnabled(true);
 
-//	} else if (item == gitItem) {
+	} else if (item == cargoItem) {
 
+		fProjectTargetTC->SetEnabled(false);
+		fRunInTeminal->SetEnabled(true);
+		fRunInTeminal->SetValue(B_CONTROL_ON);
+		fAddFileTC->SetEnabled(false);
+		fCargoPathText->SetEnabled(true);
+		fCargoBin->SetEnabled(true);
+		fCargoVcs->SetEnabled(true);
+//	} else if (item == gitItem) {
 	}
 
 	fCreateButton->SetEnabled(true);
@@ -1174,11 +1277,11 @@ NewProjectWindow::_UpdateControlsData(int32 selection)
 
 	BStringItem *item = dynamic_cast<BStringItem*>(fTypeListView->ItemAt(selection));
 
-	// Import items are managed elsewhere
-	if (item == sourcesItem || item == existingItem)
+	// Import and Cargo items are managed elsewhere
+	if (item == sourcesItem || item == existingItem || item == cargoItem)
 		return;
 
-	BString name = fProjectNameTC->Text();
+	BString name = fProjectNameText->Text();
 	fProjectTargetTC->SetText(name);
 
 	// Get rid of garbage on changing project
@@ -1221,8 +1324,8 @@ NewProjectWindow::_WriteMakefile()
 {
 	status_t status;
 	BFile file;
-	BPath path(fProjectsDirectoryTC->Text());
-	path.Append(fProjectNameTC->Text());
+	BPath path(fProjectsDirectoryText->Text());
+	path.Append(fProjectNameText->Text());
 
 	path.Append("Makefile");
 	status = file.SetTo(path.Path(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
@@ -1295,8 +1398,8 @@ NewProjectWindow::_WriteAppfiles()
 {
 	status_t status;
 	BFile file;
-	BPath cppPath(fProjectsDirectoryTC->Text());
-	cppPath.Append(fProjectNameTC->Text());
+	BPath cppPath(fProjectsDirectoryText->Text());
+	cppPath.Append(fProjectNameText->Text());
 	cppPath.Append("src");
 
 	BPath hPath(cppPath.Path());
@@ -1396,8 +1499,8 @@ NewProjectWindow::_WriteAppMenufiles()
 	// Files path
 	status_t status;
 	BFile file;
-	BPath cppPath(fProjectsDirectoryTC->Text());
-	cppPath.Append(fProjectNameTC->Text());
+	BPath cppPath(fProjectsDirectoryText->Text());
+	cppPath.Append(fProjectNameText->Text());
 	cppPath.Append("src");
 	BPath cpp2Path(cppPath);
 
@@ -1562,7 +1665,7 @@ NewProjectWindow::_WriteAppMenufiles()
 		<< fileSecondNameStripped << "::" << fileSecondNameStripped << "()\n"
 		<< "\t:\n"
 		<< "\tBWindow(BRect(100, 100, 499, 399), \""
-		<< fProjectNameTC->Text() << "\", B_TITLED_WINDOW,\n"
+		<< fProjectNameText->Text() << "\", B_TITLED_WINDOW,\n"
 		<< "\t\t\t\t\t\t\t\t\t\t\t\tB_QUIT_ON_WINDOW_CLOSE)\n"
 		<< "{\n"
 		<< "\t// Menu\n"
@@ -1609,8 +1712,8 @@ NewProjectWindow::_WriteHelloCplusfile()
 {
 	status_t status;
 	BFile file;
-	BPath cppPath(fProjectsDirectoryTC->Text());
-	cppPath.Append(fProjectNameTC->Text());
+	BPath cppPath(fProjectsDirectoryText->Text());
+	cppPath.Append(fProjectNameText->Text());
 	cppPath.Append("src");
 	cppPath.Append(fAddFileTC->Text());
 	status = file.SetTo(cppPath.Path(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
@@ -1646,8 +1749,8 @@ NewProjectWindow::_WriteHelloCfile()
 {
 	status_t status;
 	BFile file;
-	BPath cPath(fProjectsDirectoryTC->Text());
-	cPath.Append(fProjectNameTC->Text());
+	BPath cPath(fProjectsDirectoryText->Text());
+	cPath.Append(fProjectNameText->Text());
 	cPath.Append("src");
 	cPath.Append(fAddFileTC->Text());
 	status = file.SetTo(cPath.Path(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
@@ -1685,8 +1788,8 @@ NewProjectWindow::_WritePrinciplesfile()
 {
 	status_t status;
 	BFile file;
-	BPath cppPath(fProjectsDirectoryTC->Text());
-	cppPath.Append(fProjectNameTC->Text());
+	BPath cppPath(fProjectsDirectoryText->Text());
+	cppPath.Append(fProjectNameText->Text());
 	cppPath.Append("src");
 	cppPath.Append(fAddFileTC->Text());
 	status = file.SetTo(cppPath.Path(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
@@ -1718,8 +1821,8 @@ NewProjectWindow::_WriteHelloCMakefile()
 {
 	status_t status;
 	BFile file;
-	BPath path(fProjectsDirectoryTC->Text());
-	path.Append(fProjectNameTC->Text());
+	BPath path(fProjectsDirectoryText->Text());
+	path.Append(fProjectNameText->Text());
 
 	path.Append("Makefile");
 	status = file.SetTo(path.Path(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);

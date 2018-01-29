@@ -21,6 +21,7 @@
 
 enum {
 	// Project context menu
+	NEWPROJECTWINDOW_PROJECT_CARGO_NEW	= 'Npcn',
 	NEWPROJECTWINDOW_PROJECT_OPEN_NEW	= 'Npon',
 };
 
@@ -41,6 +42,7 @@ private:
 			status_t			_CreateProject();
 			status_t			_CreateAppProject();
 			status_t			_CreateAppMenuProject();
+			status_t			_CreateCargoProject();
 			status_t			_CreateHelloCplusProject();
 			status_t			_CreateHelloCProject();
 			status_t			_CreatePrinciplesProject();
@@ -90,16 +92,18 @@ private:
 			TitleItem*			importItem;
 			BStringItem*		sourcesItem;
 			BStringItem*		existingItem;
-//			BStringItem*		gitItem;
+
+			TitleItem*			rustItem;
+			BStringItem*		cargoItem;
 
 			BTextView*			fProjectDescription;
 			BScrollView*		fScrollText;
 
 			BBox*				fProjectBox;
-			BTextControl*		fProjectNameTC;
+			BTextControl*		fProjectNameText;
 			BTextControl*		fProjectTargetTC;
 			BCheckBox*			fRunInTeminal;
-			BTextControl*		fProjectsDirectoryTC;
+			BTextControl*		fProjectsDirectoryText;
 			BTextControl*		fAddFileTC;
 			BCheckBox*			fAddHeader;
 			BTextControl*		fAddSecondFileTC;
@@ -109,6 +113,9 @@ private:
 			BFilePanel*			fOpenPanel;
 			BTextControl*		fLocalAppDirTC;
 			BButton*			fBrowseLocalAppButton;
+			BTextControl*		fCargoPathText;
+			BCheckBox*			fCargoBin;
+			BCheckBox*			fCargoVcs;
 
 			BButton*			fCreateButton;
 			BButton*			fCancelButton;

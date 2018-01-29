@@ -22,13 +22,15 @@ public:
 			BString				CleanCommand() const { return fCleanCommand; }
 			void				Close();
 			void				Deactivate();
+	std::vector<BString>		FilesList() const { return fFilesList; };
 			bool				IsActive() { return isActive; }
 			BString	const		Name() const { return fName; }
 			status_t			Open(bool activate);
+			bool				RunInTerminal() { return fRunInTerminal; }
+	std::vector<BString>		SourcesList() const { return fSourcesList; };
 			BString 			Target() const { return fTarget; }
 			ProjectTitleItem*	Title() const { return fProjectTitle; }
-	std::vector<BString>		FilesList() const { return fFilesList; };
-	std::vector<BString>		SourcesList() const { return fSourcesList; };
+			BString				Type() const { return fType; }
 
 private:
 
@@ -39,6 +41,8 @@ private:
 			BString				fProjectDirectory;
 			BString				fTarget;
 			BString				fScm;
+			BString				fType;
+			bool				fRunInTerminal;
 		std::vector<BString>	fFilesList;
 		std::vector<BString>	fSourcesList;
 			bool				isActive;

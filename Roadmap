@@ -1,8 +1,8 @@
 Ideam Roadmap
 ================================================================================
 legenda:
-) = Feature
-] = Bug/Enhancement
+ ) = Feature
+ ] = Bug/Enhancement
   = To be done
 - = Partially done
 + = Done
@@ -30,9 +30,9 @@ current Scintilla version: HaikuPorts version
 
 +) Added toolbar & icons
 
-] BIconButton->SetIcon(int32) could let user set frame/size
-] ToolTips seems to leak, disable them for now
-] BTabView seems to leak
+ ] BIconButton->SetIcon(int32) could let user set frame/size
+ ] ToolTips seems to leak, disable them for now
+ ] BTabView seems to leak
 
 +) Added Projects view
 +) Added Notifications view
@@ -41,7 +41,7 @@ current Scintilla version: HaikuPorts version
 0.0.4) Tab Interface
 
 -] Scintilla multitab has bad behaviour with layout
-] Menubar messed up on resizing
+ ] Menubar messed up on resizing
 --------------------------------------------------------------------------------
 
 0.0.5) File interface
@@ -55,11 +55,11 @@ current Scintilla version: HaikuPorts version
 +) Don't reopen same file or symlink
 -) On multifile open select first file (needs modified scintilla)
 
-] BFilePanel seems to leak
-] SetTabLabel seems to leak
+ ] BFilePanel seems to leak
+ ] SetTabLabel seems to leak
 -] Scintilla automatically takes focus
 -] Scintilla may crash on leak detection
-] Tabs & Projects split interaction should be reworked
+ ] Tabs & Projects split interaction should be reworked
 --------------------------------------------------------------------------------
 
 0.0.6) File Interface
@@ -69,8 +69,8 @@ current Scintilla version: HaikuPorts version
 +) Recent file list
 +) Save As
 
-] Scintilla context menu is untranslated
-] RecentFilesList seems to leak
+ ] Scintilla context menu is untranslated
+ ] RecentFilesList seems to leak
 --------------------------------------------------------------------------------
 
 0.0.7) File Interface
@@ -83,7 +83,7 @@ current Scintilla version: HaikuPorts version
 ) Tabs should be swappable
 ) Recheck permissions on a monitored file with mode/uid/gid changed
 
-] Pe and StyledEdit fire different messages of B_STAT_CHANGED fields
+ ] Pe and StyledEdit fire different messages of B_STAT_CHANGED fields
   on modifying the same file
 --------------------------------------------------------------------------------
 
@@ -126,8 +126,8 @@ current Scintilla version: HaikuPorts version
 +) Overwrite
 
 
-] Overwrite shortcut violates rules and displays wrong (none) key
-] Scintilla goes Overwrite when Insert key pressed
+ ] Overwrite shortcut violates rules and displays wrong (none) key
+ ] Scintilla goes Overwrite when Insert key pressed
 --------------------------------------------------------------------------------
 
 0.2.0) Simple Extension management
@@ -138,7 +138,7 @@ current Scintilla version: HaikuPorts version
 +) Auto indent
 
 
-] Should be extended to different languages/extensions
+ ] Should be extended to different languages/extensions
 --------------------------------------------------------------------------------
 
 0.3.0) New Project management
@@ -146,7 +146,7 @@ current Scintilla version: HaikuPorts version
 +) Project creation
 +) Project import
 
-] Leak analyzer marks as leaks undeleted BStringItems
+ ] Leak analyzer marks as leaks undeleted BStringItems
 --------------------------------------------------------------------------------
 
 0.4.0) Project management
@@ -156,7 +156,7 @@ current Scintilla version: HaikuPorts version
 +) Project context menu
 +) Project reopen at startup
 
-] Context menu not working for already selected items
+ ] Context menu not working for already selected items
 --------------------------------------------------------------------------------
 
 0.5.0) Project management
@@ -177,7 +177,7 @@ current Scintilla version: HaikuPorts version
 
 +) Set/Convert line endings
 
-] Is there a Haiku file attrs standard?
+ ] Is there a Haiku file attrs standard?
 --------------------------------------------------------------------------------
 
 0.5.3) Fix nonexistent Project Directory bug
@@ -186,13 +186,32 @@ current Scintilla version: HaikuPorts version
 
 --------------------------------------------------------------------------------
 
-0.5.4) Enable building in both intel platforms
+0.5.4) Enable building in both intel variants
 
 +) Build x86_gcc2 (g++-x86, clang++)
 +) Build x86_64   (g++, clang++)
 
 -] clang++ build needs some headers hack
+--------------------------------------------------------------------------------
 
+0.5.5) Fix x86_64 build
+
+ ] gcc 5.4.0 (x86_64) and gcc-x86 5.4.0 (x86_gcc2) have different behaviour
+   when compiling the same sources
+--------------------------------------------------------------------------------
+
+0.6.0) Preliminary rust support
+
++) Create cargo project
++) Project build, clean
++) Rust syntax highlighting (.toml missing)
++) Rust "4 spaces tab" management
++) Added Debug/Release flag
+
+
+-] Bad environment hack to allow "cargo new" succeed
+ ] rust-gdb needs gdb which is not available in x86_64
+ ] rust(_x86) and cargo do not work in x86_gcc2
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

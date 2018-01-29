@@ -74,6 +74,12 @@ Project::Open(bool activate)
 	if (fIdmproFile->FindString("project_scm", &fScm) != B_OK)
 		fScm = "";
 
+	if (fIdmproFile->FindString("project_type", &fType) != B_OK)
+		fType = "";
+
+	if (fIdmproFile->FindBool("run_in_terminal", &fRunInTerminal) != B_OK)
+		fRunInTerminal = false;
+
 	// Source files
 	int32 refsCount = 0;
 	BString sources;

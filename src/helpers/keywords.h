@@ -24,6 +24,20 @@ static const char cppKeywords[] =
 " final noexcept nullptr override static_assert thread_local"
 ;
 
+static const char rustKeywords[] =
+"_ abstract alignof as become"
+" box break const continue crate"
+" do else enum extern false"
+" final fn for if impl"
+" in let loop macro match"
+" mod move mut offsetof override"
+" priv proc pub pure ref"
+" return Self self sizeof static"
+" struct super trait true type"
+" typeof unsafe unsized use virtual"
+" where while yield"
+;
+
 // April 2016 (taken from haiku headers)
 static const char haikuClasses[] =
 // App Kit

@@ -28,6 +28,9 @@
 #include "SettingsWindow.h"
 #include "TPreferences.h"
 
+
+
+
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "IdeamWindow"
 
@@ -55,6 +58,8 @@ static float kOutputWeight  = 0.4f;
 
 BRect dirtyFrameHack;
 
+// Self enum names begin with MSG_ and values are all lowercase
+// External enum names begin with MODULENAME_ and values are Capitalized
 enum {
 	// Project menu
 	MSG_PROJECT_CLOSE			= 'prcl',
@@ -109,6 +114,8 @@ enum {
 	MSG_BUILD_PROJECT_STOP		= 'bpst',
 	MSG_CLEAN_PROJECT			= 'clpr',
 	MSG_RUN_TARGET				= 'ruta',
+	MSG_BUILD_FLAG_RELEASE		= 'bfre',
+	MSG_BUILD_FLAG_DEBUG		= 'bfde',
 	MSG_DEBUG_PROJECT			= 'depr',
 	MSG_MAKE_CATKEYS			= 'maca',
 	MSG_MAKE_BINDCATALOGS		= 'mabi',
@@ -131,6 +138,7 @@ enum {
 
 	// Toolbar
 	MSG_BUFFER_LOCK				= 'bulo',
+	MSG_BUILD_FLAG				= 'defl',
 	MSG_FILE_MENU_SHOW			= 'fmsh',
 	MSG_FILE_NEXT_SELECTED		= 'fnse',
 	MSG_FILE_PREVIOUS_SELECTED	= 'fpse',
@@ -539,12 +547,30 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			_BuildDone(message);
 			break;
 		}
+		case MSG_BUILD_FLAG_DEBUG: {
+			fBuildFlagButton->SetEnabled(true);
+			fBuildFlagButton->SetToolTip(B_TRANSLATE("Build flag: Debug"));
+			fReleaseBuild = false;
+			_UpdateProjectActivation(fActiveProject != nullptr);
+			break;
+		}
+		case MSG_BUILD_FLAG_RELEASE: {
+			fBuildFlagButton->SetEnabled(false);
+			fBuildFlagButton->SetToolTip(B_TRANSLATE("Build flag: Release"));
+			fReleaseBuild = true;
+			_UpdateProjectActivation(fActiveProject != nullptr);
+			break;
+		}
 		case MSG_BUILD_PROJECT: {
 			_BuildProject();
 			break;
 		}
 		case MSG_CLEAN_PROJECT: {
 			_CleanProject();
+			break;
+		}
+		case MSG_BUILD_FLAG: {
+
 			break;
 		}
 		case MSG_DEBUG_PROJECT: {
@@ -948,6 +974,12 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 
 			break;
 		}
+		case NEWPROJECTWINDOW_PROJECT_CARGO_NEW: {
+			BString command;
+			if (message->FindString("command_string", &command) == B_OK)
+				_CargoNew(command);
+			break;
+		}
 		case NEWPROJECTWINDOW_PROJECT_OPEN_NEW: {
 			BString fileName;
 			if (message->FindString("project_filename", &fileName) == B_OK)
@@ -1132,13 +1164,14 @@ IdeamWindow::_BuildProject()
 
 	_UpdateProjectActivation(false);
 
+	fBuildLog->Clear();
 	_ShowLog(kBuildLog);
 
 	BString text;
 	text << "Build started: "  << fActiveProject->Name();
 	_SendNotification(text, "PROJ_BUILD");
 
-	fBuildLog->Clear();
+
 	BString buildBanner;
 	buildBanner << "------------------------------   "
 				<< B_TRANSLATE("Build started")
@@ -1146,16 +1179,38 @@ IdeamWindow::_BuildProject()
 	fBuildLog->Insert(buildBanner);
 
 	BString command = fActiveProject->BuildCommand();
+
+
 	BString execDirectory;
 	BPath path;
 	BEntry entry(fActiveProject->BasePath());
 	entry.GetPath(&path);
 	execDirectory = path.Path();
-	execDirectory += "/";
 
 	fIsBuilding = true;
 
 	status = fBuildLog->Exec(command, execDirectory);
+
+	return status;
+}
+
+status_t
+IdeamWindow::_CargoNew(BString command)
+{
+	status_t status;
+	BString cargoCommand;
+	cargoCommand << "cargo new " << command;
+
+	fBuildLog->Clear();
+	_ShowLog(kBuildLog);
+
+	BString execDirectory(IdeamNames::Settings.projects_directory);
+
+	// Dirty hack (getenv broken?)
+	setenv("USER", "user", true);
+
+	// TODO: Collapse Projects Outline to make new active project visible?
+	status = fBuildLog->Exec(cargoCommand, execDirectory);
 
 	return status;
 }
@@ -1171,13 +1226,14 @@ IdeamWindow::_CleanProject()
 
 	_UpdateProjectActivation(false);
 
+	fBuildLog->Clear();
 	_ShowLog(kBuildLog);
 
 	BString text;
 	text << B_TRANSLATE("Clean started: ") << fActiveProject->Name();
 	_SendNotification( text.String(), "PROJ_BUILD");
 
-	fBuildLog->Clear();
+
 	BString cleanBanner;
 	cleanBanner << "------------------------------   "
 				<< B_TRANSLATE("Clean started")
@@ -1192,7 +1248,6 @@ IdeamWindow::_CleanProject()
 	BEntry entry(fActiveProject->BasePath());
 	entry.GetPath(&path);
 	execDirectory = path.Path();
-	execDirectory += "/";
 
 	fIsBuilding = true;
 	status = fBuildLog->Exec(command, execDirectory);
@@ -2079,6 +2134,16 @@ IdeamWindow::_InitMenu()
 	menu->AddItem(fRunItem = new BMenuItem (B_TRANSLATE("Run target"),
 		new BMessage(MSG_RUN_TARGET)));
 	menu->AddSeparatorItem();
+
+	submenu = new BMenu(B_TRANSLATE("Build flag"));
+	submenu->SetRadioMode(true);
+	submenu->AddItem(fReleaseFlagItem = new BMenuItem(B_TRANSLATE("Release"),
+		new BMessage(MSG_BUILD_FLAG_RELEASE)));
+	submenu->AddItem(fDebugFlagItem = new BMenuItem(B_TRANSLATE("Debug"),
+		new BMessage(MSG_BUILD_FLAG_DEBUG)));
+	fDebugFlagItem->SetMarked(true);
+	menu->AddItem(submenu);
+	menu->AddSeparatorItem();
 	menu->AddItem(fDebugItem = new BMenuItem (B_TRANSLATE("Debug Project"),
 		new BMessage(MSG_DEBUG_PROJECT)));
 	menu->AddSeparatorItem();
@@ -2153,6 +2218,11 @@ IdeamWindow::_InitWindow()
 	fFileSaveAllButton = _LoadIconButton("FileSaveAllButton", MSG_FILE_SAVE_ALL,
 						207, false, B_TRANSLATE("Save all Files"));
 
+	fBuildFlagButton = _LoadIconButton("BuildFlag", MSG_BUILD_FLAG,
+						221, true, B_TRANSLATE("Build Flag: Debug"));
+
+	fReleaseBuild = false;
+
 	fFileUnlockedButton = _LoadIconButton("FileUnlockedButton", MSG_BUFFER_LOCK,
 						212, false, B_TRANSLATE("Set buffer read-only"));
 	fFilePreviousButton = _LoadIconButton("FilePreviousButton", MSG_FILE_PREVIOUS_SELECTED,
@@ -2195,6 +2265,7 @@ IdeamWindow::_InitWindow()
 			.Add(fReplaceButton)
 			.Add(fFindinFilesButton)
 			.AddGlue()
+			.Add(fBuildFlagButton)
 			.Add(fFileUnlockedButton)
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
 			.Add(fGotoLine)
@@ -2306,7 +2377,7 @@ IdeamWindow::_InitWindow()
 	fReplaceAndFindNextButton = _LoadIconButton("ReplaceFindNextButton", MSG_REPLACE_NEXT,
 								167, true, B_TRANSLATE("Replace and find next"));
 	fReplaceAndFindPrevButton = _LoadIconButton("ReplaceFindPrevButton", MSG_REPLACE_PREVIOUS,
-								168, false, B_TRANSLATE("Replace and find previous"));
+								168, true, B_TRANSLATE("Replace and find previous"));
 	fReplaceAllButton = _LoadIconButton("ReplaceAllButton", MSG_REPLACE_ALL,
 							169, true, B_TRANSLATE("Replace all"));
 
@@ -2387,6 +2458,7 @@ IdeamWindow::_InitWindow()
 								400.0, 400.0, 800.0, 0), kMessageColumn);
 	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Type"),
 								140.0, 140.0, 140.0, 0), kTypeColumn);
+
 
 	fOutputTabView->AddTab(fNotificationsListView);
 	fOutputTabView->AddTab(fBuildLog->ScrollView());
@@ -2906,6 +2978,8 @@ IdeamWindow::_ReplaceGroupToggled()
 	}
 }
 
+
+
 void
 IdeamWindow::_RunTarget()
 {
@@ -2918,11 +2992,13 @@ IdeamWindow::_RunTarget()
 	if (!entry.Exists())
 		return;
 
+	// TODO: Differentiate terminal projects from window ones
 	// TODO: run args
 	entry_ref ref;
 	entry.SetTo(fActiveProject->Target());
 	entry.GetRef(&ref);
 	be_roster->Launch(&ref, 1, NULL);
+
 }
 
 void
@@ -2993,15 +3069,20 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 		fCleanItem->SetEnabled(true);
 		fMakeCatkeysItem->SetEnabled(true);
 		fMakeBindcatalogsItem->SetEnabled(true);
+
 		// Target exists: enable run button
 		BEntry entry(fActiveProject->Target());
-		// TODO: Enable debug button in debug mode only
 		if (entry.Exists()) {
 			fRunButton->SetEnabled(true);
-			fDebugButton->SetEnabled(true);
 			fRunItem->SetEnabled(true);
-			fDebugItem->SetEnabled(true);
-
+			// Enable debug button in debug mode only
+			if (fReleaseBuild == true) {
+				fDebugButton->SetEnabled(false);
+				fDebugItem->SetEnabled(false);
+			} else {
+				fDebugButton->SetEnabled(true);
+				fDebugItem->SetEnabled(true);
+			}
 		} else {
 			fRunButton->SetEnabled(false);
 			fDebugButton->SetEnabled(false);

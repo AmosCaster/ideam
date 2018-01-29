@@ -16,7 +16,7 @@ Compiling
 
 * Install `scintilla` and `scintilla_devel` hpkgs from HaikuPorts (`scintilla_x86` versions for x86_gcc2)
 * Clone `ideam` sources
-* Execute `make` in Ideam's top directory
+* Execute `make` in Ideam's top directory  
 The executable is created in app subdirectory.  
 
 
