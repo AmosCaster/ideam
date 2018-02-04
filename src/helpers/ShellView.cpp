@@ -140,8 +140,7 @@ ShellView::Exec()
 	if (fExecThread != NULL)
 		return B_ERROR;
 
-	fExecThread = new ExecThread(fCommand, fExecDir,
-				BMessenger(this, (BLooper*)Window()));
+	fExecThread = new ExecThread(fCommand, fExecDir, BMessenger(this));
 	fExecThread->Run();
 	fExecThread->PostMessage(SV_LAUNCH);
 	return B_OK;

@@ -628,6 +628,9 @@ NewProjectWindow::_CreateAppMenuProject()
 	if ((status = _CreateSkeleton()) != B_OK)
 		return status;
 
+	fProjectFile->SetBString("project_build_command",
+		"make && make bindcatalogs");
+
 	if ((status = _WriteMakefile()) != B_OK)
 		return status;
 
@@ -651,18 +654,18 @@ NewProjectWindow::_CreateCargoProject()
 		return B_ERROR;
 	}
 
-	BString command, srcFilename("src/lib.rs");
-	command << fProjectNameText->Text();
+	BString args, srcFilename("src/lib.rs");
+	args << fProjectNameText->Text();
 	if (fCargoBin->Value() == B_CONTROL_ON) {
-		command << " --bin";
+		args << " --bin";
 		srcFilename = "src/main.rs";
 	}
 	if (fCargoVcs->Value() == B_CONTROL_ON)
-		command << " --vcs none";
+		args << " --vcs none";
 
 	// Post a message
 	BMessage message(NEWPROJECTWINDOW_PROJECT_CARGO_NEW);
-	message.AddString("command_string", command);
+	message.AddString("cargo_new_string", args);
 	be_app->WindowAt(0)->PostMessage(&message);
 
 	// Project file

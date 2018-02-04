@@ -1,7 +1,7 @@
 Ideam
 ================
-![Screenshot](https://raw.github.com/AmosCaster/ideam/master/data/screenshot/screenshot-0.5.2-eng.png)
-    screenshot-0.5.2-eng.png
+![Screenshot](https://raw.github.com/AmosCaster/ideam/master/data/screenshot/screenshot-0.6.1-eng.png)
+    screenshot-0.6.1-eng.png
 
 Introducing
 ----------------
@@ -17,7 +17,7 @@ Compiling
 * Install `scintilla` and `scintilla_devel` hpkgs from HaikuPorts (`scintilla_x86` versions for x86_gcc2)
 * Clone `ideam` sources
 * Execute `make` in Ideam's top directory  
-The executable is created in app subdirectory.  
+The executable is created in `app` subdirectory.  
 
 
 If you would like to try a clang++ build:

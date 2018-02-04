@@ -211,7 +211,15 @@ current Scintilla version: HaikuPorts version
 
 -] Bad environment hack to allow "cargo new" succeed
  ] rust-gdb needs gdb which is not available in x86_64
- ] rust(_x86) and cargo do not work in x86_gcc2
+ ] rustc and cargo-x86 do not work in x86_gcc2
+--------------------------------------------------------------------------------
+
+0.6.1) New log/console management
+
++) New build log
++) Added I/O console for terminal projects
++) Terminal projects accept args when run
+
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

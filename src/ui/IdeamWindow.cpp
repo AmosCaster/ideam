@@ -114,8 +114,8 @@ enum {
 	MSG_BUILD_PROJECT_STOP		= 'bpst',
 	MSG_CLEAN_PROJECT			= 'clpr',
 	MSG_RUN_TARGET				= 'ruta',
-	MSG_BUILD_FLAG_RELEASE		= 'bfre',
-	MSG_BUILD_FLAG_DEBUG		= 'bfde',
+	MSG_BUILD_MODE_RELEASE		= 'bmre',
+	MSG_BUILD_MODE_DEBUG		= 'bmde',
 	MSG_DEBUG_PROJECT			= 'depr',
 	MSG_MAKE_CATKEYS			= 'maca',
 	MSG_MAKE_BINDCATALOGS		= 'mabi',
@@ -138,7 +138,7 @@ enum {
 
 	// Toolbar
 	MSG_BUFFER_LOCK				= 'bulo',
-	MSG_BUILD_FLAG				= 'defl',
+	MSG_BUILD_MODE				= 'bumo',
 	MSG_FILE_MENU_SHOW			= 'fmsh',
 	MSG_FILE_NEXT_SELECTED		= 'fnse',
 	MSG_FILE_PREVIOUS_SELECTED	= 'fpse',
@@ -173,6 +173,10 @@ IdeamWindow::IdeamWindow(BRect frame)
 												B_QUIT_ON_WINDOW_CLOSE)
 	, fActiveProject(nullptr)
 	, fIsBuilding(false)
+	, fConsoleIOThread(nullptr)
+	, fBuildLogView(nullptr)
+	, fConsoleIOView(nullptr)
+	, fConsoleStdinLine("")
 {
 	_InitMenu();
 
@@ -319,6 +323,19 @@ IdeamWindow::DispatchMessage(BMessage* message, BHandler* handler)
 				}
 			}
 		}
+	} else if (handler == fConsoleIOView) {
+		if (message->what == B_KEY_DOWN) {
+			int8 key;
+			if (message->FindInt8("byte", 0, &key) == B_OK) {
+				// A little hack to make Console I/O pipe act as line-input
+				fConsoleStdinLine << static_cast<const char>(key);
+				fConsoleIOView->ConsoleOutputReceived(1, (const char*)&key);
+				if (key == B_RETURN) {
+					fConsoleIOThread->PushInput(fConsoleStdinLine);
+					fConsoleStdinLine = "";
+				}
+			}
+		}
 	}
 
 	BWindow::DispatchMessage(message, handler);
@@ -399,6 +416,32 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+		case CONSOLEIOTHREAD_ERROR:
+		case CONSOLEIOTHREAD_EXIT:
+		case CONSOLEIOTHREAD_STOP:
+		{
+			// TODO: Review focus policy
+//			if (fTabManager->CountTabs() > 0)
+//				fEditor->GrabFocus();
+
+			fIsBuilding = false;
+
+			BString type;
+			if (message->FindString("cmd_type", &type) == B_OK) {
+				if (type == "build" || type == "clean" || type == "run")
+					_UpdateProjectActivation(true);
+				else if (type == "startfail") {
+					_UpdateProjectActivation(true);
+					break;
+				}
+			}
+
+			if (fConsoleIOThread) {
+				fConsoleIOThread->InterruptExternal();
+				fConsoleIOThread = nullptr;
+			}
+			break;
+		}
 		case EDITOR_BOOKMARK_MARK: {
 			entry_ref ref;
 			if (message->FindRef("ref", &ref) == B_OK) {
@@ -414,7 +457,6 @@ IdeamWindow::MessageReceived(BMessage* message)
 					}
 				}
 			}
-
 			break;
 		}
 		case EDITOR_REPLACED_ONE: {
@@ -543,21 +585,17 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			}
 			break;
 		}
-		case MSG_BUILD_DONE: {
-			_BuildDone(message);
-			break;
-		}
-		case MSG_BUILD_FLAG_DEBUG: {
-			fBuildFlagButton->SetEnabled(true);
-			fBuildFlagButton->SetToolTip(B_TRANSLATE("Build flag: Debug"));
-			fReleaseBuild = false;
+		case MSG_BUILD_MODE_DEBUG: {
+			fBuildModeButton->SetEnabled(true);
+			fBuildModeButton->SetToolTip(B_TRANSLATE("Build mode: Debug"));
+			fReleaseModeEnabled = false;
 			_UpdateProjectActivation(fActiveProject != nullptr);
 			break;
 		}
-		case MSG_BUILD_FLAG_RELEASE: {
-			fBuildFlagButton->SetEnabled(false);
-			fBuildFlagButton->SetToolTip(B_TRANSLATE("Build flag: Release"));
-			fReleaseBuild = true;
+		case MSG_BUILD_MODE_RELEASE: {
+			fBuildModeButton->SetEnabled(false);
+			fBuildModeButton->SetToolTip(B_TRANSLATE("Build mode: Release"));
+			fReleaseModeEnabled = true;
 			_UpdateProjectActivation(fActiveProject != nullptr);
 			break;
 		}
@@ -569,7 +607,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			_CleanProject();
 			break;
 		}
-		case MSG_BUILD_FLAG: {
+		case MSG_BUILD_MODE: {
 
 			break;
 		}
@@ -975,9 +1013,9 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			break;
 		}
 		case NEWPROJECTWINDOW_PROJECT_CARGO_NEW: {
-			BString command;
-			if (message->FindString("command_string", &command) == B_OK)
-				_CargoNew(command);
+			BString args;
+			if (message->FindString("cargo_new_string", &args) == B_OK)
+				_CargoNew(args);
 			break;
 		}
 		case NEWPROJECTWINDOW_PROJECT_OPEN_NEW: {
@@ -1125,34 +1163,6 @@ IdeamWindow::_AddEditorTab(entry_ref* ref, int32 index)
 	return B_OK;
 }
 
-void
-IdeamWindow::_BuildDone(BMessage* msg)
-{
-	BString command;
-
-	if (msg->FindString("command", &command) == B_OK) {
-		if (command == fActiveProject->BuildCommand()) {
-			BString buildBanner;
-			buildBanner << "------------------------------   "
-						<< B_TRANSLATE("Build finished")
-						<< "   -----------------------------";
-			fBuildLog->Insert(buildBanner);
-			_UpdateProjectActivation(true);
-		} else if (command == fActiveProject->CleanCommand()) {
-			BString cleanBanner;
-			cleanBanner << "------------------------------   "
-						<< B_TRANSLATE("Clean finished")
-						<< "   ----------------------------";
-			fBuildLog->Insert(cleanBanner);
-			_UpdateProjectActivation(true);
-		} else if (command == "make catkeys"
-				|| command == "make bindcatalogs")
-			;
-	}
-
-	fIsBuilding = false;
-}
-
 status_t
 IdeamWindow::_BuildProject()
 {
@@ -1164,53 +1174,59 @@ IdeamWindow::_BuildProject()
 
 	_UpdateProjectActivation(false);
 
-	fBuildLog->Clear();
+	fBuildLogView->Clear();
 	_ShowLog(kBuildLog);
 
 	BString text;
 	text << "Build started: "  << fActiveProject->Name();
 	_SendNotification(text, "PROJ_BUILD");
 
-
-	BString buildBanner;
-	buildBanner << "------------------------------   "
-				<< B_TRANSLATE("Build started")
-				<< "   ------------------------------\n";
-	fBuildLog->Insert(buildBanner);
-
-	BString command = fActiveProject->BuildCommand();
-
-
-	BString execDirectory;
-	BPath path;
-	BEntry entry(fActiveProject->BasePath());
-	entry.GetPath(&path);
-	execDirectory = path.Path();
+	BString command;
+	command	<< fActiveProject->BuildCommand();
 
 	fIsBuilding = true;
 
-	status = fBuildLog->Exec(command, execDirectory);
+	BMessage message;
+	message.AddString("cmd", command);
+	message.AddString("cmd_type", "build");
+
+	// Go to appropriate directory
+	chdir(fActiveProject->BasePath());
+
+	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
+		BMessenger(fBuildLogView));
+
+	status = fConsoleIOThread->Start();
 
 	return status;
 }
 
 status_t
-IdeamWindow::_CargoNew(BString command)
+IdeamWindow::_CargoNew(BString args)
 {
 	status_t status;
-	BString cargoCommand;
-	cargoCommand << "cargo new " << command;
 
-	fBuildLog->Clear();
+	fBuildLogView->Clear();
 	_ShowLog(kBuildLog);
-
-	BString execDirectory(IdeamNames::Settings.projects_directory);
 
 	// Dirty hack (getenv broken?)
 	setenv("USER", "user", true);
 
+	BString command;
+	command << "cargo new " << args;
+
+	BMessage message;
+	message.AddString("cmd", command);
+	message.AddString("cmd_type", "cargo_new");
+
+	// Go to appropriate directory
+	chdir(IdeamNames::Settings.projects_directory);
+
+	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
+		BMessenger(fBuildLogView));
+
 	// TODO: Collapse Projects Outline to make new active project visible?
-	status = fBuildLog->Exec(cargoCommand, execDirectory);
+	status = fConsoleIOThread->Start();
 
 	return status;
 }
@@ -1226,31 +1242,29 @@ IdeamWindow::_CleanProject()
 
 	_UpdateProjectActivation(false);
 
-	fBuildLog->Clear();
+	fBuildLogView->Clear();
 	_ShowLog(kBuildLog);
 
 	BString text;
 	text << B_TRANSLATE("Clean started: ") << fActiveProject->Name();
 	_SendNotification( text.String(), "PROJ_BUILD");
 
-
-	BString cleanBanner;
-	cleanBanner << "------------------------------   "
-				<< B_TRANSLATE("Clean started")
-				<< "   ------------------------------\n";
-	fBuildLog->Insert(cleanBanner);
-
-
-	BString command = fActiveProject->CleanCommand();
-
-	BString execDirectory;
-	BPath path;
-	BEntry entry(fActiveProject->BasePath());
-	entry.GetPath(&path);
-	execDirectory = path.Path();
+	BString command;
+	command << fActiveProject->CleanCommand();
 
 	fIsBuilding = true;
-	status = fBuildLog->Exec(command, execDirectory);
+
+	BMessage message;
+	message.AddString("cmd", command);
+	message.AddString("cmd_type", "clean");
+
+	// Go to appropriate directory
+	chdir(fActiveProject->BasePath());
+
+	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
+		BMessenger(fBuildLogView));
+
+	status = fConsoleIOThread->Start();
 
 	return status;
 }
@@ -1284,7 +1298,9 @@ IdeamWindow::_DebugProject()
 	if (fActiveProject == nullptr)
 		return B_ERROR;
 
-	// If in release mode warn
+	// Release mode enabled, should not happen
+	if (fReleaseModeEnabled == true)
+		return B_ERROR;
 
 	// TODO: args
 	const char *args[] = { fActiveProject->Target(), 0};
@@ -2135,13 +2151,13 @@ IdeamWindow::_InitMenu()
 		new BMessage(MSG_RUN_TARGET)));
 	menu->AddSeparatorItem();
 
-	submenu = new BMenu(B_TRANSLATE("Build flag"));
+	submenu = new BMenu(B_TRANSLATE("Build mode"));
 	submenu->SetRadioMode(true);
-	submenu->AddItem(fReleaseFlagItem = new BMenuItem(B_TRANSLATE("Release"),
-		new BMessage(MSG_BUILD_FLAG_RELEASE)));
-	submenu->AddItem(fDebugFlagItem = new BMenuItem(B_TRANSLATE("Debug"),
-		new BMessage(MSG_BUILD_FLAG_DEBUG)));
-	fDebugFlagItem->SetMarked(true);
+	submenu->AddItem(fReleaseModeItem = new BMenuItem(B_TRANSLATE("Release"),
+		new BMessage(MSG_BUILD_MODE_RELEASE)));
+	submenu->AddItem(fDebugModeItem = new BMenuItem(B_TRANSLATE("Debug"),
+		new BMessage(MSG_BUILD_MODE_DEBUG)));
+	fDebugModeItem->SetMarked(true);
 	menu->AddItem(submenu);
 	menu->AddSeparatorItem();
 	menu->AddItem(fDebugItem = new BMenuItem (B_TRANSLATE("Debug Project"),
@@ -2218,10 +2234,10 @@ IdeamWindow::_InitWindow()
 	fFileSaveAllButton = _LoadIconButton("FileSaveAllButton", MSG_FILE_SAVE_ALL,
 						207, false, B_TRANSLATE("Save all Files"));
 
-	fBuildFlagButton = _LoadIconButton("BuildFlag", MSG_BUILD_FLAG,
-						221, true, B_TRANSLATE("Build Flag: Debug"));
+	fBuildModeButton = _LoadIconButton("BuildMode", MSG_BUILD_MODE,
+						221, true, B_TRANSLATE("Build mode: Debug"));
 
-	fReleaseBuild = false;
+	fReleaseModeEnabled = false;
 
 	fFileUnlockedButton = _LoadIconButton("FileUnlockedButton", MSG_BUFFER_LOCK,
 						212, false, B_TRANSLATE("Set buffer read-only"));
@@ -2265,7 +2281,7 @@ IdeamWindow::_InitWindow()
 			.Add(fReplaceButton)
 			.Add(fFindinFilesButton)
 			.AddGlue()
-			.Add(fBuildFlagButton)
+			.Add(fBuildModeButton)
 			.Add(fFileUnlockedButton)
 			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
 			.Add(fGotoLine)
@@ -2448,7 +2464,6 @@ IdeamWindow::_InitWindow()
 
 	// Output
 	fOutputTabView = new BTabView("OutputTabview");
-	fBuildLog = new ShellView(B_TRANSLATE("Build Log"), BMessenger(this), MSG_BUILD_DONE);
 
 	fNotificationsListView = new BColumnListView(B_TRANSLATE("Notifications"),
 									B_NAVIGABLE, B_PLAIN_BORDER, true);
@@ -2459,9 +2474,13 @@ IdeamWindow::_InitWindow()
 	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Type"),
 								140.0, 140.0, 140.0, 0), kTypeColumn);
 
+	fBuildLogView = new ConsoleIOView(B_TRANSLATE("Build Log"), BMessenger(this));
+
+	fConsoleIOView = new ConsoleIOView(B_TRANSLATE("Console I/O"), BMessenger(this));
 
 	fOutputTabView->AddTab(fNotificationsListView);
-	fOutputTabView->AddTab(fBuildLog->ScrollView());
+	fOutputTabView->AddTab(fBuildLogView);
+	fOutputTabView->AddTab(fConsoleIOView);
 }
 
 BIconButton*
@@ -2503,18 +2522,20 @@ IdeamWindow::_MakeCatkeys()
 	if (fActiveProject == nullptr)
 		return;
 
+	fBuildLogView->Clear();
 	_ShowLog(kBuildLog);
 
-	fBuildLog->Clear();
+	BMessage message;
+	message.AddString("cmd", "make catkeys");
+	message.AddString("cmd_type", "catkeys");
 
-	BString execDirectory;
-	BPath path;
-	BEntry entry(fActiveProject->BasePath());
-	entry.GetPath(&path);
-	execDirectory = path.Path();
-	execDirectory += "/";
+	// Go to appropriate directory
+	chdir(fActiveProject->BasePath());
 
-	fBuildLog->Exec("make catkeys", execDirectory);
+	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
+		BMessenger(fBuildLogView));
+
+	fConsoleIOThread->Start();
 }
 
 void
@@ -2524,19 +2545,20 @@ IdeamWindow::_MakeBindcatalogs()
 	if (fActiveProject == nullptr)
 		return;
 
+	fBuildLogView->Clear();
 	_ShowLog(kBuildLog);
 
-	fBuildLog->Clear();
+	BMessage message;
+	message.AddString("cmd", "make bindcatalogs");
+	message.AddString("cmd_type", "bindcatalogs");
 
-	BString command = "make bindcatalogs";
-	BString execDirectory;
-	BPath path;
-	BEntry entry(fActiveProject->BasePath());
-	entry.GetPath(&path);
-	execDirectory = path.Path();
-	execDirectory += "/";
+	// Go to appropriate directory
+	chdir(fActiveProject->BasePath());
 
-	fBuildLog->Exec(command, execDirectory);
+	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
+		BMessenger(fBuildLogView));
+
+	fConsoleIOThread->Start();
 }
 
 /*
@@ -2978,8 +3000,6 @@ IdeamWindow::_ReplaceGroupToggled()
 	}
 }
 
-
-
 void
 IdeamWindow::_RunTarget()
 {
@@ -2992,13 +3012,49 @@ IdeamWindow::_RunTarget()
 	if (!entry.Exists())
 		return;
 
-	// TODO: Differentiate terminal projects from window ones
-	// TODO: run args
-	entry_ref ref;
-	entry.SetTo(fActiveProject->Target());
-	entry.GetRef(&ref);
-	be_roster->Launch(&ref, 1, NULL);
+	_UpdateProjectActivation(false);
 
+	// Check if run args present
+	BString args("");
+	TPreferences prefs(fActiveProject->Name(), IdeamNames::kApplicationName, 'PRSE');
+	prefs.FindString("project_run_args", &args);
+
+	// Differentiate terminal projects from window ones
+	if (fActiveProject->RunInTerminal() == true) {
+
+		fConsoleIOView->Clear();
+		_ShowLog(kOutputLog);
+
+		// Is it a cargo project?
+		if (fActiveProject->Type() == "cargo") {
+
+		} else { // here type != "cargo"
+
+			BString command;
+			command << fActiveProject->Target();
+			if (!args.IsEmpty())
+				command << " " << args;
+
+			BMessage message;
+			message.AddString("cmd", command);
+			message.AddString("cmd_type", "run");
+
+			fConsoleIOView->MakeFocus(true);
+
+			// TODO: Go to appropriate directory
+			// chdir(...);
+
+			fConsoleIOThread = new ConsoleIOThread(&message, BMessenger(this),
+				BMessenger(fConsoleIOView));
+			fConsoleIOThread->Start();
+		}
+	} else {
+	// TODO: run args
+		entry_ref ref;
+		entry.SetTo(fActiveProject->Target());
+		entry.GetRef(&ref);
+		be_roster->Launch(&ref, 1, NULL);
+	}
 }
 
 void
@@ -3076,7 +3132,7 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 			fRunButton->SetEnabled(true);
 			fRunItem->SetEnabled(true);
 			// Enable debug button in debug mode only
-			if (fReleaseBuild == true) {
+			if (fReleaseModeEnabled == true) {
 				fDebugButton->SetEnabled(false);
 				fDebugItem->SetEnabled(false);
 			} else {

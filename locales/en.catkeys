@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	3857829693
+1	English	application/x-vnd.Ideam-Ideam	1694736444
 tuned 	SettingsWindow		tuned 
 A C command line \"Hello World!\" application	NewProject Window		A C command line \"Hello World!\" application
 Find	IdeamWindow		Find
@@ -11,11 +11,12 @@ Index 	IdeamWindow		Index
 Search	IdeamWindow		Search
 An application template for programs contained in Bjarne Stroustrup' s book:\n\n	NewProject Window		An application template for programs contained in Bjarne Stroustrup' s book:\n\n
 Toggle Projects panes	IdeamWindow		Toggle Projects panes
-Build flag: Debug	IdeamWindow		Build flag: Debug
+Stop	ConsoleIOView		Stop
 : NULL editor pointer	IdeamWindow		: NULL editor pointer
 Local app dir:	NewProject Window		Local app dir:
 Project target:	NewProject Window		Project target:
 Import	NewProject Window		Import
+Console I/O	IdeamWindow		Console I/O
 Startup	SettingsWindow		Startup
 length: 	IdeamWindow		length: 
 Please fill \"Local app dir\" field	NewProject Window		Please fill \"Local app dir\" field
@@ -31,6 +32,7 @@ Run target	IdeamWindow		Run target
 Programming: Principles and Practice using C++ (2nd edition)\n\n\n	NewProject Window		Programming: Principles and Practice using C++ (2nd edition)\n\n\n
 Please fill \"Haiku app dir\" field	NewProject Window		Please fill \"Haiku app dir\" field
 Browse…	NewProject Window		Browse…
+Build mode: Release	IdeamWindow		Build mode: Release
 A C++ command line \"Hello World!\" application	NewProject Window		A C++ command line \"Hello World!\" application
 Please fill \"Project name\" field	NewProject Window		Please fill \"Project name\" field
  time	SettingsWindow		 time
@@ -45,6 +47,7 @@ Set to Unix	IdeamWindow		Set to Unix
 Save current File	IdeamWindow		Save current File
 Sources too	IdeamWindow		Sources too
 Add header	NewProject Window		Add header
+stderr	ConsoleIOView		stderr
 Active project opened:	IdeamWindow		Active project opened:
 \nRemoving stale file: 	NewProject Window		\nRemoving stale file: 
 Project	IdeamWindow		Project
@@ -52,6 +55,7 @@ ERROR: empty \"TARGET\" in Makefile	NewProject Window		ERROR: empty \"TARGET\" i
 Steps (read Haiku guides if unsure):\n\n	NewProject Window		Steps (read Haiku guides if unsure):\n\n
 Match case	IdeamWindow		Match case
 Replace and find next	IdeamWindow		Replace and find next
+Build mode	IdeamWindow		Build mode
 Reload files	SettingsWindow		Reload files
 Save changes to file \"%file%\"	IdeamWindow		Save changes to file \"%file%\"
 Replace:	IdeamWindow		Replace:
@@ -82,7 +86,6 @@ Choose Project:	ProjectSettingsWindow		Choose Project:
 Toggle ToolBar	IdeamWindow		Toggle ToolBar
 Font size:	SettingsWindow		Font size:
 applied 	SettingsWindow		applied 
-Clean started	IdeamWindow		Clean started
 available under the MIT license.\n\n	IdeamApp		available under the MIT license.\n\n
 Set to Mac	IdeamWindow		Set to Mac
 Select previous File	IdeamWindow		Select previous File
@@ -96,10 +99,8 @@ Convert to Mac	IdeamWindow		Convert to Mac
 Find:	IdeamWindow		Find:
 Build Log	IdeamWindow		Build Log
 Build	SettingsWindow		Build
-Build flag: Release	IdeamWindow		Build flag: Release
 Interface	IdeamWindow		Interface
 Project Files	IdeamWindow		Project Files
-Build finished	IdeamWindow		Build finished
 Toggle Output panes	IdeamWindow		Toggle Output panes
 Find toggle (closes Replace bar if open)	IdeamWindow		Find toggle (closes Replace bar if open)
 Paste	IdeamWindow		Paste
@@ -139,10 +140,13 @@ Next Bookmark not found	IdeamWindow		Next Bookmark not found
 Active project closed:	IdeamWindow		Active project closed:
  moved externally to 	IdeamWindow		 moved externally to 
 File full path in window title	SettingsWindow		File full path in window title
+Wrap	ConsoleIOView		Wrap
 File \"%file%\" was modified externally, reload it?	IdeamWindow		File \"%file%\" was modified externally, reload it?
 Project target:	ProjectSettingsWindow		Project target:
  e.g. /boot/home/repodir/haiku/src/apps/clock\n\n	NewProject Window		 e.g. /boot/home/repodir/haiku/src/apps/clock\n\n
+Clear	ConsoleIOView		Clear
 A GUI application with menu bar and localization	NewProject Window		A GUI application with menu bar and localization
+stdout	ConsoleIOView		stdout
 Project opened:	IdeamWindow		Project opened:
 A simple GUI \"Hello World!\" application	NewProject Window		A simple GUI \"Hello World!\" application
 Delete file	IdeamWindow		Delete file
@@ -185,7 +189,6 @@ Overwrite	IdeamWindow		Overwrite
 This is the font size preview	SettingsWindow		This is the font size preview
 Project name:	NewProject Window		Project name:
 Project only	IdeamWindow		Project only
-Clean finished	IdeamWindow		Clean finished
 Save all	IdeamWindow		Save all
 Cancel	Editor		Cancel
 Don't save	IdeamWindow		Don't save
@@ -206,6 +209,7 @@ Clean Project	IdeamWindow		Clean Project
 Please fill \"Add file\" field	NewProject Window		Please fill \"Add file\" field
  times	SettingsWindow		 times
 Mark all	IdeamWindow		Mark all
+Build mode: Debug	IdeamWindow		Build mode: Debug
 Find in files	IdeamWindow		Find in files
 Release	IdeamWindow		Release
 Line endings	IdeamWindow		Line endings
@@ -234,7 +238,6 @@ Edit	IdeamWindow		Edit
 Create	NewProject Window		Create
 Project (host architecture: 	NewProject Window		Project (host architecture: 
 cargo path:	NewProject Window		cargo path:
-Build Flag: Debug	IdeamWindow		Build Flag: Debug
 NULL editor pointer	IdeamWindow		NULL editor pointer
 Fold	IdeamWindow		Fold
 Application	NewProject Window		Application
@@ -258,12 +261,10 @@ See Credits for a complete list.	IdeamApp		See Credits for a complete list.
 ) Click \"Create\" button\n\n\n	NewProject Window		) Click \"Create\" button\n\n\n
 Projects	IdeamWindow		Projects
 Projects directory:	SettingsWindow		Projects directory:
-Build started	IdeamWindow		Build started
 General	SettingsWindow		General
  bytes written	IdeamWindow		 bytes written
  occurrences found: 	IdeamWindow		 occurrences found: 
  uses:	IdeamApp		 uses:
-Build flag	IdeamWindow		Build flag
 Toggle white spaces	IdeamWindow		Toggle white spaces
  exists!	NewProject Window		 exists!
 Convert to Unix	IdeamWindow		Convert to Unix

@@ -1,11 +1,14 @@
 
 - Icons taken from Haiku artwork.
 - TPreferences class by Eric Shepherd
-- tabview interface taken from Haiku apps/webpositive app
+- tabview interface adapted from Haiku apps/webpositive
 - Scintilla lib by Neil Hodgson
 - Scintilla for Haiku  by Andrea Anzani, Kacper Kasper
 - TitleItem/ProjectTitleItem classes taken from Haiku preferences/network
 - Editor::ReplaceAll adapted from Koder
 - IdeamWindow::_CompareListItems taken from Haiku preferences/network
 - ShellView class adapted from Heidi project
-- Build icons taken from Heidi project
+- Build icons taken/adapted from Heidi project
+- ConsoleIOView class adapted from Haiku apps/debugger ConsoleOutputView class
+- ConsoleIOThread class adapted from Haiku apps/expander ExpanderThread class
+- GenericThread class taken fom Haiku apps/expander
