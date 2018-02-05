@@ -116,6 +116,7 @@ enum {
 	MSG_RUN_TARGET				= 'ruta',
 	MSG_BUILD_MODE_RELEASE		= 'bmre',
 	MSG_BUILD_MODE_DEBUG		= 'bmde',
+	MSG_CARGO_UPDATE			= 'caup',
 	MSG_DEBUG_PROJECT			= 'depr',
 	MSG_MAKE_CATKEYS			= 'maca',
 	MSG_MAKE_BINDCATALOGS		= 'mabi',
@@ -603,12 +604,15 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			_BuildProject();
 			break;
 		}
+		case MSG_CARGO_UPDATE: {
+			// TODO
+			break;
+		}
 		case MSG_CLEAN_PROJECT: {
 			_CleanProject();
 			break;
 		}
 		case MSG_BUILD_MODE: {
-
 			break;
 		}
 		case MSG_DEBUG_PROJECT: {
@@ -876,7 +880,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		case MSG_PROJECT_SETTINGS: {
 			BString name("");
 			if (fActiveProject != nullptr)
-				name = fActiveProject->Name();
+				name = fActiveProject->ExtensionedName();
 			ProjectSettingsWindow *window = new ProjectSettingsWindow(name);
 			window->Show();
 			break;
@@ -1019,9 +1023,9 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			break;
 		}
 		case NEWPROJECTWINDOW_PROJECT_OPEN_NEW: {
-			BString fileName;
-			if (message->FindString("project_filename", &fileName) == B_OK)
-				_ProjectOpen(fileName, true);
+			BString extensionedName;
+			if (message->FindString("project_extensioned_name", &extensionedName) == B_OK)
+				_ProjectOpen(extensionedName, true);
 			break;
 		}
 		case TABMANAGER_TAB_CHANGED: {
@@ -1124,9 +1128,9 @@ IdeamWindow::QuitRequested()
 
 		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 			Project * project = fProjectObjectList->ItemAt(index);
-			projects->AddString("project_to_reopen", project->Name());
+			projects->AddString("project_to_reopen", project->ExtensionedName());
 			if (project->IsActive())
-				projects->AddString("active_project", project->Name());
+				projects->AddString("active_project", project->ExtensionedName());
 			// Avoiding leaks
 			_ProjectOutlineDepopulate(project);
 			delete project;
@@ -1172,19 +1176,24 @@ IdeamWindow::_BuildProject()
 	if (fActiveProject == nullptr)
 		return B_ERROR;
 
+	fIsBuilding = true;
 	_UpdateProjectActivation(false);
 
 	fBuildLogView->Clear();
 	_ShowLog(kBuildLog);
 
 	BString text;
-	text << "Build started: "  << fActiveProject->Name();
+	text << "Build started: "  << fActiveProject->ExtensionedName();
 	_SendNotification(text, "PROJ_BUILD");
 
 	BString command;
 	command	<< fActiveProject->BuildCommand();
 
-	fIsBuilding = true;
+	// Honour build mode for cargo projects
+	if (fActiveProject->Type() == "cargo") {
+		if (fReleaseModeEnabled == true)
+			command << " --release";
+	}
 
 	BMessage message;
 	message.AddString("cmd", command);
@@ -1246,7 +1255,7 @@ IdeamWindow::_CleanProject()
 	_ShowLog(kBuildLog);
 
 	BString text;
-	text << B_TRANSLATE("Clean started: ") << fActiveProject->Name();
+	text << B_TRANSLATE("Clean started: ") << fActiveProject->ExtensionedName();
 	_SendNotification( text.String(), "PROJ_BUILD");
 
 	BString command;
@@ -2121,25 +2130,22 @@ IdeamWindow::_InitMenu()
 	menu->AddItem(fGoToLineItem = new BMenuItem(B_TRANSLATE("Go to line" B_UTF8_ELLIPSIS),
 		new BMessage(MSG_GOTO_LINE), '<'));
 
-	BMenu* submenu = new BMenu(B_TRANSLATE("Bookmark"));
-	submenu->AddItem(fBookmarkToggleItem = new BMenuItem(B_TRANSLATE("Toggle"),
+	fBookmarksMenu = new BMenu(B_TRANSLATE("Bookmark"));
+	fBookmarksMenu->AddItem(fBookmarkToggleItem = new BMenuItem(B_TRANSLATE("Toggle"),
 		new BMessage(MSG_BOOKMARK_TOGGLE)));
-	submenu->AddItem(fBookmarkClearAllItem = new BMenuItem(B_TRANSLATE("Clear all"),
+	fBookmarksMenu->AddItem(fBookmarkClearAllItem = new BMenuItem(B_TRANSLATE("Clear all"),
 		new BMessage(MSG_BOOKMARK_CLEAR_ALL)));
-	submenu->AddItem(fBookmarkGoToNextItem = new BMenuItem(B_TRANSLATE("Go to next"),
+	fBookmarksMenu->AddItem(fBookmarkGoToNextItem = new BMenuItem(B_TRANSLATE("Go to next"),
 		new BMessage(MSG_BOOKMARK_GOTO_NEXT)));
-	submenu->AddItem(fBookmarkGoToPreviousItem = new BMenuItem(B_TRANSLATE("Go to previous"),
+	fBookmarksMenu->AddItem(fBookmarkGoToPreviousItem = new BMenuItem(B_TRANSLATE("Go to previous"),
 		new BMessage(MSG_BOOKMARK_GOTO_PREVIOUS)));
 
 	fFindItem->SetEnabled(false);
 	fReplaceItem->SetEnabled(false);
 	fGoToLineItem->SetEnabled(false);
-	fBookmarkToggleItem->SetEnabled(false);
-	fBookmarkClearAllItem->SetEnabled(false);
-	fBookmarkGoToNextItem->SetEnabled(false);
-	fBookmarkGoToPreviousItem->SetEnabled(false);
+	fBookmarksMenu->SetEnabled(false);
 
-	menu->AddItem(submenu);
+	menu->AddItem(fBookmarksMenu);
 	fMenuBar->AddItem(menu);
 
 	menu = new BMenu(B_TRANSLATE("Build"));
@@ -2151,7 +2157,7 @@ IdeamWindow::_InitMenu()
 		new BMessage(MSG_RUN_TARGET)));
 	menu->AddSeparatorItem();
 
-	submenu = new BMenu(B_TRANSLATE("Build mode"));
+	BMenu* submenu = new BMenu(B_TRANSLATE("Build mode"));
 	submenu->SetRadioMode(true);
 	submenu->AddItem(fReleaseModeItem = new BMenuItem(B_TRANSLATE("Release"),
 		new BMessage(MSG_BUILD_MODE_RELEASE)));
@@ -2160,6 +2166,13 @@ IdeamWindow::_InitMenu()
 	fDebugModeItem->SetMarked(true);
 	menu->AddItem(submenu);
 	menu->AddSeparatorItem();
+
+	fCargoMenu = new BMenu(B_TRANSLATE("Cargo"));
+	fCargoMenu->AddItem(fCargoUpdateItem = new BMenuItem(B_TRANSLATE("update"),
+		new BMessage(MSG_CARGO_UPDATE)));
+	menu->AddItem(fCargoMenu);
+	menu->AddSeparatorItem();
+
 	menu->AddItem(fDebugItem = new BMenuItem (B_TRANSLATE("Debug Project"),
 		new BMessage(MSG_DEBUG_PROJECT)));
 	menu->AddSeparatorItem();
@@ -2172,6 +2185,7 @@ IdeamWindow::_InitMenu()
 	fCleanItem->SetEnabled(false);
 	fRunItem->SetEnabled(false);
 	fDebugItem->SetEnabled(false);
+	fCargoMenu->SetEnabled(false);
 	fMakeCatkeysItem->SetEnabled(false);
 	fMakeBindcatalogsItem->SetEnabled(false);
 
@@ -2574,7 +2588,7 @@ IdeamWindow::_ProjectActivate(BString const& projectName)
 	if (fActiveProject == nullptr) {
 		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 			Project * project = fProjectObjectList->ItemAt(index);
-			if (project->Name() == projectName) {
+			if (project->ExtensionedName() == projectName) {
 				fActiveProject = project;
 				fActiveProject->Activate();
 				_UpdateProjectActivation(true);
@@ -2585,7 +2599,7 @@ IdeamWindow::_ProjectActivate(BString const& projectName)
 		// There was an active project already
 		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 			Project * project = fProjectObjectList->ItemAt(index);
-			if (project->Name() == projectName) {
+			if (project->ExtensionedName() == projectName) {
 				fActiveProject->Deactivate();
 				fActiveProject = project;
 				fActiveProject->Activate();
@@ -2606,7 +2620,7 @@ IdeamWindow::_ProjectClose()
 
 	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 		Project *project = fProjectObjectList->ItemAt(index);
-		if (project->Name() == fSelectedProjectName) {
+		if (project->ExtensionedName() == fSelectedProjectName) {
 			if (project == fActiveProject) {
 				fActiveProject = nullptr;
 				closed = B_TRANSLATE("Active project closed:");
@@ -2708,7 +2722,7 @@ IdeamWindow::_ProjectFileFullPath()
 	// Selected File Full Path
 	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 		Project * project = fProjectObjectList->ItemAt(index);
-		if (project->Name() == fSelectedProjectName) {
+		if (project->ExtensionedName() == fSelectedProjectName) {
 			selectedFileFullpath = project->BasePath();
 			selectedFileFullpath.Append("/");
 			selectedFileFullpath.Append(fSelectedProjectItem->Text());
@@ -2810,7 +2824,7 @@ IdeamWindow::_ProjectOpen(BString const& projectName, bool activate)
 	// Check if already open
 	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 		Project * pProject = fProjectObjectList->ItemAt(index);
-		if (pProject->Name() == currentProject->Name())
+		if (pProject->ExtensionedName() == currentProject->ExtensionedName())
 				return;
 	}
 
@@ -3008,6 +3022,8 @@ IdeamWindow::_RunTarget()
 		return;
 
 	// If there's no app just return, should not happen
+	// Cargo projects can build & run in one pass,
+	// so fake target to project directory to do the same
 	BEntry entry(fActiveProject->Target());
 	if (!entry.Exists())
 		return;
@@ -3016,7 +3032,7 @@ IdeamWindow::_RunTarget()
 
 	// Check if run args present
 	BString args("");
-	TPreferences prefs(fActiveProject->Name(), IdeamNames::kApplicationName, 'PRSE');
+	TPreferences prefs(fActiveProject->ExtensionedName(), IdeamNames::kApplicationName, 'PRSE');
 	prefs.FindString("project_run_args", &args);
 
 	// Differentiate terminal projects from window ones
@@ -3025,29 +3041,37 @@ IdeamWindow::_RunTarget()
 		fConsoleIOView->Clear();
 		_ShowLog(kOutputLog);
 
+		BString command;
+
 		// Is it a cargo project?
 		if (fActiveProject->Type() == "cargo") {
 
+			command << "cargo run";
+			// Honour run mode for cargo projects
+			if (fReleaseModeEnabled == true)
+				command << " --release";
+			// Go to appropriate directory
+			chdir(fActiveProject->BasePath());
+
 		} else { // here type != "cargo"
 
-			BString command;
 			command << fActiveProject->Target();
 			if (!args.IsEmpty())
 				command << " " << args;
-
-			BMessage message;
-			message.AddString("cmd", command);
-			message.AddString("cmd_type", "run");
-
-			fConsoleIOView->MakeFocus(true);
-
 			// TODO: Go to appropriate directory
 			// chdir(...);
-
-			fConsoleIOThread = new ConsoleIOThread(&message, BMessenger(this),
-				BMessenger(fConsoleIOView));
-			fConsoleIOThread->Start();
 		}
+
+		BMessage message;
+		message.AddString("cmd", command);
+		message.AddString("cmd_type", "run");
+
+		fConsoleIOView->MakeFocus(true);
+
+		fConsoleIOThread = new ConsoleIOThread(&message, BMessenger(this),
+			BMessenger(fConsoleIOView));
+		fConsoleIOThread->Start();
+
 	} else {
 	// TODO: run args
 		entry_ref ref;
@@ -3120,41 +3144,50 @@ void
 IdeamWindow::_UpdateProjectActivation(bool active)
 {
 	if (active == true) {
-		fBuildButton->SetEnabled(true);
 		fBuildItem->SetEnabled(true);
 		fCleanItem->SetEnabled(true);
 		fMakeCatkeysItem->SetEnabled(true);
 		fMakeBindcatalogsItem->SetEnabled(true);
-
+		fBuildButton->SetEnabled(true);
+		// cargo projects
+		if (fActiveProject->Type() == "cargo") {
+			fRunItem->SetEnabled(true);
+			fDebugItem->SetEnabled(false);
+			fMakeCatkeysItem->SetEnabled(false);
+			fMakeBindcatalogsItem->SetEnabled(false);
+			fRunButton->SetEnabled(true);
+			fDebugButton->SetEnabled(false);
+			return;
+		}
 		// Target exists: enable run button
 		BEntry entry(fActiveProject->Target());
 		if (entry.Exists()) {
-			fRunButton->SetEnabled(true);
 			fRunItem->SetEnabled(true);
+			fRunButton->SetEnabled(true);
 			// Enable debug button in debug mode only
 			if (fReleaseModeEnabled == true) {
-				fDebugButton->SetEnabled(false);
 				fDebugItem->SetEnabled(false);
+				fDebugButton->SetEnabled(false);
 			} else {
-				fDebugButton->SetEnabled(true);
 				fDebugItem->SetEnabled(true);
+				fDebugButton->SetEnabled(true);
 			}
 		} else {
-			fRunButton->SetEnabled(false);
-			fDebugButton->SetEnabled(false);
 			fRunItem->SetEnabled(false);
 			fDebugItem->SetEnabled(false);
+			fRunButton->SetEnabled(false);
+			fDebugButton->SetEnabled(false);
 		}
-	} else {
-		fBuildButton->SetEnabled(false);
-		fRunButton->SetEnabled(false);
-		fDebugButton->SetEnabled(false);
+	} else { // here project is inactive
 		fBuildItem->SetEnabled(false);
 		fCleanItem->SetEnabled(false);
 		fRunItem->SetEnabled(false);
 		fDebugItem->SetEnabled(false);
 		fMakeCatkeysItem->SetEnabled(false);
 		fMakeBindcatalogsItem->SetEnabled(false);
+		fBuildButton->SetEnabled(false);
+		fRunButton->SetEnabled(false);
+		fDebugButton->SetEnabled(false);
 	}
 }
 
@@ -3222,10 +3255,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 		fFindItem->SetEnabled(false);
 		fReplaceItem->SetEnabled(false);
 		fGoToLineItem->SetEnabled(false);
-		fBookmarkToggleItem->SetEnabled(false);
-		fBookmarkClearAllItem->SetEnabled(false);
-		fBookmarkGoToNextItem->SetEnabled(false);
-		fBookmarkGoToPreviousItem->SetEnabled(false);
+		fBookmarksMenu->SetEnabled(false);
 
 		// Clean Status bar
 		fStatusBar->Reset();
@@ -3282,10 +3312,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 	fFindItem->SetEnabled(true);
 	fReplaceItem->SetEnabled(true);
 	fGoToLineItem->SetEnabled(true);
-	fBookmarkToggleItem->SetEnabled(true);
-	fBookmarkClearAllItem->SetEnabled(true);
-	fBookmarkGoToNextItem->SetEnabled(true);
-	fBookmarkGoToPreviousItem->SetEnabled(true);
+	fBookmarksMenu->SetEnabled(true);
 
 	if (IdeamNames::Settings.fullpath_title == true) {
 		BString title;

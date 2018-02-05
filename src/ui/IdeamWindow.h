@@ -137,6 +137,7 @@ private:
 			BMenuItem*			fFindItem;
 			BMenuItem*			fReplaceItem;
 			BMenuItem*			fGoToLineItem;
+			BMenu*				fBookmarksMenu;
 			BMenuItem*			fBookmarkToggleItem;
 			BMenuItem*			fBookmarkClearAllItem;
 			BMenuItem*			fBookmarkGoToNextItem;
@@ -146,6 +147,8 @@ private:
 			BMenuItem*			fRunItem;
 			BMenuItem*			fReleaseModeItem;
 			BMenuItem*			fDebugModeItem;
+			BMenu*				fCargoMenu;
+			BMenuItem*			fCargoUpdateItem;
 			BMenuItem*			fDebugItem;
 			BMenuItem*			fMakeCatkeysItem;
 			BMenuItem*			fMakeBindcatalogsItem;

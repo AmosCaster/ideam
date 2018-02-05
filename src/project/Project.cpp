@@ -12,7 +12,7 @@
 
 Project::Project(BString const& name)
 	:
-	fName(name)
+	fExtensionedName(name)
 {
 }
 
@@ -43,20 +43,18 @@ Project::Deactivate()
 status_t
 Project::Open(bool activate)
 {
-	if (fName.IsEmpty())
+	if (fExtensionedName.IsEmpty())
 		throw std::logic_error("Empty name");
 
-	fIdmproFile = new TPreferences(fName, IdeamNames::kApplicationName, 'PRSE');
-/*
-	BString filename;
-	if (fIdmproFile->FindString("project_filename", &filename) != B_OK) {
-		delete fIdmproFile;
-		return B_ERROR;
-	}
-*/
+	fIdmproFile = new TPreferences(fExtensionedName, IdeamNames::kApplicationName, 'PRSE');
+
 	isActive = activate;
 
-	fProjectTitle = new ProjectTitleItem(fName.String(), activate);
+	fProjectTitle = new ProjectTitleItem(fExtensionedName.String(), activate);
+
+	// name without extension
+	if (fIdmproFile->FindString("project_name", &fName) != B_OK)
+		throw std::logic_error("Empty name");
 
 	// Update project data
 	if (fIdmproFile->FindString("project_build_command", &fBuildCommand) != B_OK)

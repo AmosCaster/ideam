@@ -523,7 +523,7 @@ NewProjectWindow::_CreateProject()
 	if (status == B_OK) {
 		// Post a message
 		BMessage message(NEWPROJECTWINDOW_PROJECT_OPEN_NEW);
-		message.AddString("project_filename", fProjectFilename);
+		message.AddString("project_extensioned_name", fProjectExtensionedName);
 		be_app->WindowAt(0)->PostMessage(&message);
 		// Quit
 		PostMessage(B_QUIT_REQUESTED);
@@ -582,13 +582,13 @@ NewProjectWindow::_CreateSkeleton()
 		return status;
 
 	// Project file
-	fProjectFilename = fProjectNameText->Text();
-	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	fProjectFile =  new TPreferences(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
+	fProjectExtensionedName = fProjectNameText->Text();
+	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
+	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
 
-	fProjectFile->SetBString("project_filename", fProjectFilename);
-	fProjectFile->SetString("project_name", fProjectNameText->Text());
-	fProjectFile->SetString("project_directory", path.Path());
+	fProjectFile->SetBString("project_extensioned_name", fProjectExtensionedName);
+	fProjectFile->SetBString("project_name", fProjectNameText->Text());
+	fProjectFile->SetBString("project_directory", path.Path());
 	fProjectFile->SetBString("project_build_command", "make");
 	fProjectFile->SetBString("project_clean_command", "make clean rmapp");
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
@@ -669,25 +669,22 @@ NewProjectWindow::_CreateCargoProject()
 	be_app->WindowAt(0)->PostMessage(&message);
 
 	// Project file
-	fProjectFilename = fProjectNameText->Text();
-	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	TPreferences projectFile(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
+	fProjectExtensionedName = fProjectNameText->Text();
+	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
+	TPreferences projectFile(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
 
-	projectFile.SetBString("project_filename", fProjectFilename);
+	projectFile.SetBString("project_extensioned_name", fProjectExtensionedName);
 	projectFile.SetString("project_name", fProjectNameText->Text());
 	path.Append(fProjectNameText->Text());
 	projectFile.SetString("project_directory", path.Path());
+	// Set project target: cargo is able to build & run in one pass, setting
+	// target to project directory will enable doing the same in
+	// IdeamWindow::_RunTarget()
+	projectFile.SetBString("project_target", path.Path());
 	projectFile.SetBString("project_build_command", "cargo build");
 	projectFile.SetBString("project_clean_command", "cargo clean");
 	projectFile.SetBool("run_in_terminal", fRunInTeminal->Value());
 
-	// TODO: check if it may be useful somewhere
-	// What about release target?
-	// Set project target
-	BPath targetPath(path);
-	targetPath.Append("target/debug");
-	targetPath.Append(fProjectNameText->Text());
-	projectFile.SetBString("project_target", targetPath.Path());
 	// Cargo specific
 	projectFile.SetBString("project_type", "cargo");
 
@@ -772,11 +769,11 @@ NewProjectWindow::_CreateEmptyProject()
 		return status;
 
 	// Project file
-	fProjectFilename = fProjectNameText->Text();
-	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	fProjectFile =  new TPreferences(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
+	fProjectExtensionedName = fProjectNameText->Text();
+	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
+	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
 
-	fProjectFile->SetBString("project_filename", fProjectFilename);
+	fProjectFile->SetBString("project_extensioned_name", fProjectExtensionedName);
 	fProjectFile->SetString("project_name", fProjectNameText->Text());
 	fProjectFile->SetString("project_directory", path.Path());
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
@@ -792,11 +789,11 @@ NewProjectWindow::_CreateHaikuSourcesProject()
 	status_t status    = B_OK;
 
 	// Project file
-	fProjectFilename = fProjectNameText->Text();
-	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	fProjectFile =  new TPreferences(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
+	fProjectExtensionedName = fProjectNameText->Text();
+	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
+	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
 
-	fProjectFile->SetBString("project_filename", fProjectFilename);
+	fProjectFile->SetBString("project_extensioned_name", fProjectExtensionedName);
 	fProjectFile->SetString("project_name", fProjectNameText->Text());
 	fProjectFile->SetString("project_target", fProjectTargetTC->Text());
 	fProjectFile->SetString("project_directory", fHaikuAppDirTC->Text());
@@ -818,11 +815,11 @@ NewProjectWindow::_CreateLocalSourcesProject()
 	status_t status    = B_OK;
 
 	// Project file
-	fProjectFilename = fProjectNameText->Text();
-	fProjectFilename.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	fProjectFile =  new TPreferences(fProjectFilename, IdeamNames::kApplicationName, 'PRSE');
+	fProjectExtensionedName = fProjectNameText->Text();
+	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
+	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
 
-	fProjectFile->SetBString("project_filename", fProjectFilename);
+	fProjectFile->SetBString("project_extensioned_name", fProjectExtensionedName);
 	fProjectFile->SetString("project_name", fProjectNameText->Text());
 	fProjectFile->SetString("project_target", fProjectTargetTC->Text());
 	fProjectFile->SetString("project_directory", fLocalAppDirTC->Text());

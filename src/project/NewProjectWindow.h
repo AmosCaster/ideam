@@ -72,7 +72,7 @@ private:
 			BScrollView*		typeListScrollView;
 
 			TPreferences*		fProjectFile;
-			BString				fProjectFilename;
+			BString				fProjectExtensionedName;
 
 			TitleItem*			haikuItem;
 			BStringItem*		appItem;

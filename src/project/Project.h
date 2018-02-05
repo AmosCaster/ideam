@@ -22,6 +22,7 @@ public:
 			BString				CleanCommand() const { return fCleanCommand; }
 			void				Close();
 			void				Deactivate();
+			BString	const		ExtensionedName() const { return fExtensionedName; }
 	std::vector<BString>		FilesList() const { return fFilesList; };
 			bool				IsActive() { return isActive; }
 			BString	const		Name() const { return fName; }
@@ -35,7 +36,8 @@ public:
 private:
 
 private:
-			BString	const		fName;
+			BString				fName;
+			BString const		fExtensionedName;
 			BString				fBuildCommand;
 			BString				fCleanCommand;
 			BString				fProjectDirectory;

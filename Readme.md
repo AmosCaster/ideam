@@ -1,14 +1,14 @@
 Ideam
 ================
-![Screenshot](https://raw.github.com/AmosCaster/ideam/master/data/screenshot/screenshot-0.6.1-eng.png)
-    screenshot-0.6.1-eng.png
+![Screenshot](https://raw.github.com/AmosCaster/ideam/master/data/screenshot/screenshot-0.6.2-eng.png)
+    screenshot-0.6.2-eng.png
 
 Introducing
 ----------------
 
 Ideam is an IDE for [Haiku](https://www.haiku-os.org).
 The editor is based on [Scintilla for Haiku](https://sourceforge.net/p/scintilla/haiku/ci/default/tree/).  
-From version 0.5.5 onwards it is developed and tested on both x86 variants.
+From version 0.5.5 onwards it is developed and tested on both x86 variants (x86_gcc2, x86_64).
 
 
 Compiling
