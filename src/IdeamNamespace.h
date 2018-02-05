@@ -43,6 +43,8 @@ namespace IdeamNames
 		BString edgeline_column;
 		int32 enable_folding;
 		int32 enable_notifications;
+		int32 wrap_console;
+		int32 console_banner;
 
 	} SettingsVars;
 

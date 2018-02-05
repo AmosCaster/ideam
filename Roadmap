@@ -226,6 +226,11 @@ current Scintilla version: HaikuPorts version
 
 +) Project run (debug and release mode)
 
+--------------------------------------------------------------------------------
+
+0.6.3) Console check boxes mapped in Settings
+
++) Wrap and Banner console flags in Window->Settings->Build
 
 --------------------------------------------------------------------------------
 ________________________________________________________________________________

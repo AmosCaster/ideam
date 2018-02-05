@@ -22,6 +22,8 @@
 
 #include <AutoDeleter.h>
 
+#include "IdeamNamespace.h"
+
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "ConsoleIOView"
 
@@ -117,6 +119,12 @@ ConsoleIOView::MessageReceived(BMessage* message)
 		{
 			fConsoleIOText->SetText("");
 			fPendingOutput->MakeEmpty();
+
+			// Used to reload settings too
+			fWrapEnabled->SetValue(IdeamNames::Settings.wrap_console);
+			fConsoleIOText->SetWordWrap(fWrapEnabled->Value());
+			fBannerEnabled->SetValue(IdeamNames::Settings.console_banner);
+
 			break;
 		}
 		case MSG_POST_OUTPUT:
@@ -150,9 +158,12 @@ ConsoleIOView::AttachedToWindow()
 
 	fStdoutEnabled->SetValue(B_CONTROL_ON);
 	fStderrEnabled->SetValue(B_CONTROL_ON);
-	fWrapEnabled->SetValue(B_CONTROL_OFF);
 	fWrapEnabled->SetEnabled(false);
+	fBannerEnabled->SetEnabled(false);
+
+	fWrapEnabled->SetValue(IdeamNames::Settings.wrap_console);
 	fConsoleIOText->SetWordWrap(fWrapEnabled->Value());
+	fBannerEnabled->SetValue(IdeamNames::Settings.console_banner);
 
 	fClearButton->SetTarget(this);
 	fStopButton->SetTarget(this);
@@ -162,7 +173,7 @@ ConsoleIOView::AttachedToWindow()
 void
 ConsoleIOView::Clear()
 {
-	fConsoleIOText->SetText("");
+	BMessenger(this).SendMessage(MSG_CLEAR_OUTPUT);
 }
 
 void
@@ -207,6 +218,7 @@ ConsoleIOView::_Init()
 	fStdoutEnabled = new BCheckBox(B_TRANSLATE("stdout"));
 	fStderrEnabled = new BCheckBox(B_TRANSLATE("stderr"));
 	fWrapEnabled = new BCheckBox(B_TRANSLATE("Wrap"));
+	fBannerEnabled = new BCheckBox(B_TRANSLATE("Banner"));
 	fClearButton = new BButton(B_TRANSLATE("Clear"), new BMessage(MSG_CLEAR_OUTPUT));
 	fStopButton = new BButton(B_TRANSLATE("Stop"), new BMessage(MSG_STOP_PROCESS));
 
@@ -217,6 +229,7 @@ ConsoleIOView::_Init()
 			.Add(fStdoutEnabled)
 			.Add(fStderrEnabled)
 			.Add(fWrapEnabled)
+			.Add(fBannerEnabled)
 			.AddGlue()
 			.Add(fClearButton)
 			.Add(fStopButton)

@@ -69,6 +69,9 @@ enum {
 	MSG_SHOW_TOOLBAR_TOGGLED				= 'shto',
 	MSG_SYNTAX_HIGHLIGHT_TOGGLED			= 'syhi',
 	MSG_TAB_WIDTH_CHANGED					= 'tawi',
+
+	MSG_WRAP_CONSOLE_ENABLED				= 'wcen',
+	MSG_CONSOLE_BANNER_ENABLED				= 'cben'
 };
 
 SettingsWindow::SettingsWindow()
@@ -92,7 +95,6 @@ SettingsWindow::SettingsWindow()
 	}
 
 	_InitWindow();
-
 
 	// Map Items
 	_MapPages();
@@ -296,6 +298,18 @@ SettingsWindow::MessageReceived(BMessage *msg)
 			bool modified = fTabWidthSpinner->Value() !=
 								fWindowSettingsFile->FindInt32("tab_width");
 				_ManageModifications(fTabWidthSpinner, modified);
+			break;
+		}
+		case MSG_WRAP_CONSOLE_ENABLED: {
+			bool modified = fWrapConsoleEnabled->Value() !=
+								fWindowSettingsFile->FindInt32("wrap_console");
+				_ManageModifications(fWrapConsoleEnabled, modified);
+			break;
+		}
+		case MSG_CONSOLE_BANNER_ENABLED: {
+			bool modified = fConsoleBannerEnabled->Value() !=
+								fWindowSettingsFile->FindInt32("console_banner");
+				_ManageModifications(fConsoleBannerEnabled, modified);
 			break;
 		}
 		default: {
@@ -685,6 +699,25 @@ SettingsWindow::_LoadFromFile(BControl* control, bool loadAll /*= false*/)
 		} else
 			fOrphansList->AddItem(fEnableNotifications);
 	}
+	//  Build Page
+	if (control == fWrapConsoleEnabled || loadAll == true) {
+		status = fWindowSettingsFile->FindInt32("wrap_console", &intVal);
+		fControlsCount += loadAll == true;
+		if (status == B_OK) {
+			fWrapConsoleEnabled->SetValue(intVal);
+			fControlsDone += loadAll == true;
+		} else
+			fOrphansList->AddItem(fWrapConsoleEnabled);
+	}
+	if (control == fConsoleBannerEnabled || loadAll == true) {
+		status = fWindowSettingsFile->FindInt32("console_banner", &intVal);
+		fControlsCount += loadAll == true;
+		if (status == B_OK) {
+			fConsoleBannerEnabled->SetValue(intVal);
+			fControlsDone += loadAll == true;
+		} else
+			fOrphansList->AddItem(fConsoleBannerEnabled);
+	}
 
 	_UpdateText();
 	// Note: gets rewritten on reload defaults
@@ -751,22 +784,30 @@ SettingsWindow::_MapPages()
 BView*
 SettingsWindow::_PageBuildView()
 {
-	// "" Box
-BBox*	fBox = new BBox("");
-	fBox->SetLabel("TODO BuildPage");
+	// "BuildPage" Box
 
+	fBuildBox = new BBox("BuildBox");
+	fBuildBox->SetLabel(B_TRANSLATE("Build"));
+
+	fWrapConsoleEnabled = new BCheckBox("WrapConsoleEnabled",
+		B_TRANSLATE("Wrap console"), new BMessage(MSG_WRAP_CONSOLE_ENABLED));
+
+	fConsoleBannerEnabled = new BCheckBox("ConsoleBannerEnabled",
+		B_TRANSLATE("Console banner"), new BMessage(MSG_CONSOLE_BANNER_ENABLED));
 
 	BView* view = BGroupLayoutBuilder(B_VERTICAL, 0)
-		.Add(BLayoutBuilder::Grid<>(fBox)
-
-//		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER), 0, 3, 4)
-//		.AddGlue(0, 4)
+		.Add(BLayoutBuilder::Grid<>(fBuildBox)
+		.Add(fWrapConsoleEnabled, 0, 1)
+		.Add(fConsoleBannerEnabled, 1, 1)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER), 0, 3, 4)
+		.AddGlue(0, 4)
 		.SetInsets(10, 20, 10, 10))
 	.TopView();
 
 	view->SetName("BuildPage");
 
 	return view;
+
 }
 
 BView*
@@ -1117,6 +1158,11 @@ SettingsWindow::_StoreToFile(BControl* control)
 	// Notifications Page
 	else if (control == fEnableNotifications)
 		status = fWindowSettingsFile->SetInt32("enable_notifications", fEnableNotifications->Value());
+	// Build Page
+	else if (control == fWrapConsoleEnabled)
+		status = fWindowSettingsFile->SetInt32("wrap_console", fWrapConsoleEnabled->Value());
+	else if (control == fConsoleBannerEnabled)
+		status = fWindowSettingsFile->SetInt32("console_banner", fConsoleBannerEnabled->Value());
 
 	return status;
 }
@@ -1162,6 +1208,10 @@ SettingsWindow::_StoreToFileDefaults()
 
 	// Notifications Page
 	fWindowSettingsFile->SetInt32("enable_notifications", kSKEnableNotifications);
+
+	// Build Page
+	fWindowSettingsFile->SetInt32("wrap_console", kSKWrapConsole);
+	fWindowSettingsFile->SetInt32("console_banner", kSKConsoleBanner);
 	
 	return B_OK;
 }

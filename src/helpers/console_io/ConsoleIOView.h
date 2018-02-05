@@ -49,6 +49,7 @@ private:
 			BCheckBox*			fStdoutEnabled;
 			BCheckBox*			fStderrEnabled;
 			BCheckBox*			fWrapEnabled;
+			BCheckBox*			fBannerEnabled;
 			BTextView*			fConsoleIOText;
 			BButton*			fClearButton;
 			BButton*			fStopButton;

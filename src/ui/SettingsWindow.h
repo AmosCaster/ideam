@@ -83,7 +83,6 @@ typedef std::map<BStringItem*, BString>::const_iterator ViewPageIterator;
 			TitleItem*			fNotificationsTitle;
 			TitleItem*			fBuildTitle;
 
-
 			// General page
 			BTextControl*		fProjectsDirectory;
 			BBox*				fGeneralBox;
@@ -118,6 +117,11 @@ typedef std::map<BStringItem*, BString>::const_iterator ViewPageIterator;
 			// Notifications page
 			BBox*				fNotificationsBox;
 			BCheckBox*			fEnableNotifications;
+
+			// Build page
+			BBox*				fBuildBox;
+			BCheckBox*			fWrapConsoleEnabled;
+			BCheckBox*			fConsoleBannerEnabled;
 
 			// Buttons
 			BButton*			fApplyButton;

@@ -31,4 +31,8 @@ const BString kSKEdgeLineColumn = "80"; //"edgeline_column"
 const int32 kSKEnableFolding = B_CONTROL_ON; // "enable_folding"
 
 const int32 kSKEnableNotifications = B_CONTROL_ON; // "enable_notifications"
+
+const int32 kSKWrapConsole = B_CONTROL_OFF; // "wrap_console"
+const int32 kSKConsoleBanner = B_CONTROL_ON; // "console_banner"
+
 #endif // DEFAULT_SETTINGS_KEYS_H

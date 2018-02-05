@@ -20,6 +20,9 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "IdeamNamespace.h"
+
+
 extern char **environ;
 
 ConsoleIOThread::ConsoleIOThread(BMessage* cmd_message,
@@ -93,10 +96,8 @@ ConsoleIOThread::ThreadStartup()
 	// Let console view know the cmd_type so Stop action will post it
 	button_message.AddString("cmd_type", fCmdType);
 
-#define CONSOLE_BANNER_ON
-#ifdef CONSOLE_BANNER_ON
-	_BannerMessage("started   ");
-#endif
+	if (IdeamNames::Settings.console_banner == true)
+		_BannerMessage("started   ");
 
 	return B_OK;
 }
@@ -157,9 +158,8 @@ ConsoleIOThread::ThreadShutdown(void)
 	button_message.AddBool("enable", false);
 	fConsoleTarget.SendMessage(&button_message);
 
-#ifdef CONSOLE_BANNER_ON
-	_BannerMessage("ended   --");
-#endif	
+	if (IdeamNames::Settings.console_banner == true)
+		_BannerMessage("ended   --");
 
 	return B_OK;
 }

@@ -117,6 +117,8 @@ LoadSettingsVars()
 	status += file.FindString("edgeline_column", &Settings.edgeline_column);
 	status += file.FindInt32("enable_folding", &Settings.enable_folding);
 	status += file.FindInt32("enable_notifications", &Settings.enable_notifications);
+	status += file.FindInt32("wrap_console", &Settings.wrap_console);
+	status += file.FindInt32("console_banner", &Settings.console_banner);
 
 	return status;
 }
@@ -177,6 +179,11 @@ UpdateSettingsFile()
 	//  Notifications Page
 	if (settings.FindInt32("enable_notifications", &intVal) != B_OK)
 		settings.SetInt32("enable_notifications", kSKEnableNotifications);
+	//  Build Page
+	if (settings.FindInt32("wrap_console", &intVal) != B_OK)
+		settings.SetInt32("wrap_console", kSKWrapConsole);
+	if (settings.FindInt32("console_banner", &intVal) != B_OK)
+		settings.SetInt32("console_banner", kSKConsoleBanner);
 
 	// Managed to get here without errors, reset counter and app version
 	settings.SetInt64("last_used", real_time_clock());
