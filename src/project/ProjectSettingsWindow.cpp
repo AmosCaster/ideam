@@ -35,6 +35,7 @@ ProjectSettingsWindow::ProjectSettingsWindow(BString name)
 													B_AUTO_UPDATE_SIZE_LIMITS |
 													B_CLOSE_ON_ESCAPE)
 	, fName(name)
+	, fProjectsCount(0)
 	, fIdmproFile(nullptr)
 {
 	// Button
@@ -156,15 +157,17 @@ ProjectSettingsWindow::_GetProjects()
 	BEntry entry;
 	char name[B_FILE_NAME_LENGTH];
 	int32 projectsCount;
+	BString projectName;
 
 	for (projectsCount = 0; projectDir.GetNextEntry(&entry) == B_OK; projectsCount++) {
 		entry.GetName(name);
-		BString projectName(name);
+		projectName.SetTo(name);
 
 		if (projectName.EndsWith(IdeamNames::kProjectExtension)) {
 			BMenuItem* item = new BMenuItem(projectName, new BMessage(MSG_PROJECT_SELECTED));
 			fProjectMenuField->Menu()->AddItem(item, projectsCount);
-		}
+		} else
+			projectsCount--;
 	}
 	return projectsCount;
 }
