@@ -7,6 +7,7 @@
 
 #include <Alert.h>
 #include <Application.h>
+#include <Architecture.h>
 #include <Catalog.h>
 #include <IconUtils.h>
 #include <LayoutBuilder.h>
@@ -1222,7 +1223,11 @@ IdeamWindow::_CargoNew(BString args)
 	setenv("USER", "user", true);
 
 	BString command;
-	command << "cargo new " << args;
+
+	if (!strcmp(get_primary_architecture(), "x86_gcc2"))
+		command << "cargo-x86 new " << args;
+	else
+		command << "cargo new " << args;
 
 	BMessage message;
 	message.AddString("cmd", command);
@@ -3045,8 +3050,11 @@ IdeamWindow::_RunTarget()
 
 		// Is it a cargo project?
 		if (fActiveProject->Type() == "cargo") {
-
-			command << "cargo run";
+			// Check architecture
+			if (!strcmp(get_primary_architecture(), "x86_gcc2"))
+				command << "cargo-x86 run";
+			else
+				command << "cargo run";
 			// Honour run mode for cargo projects
 			if (fReleaseModeEnabled == true)
 				command << " --release";

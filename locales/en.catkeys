@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	1694736444
+1	English	application/x-vnd.Ideam-Ideam	3230847497
 tuned 	SettingsWindow		tuned 
 A C command line \"Hello World!\" application	NewProject Window		A C command line \"Hello World!\" application
 Find	IdeamWindow		Find
@@ -7,14 +7,16 @@ ERROR: Settings directory not found	IdeamWindow		ERROR: Settings directory not f
 Replace toggle (leaves Find bar open)	IdeamWindow		Replace toggle (leaves Find bar open)
 opened with index	IdeamWindow		opened with index
 Delete project	IdeamWindow		Delete project
+Existing project with Makefile.	NewProject Window		Existing project with Makefile.
 Index 	IdeamWindow		Index 
 Search	IdeamWindow		Search
-An application template for programs contained in Bjarne Stroustrup' s book:\n\n	NewProject Window		An application template for programs contained in Bjarne Stroustrup' s book:\n\n
 Toggle Projects panes	IdeamWindow		Toggle Projects panes
+Console banner	SettingsWindow		Console banner
 Stop	ConsoleIOView		Stop
 : NULL editor pointer	IdeamWindow		: NULL editor pointer
 Local app dir:	NewProject Window		Local app dir:
 Project target:	NewProject Window		Project target:
+Project [host architecture: 	NewProject Window		Project [host architecture: 
 Import	NewProject Window		Import
 Console I/O	IdeamWindow		Console I/O
 Startup	SettingsWindow		Startup
@@ -22,15 +24,18 @@ length: 	IdeamWindow		length:
 Please fill \"Local app dir\" field	NewProject Window		Please fill \"Local app dir\" field
 Find Next	IdeamWindow		Find Next
 Help	IdeamWindow		Help
+Programming: Principles and Practice using C++ (2nd edition)	NewProject Window		Programming: Principles and Practice using C++ (2nd edition)
 About…	IdeamWindow		About…
 Reload projects	SettingsWindow		Reload projects
+* Clone Haiku repo and configure it.	NewProject Window		* Clone Haiku repo and configure it.
 C Hello World!	NewProject Window		C Hello World!
 Cargo project	NewProject Window		Cargo project
 Show/Hide Output split	IdeamWindow		Show/Hide Output split
 Empty Project	NewProject Window		Empty Project
 Run target	IdeamWindow		Run target
-Programming: Principles and Practice using C++ (2nd edition)\n\n\n	NewProject Window		Programming: Principles and Practice using C++ (2nd edition)\n\n\n
 Please fill \"Haiku app dir\" field	NewProject Window		Please fill \"Haiku app dir\" field
+A project file with an empty project directory.	NewProject Window		A project file with an empty project directory.
+ contained in Bjarne Stroustrup' s book:	NewProject Window		 contained in Bjarne Stroustrup' s book:
 Browse…	NewProject Window		Browse…
 Build mode: Release	IdeamWindow		Build mode: Release
 A C++ command line \"Hello World!\" application	NewProject Window		A C++ command line \"Hello World!\" application
@@ -38,13 +43,13 @@ Please fill \"Project name\" field	NewProject Window		Please fill \"Project name
  time	SettingsWindow		 time
 Show ToolBar	SettingsWindow		Show ToolBar
 Cancel	NewProject Window		Cancel
-      repodir/haiku> ./configure --use-xattr-ref --use-gcc-pipe\n\n	NewProject Window		      repodir/haiku> ./configure --use-xattr-ref --use-gcc-pipe\n\n
 Replace	IdeamWindow		Replace
 \nRemoving stale project dir: 	NewProject Window		\nRemoving stale project dir: 
 Go to line…	IdeamWindow		Go to line…
 Project opened failed: 	IdeamWindow		Project opened failed: 
 Set to Unix	IdeamWindow		Set to Unix
 Save current File	IdeamWindow		Save current File
+e.g. /boot/home/repodir/haiku/src/apps/clock	NewProject Window		e.g. /boot/home/repodir/haiku/src/apps/clock
 Sources too	IdeamWindow		Sources too
 Add header	NewProject Window		Add header
 stderr	ConsoleIOView		stderr
@@ -52,10 +57,10 @@ Active project opened:	IdeamWindow		Active project opened:
 \nRemoving stale file: 	NewProject Window		\nRemoving stale file: 
 Project	IdeamWindow		Project
 ERROR: empty \"TARGET\" in Makefile	NewProject Window		ERROR: empty \"TARGET\" in Makefile
-Steps (read Haiku guides if unsure):\n\n	NewProject Window		Steps (read Haiku guides if unsure):\n\n
 Match case	IdeamWindow		Match case
 Replace and find next	IdeamWindow		Replace and find next
 Build mode	IdeamWindow		Build mode
+Wrap console	SettingsWindow		Wrap console
 Reload files	SettingsWindow		Reload files
 Save changes to file \"%file%\"	IdeamWindow		Save changes to file \"%file%\"
 Replace:	IdeamWindow		Replace:
@@ -67,12 +72,9 @@ Project Sources	IdeamWindow		Project Sources
 Editor	SettingsWindow		Editor
 Select all	IdeamWindow		Select all
 Delete	IdeamWindow		Delete
-Put \"std_lib_facilities.h\" in:\n	NewProject Window		Put \"std_lib_facilities.h\" in:\n
 Close project	IdeamWindow		Close project
-) Clone Haiku repo and configure it. \n	NewProject Window		) Clone Haiku repo and configure it. \n
 Undo	IdeamWindow		Undo
 Type	IdeamWindow		Type
-Existing project with Makefile.\n\nAccord \"Project target:\" if needed\n\n\nNOTE: sources not copied or moved	NewProject Window		Existing project with Makefile.\n\nAccord \"Project target:\" if needed\n\n\nNOTE: sources not copied or moved
 Go to next	IdeamWindow		Go to next
 Defaults loaded	SettingsWindow		Defaults loaded
 Show Projects panes	SettingsWindow		Show Projects panes
@@ -85,6 +87,7 @@ Time	IdeamWindow		Time
 Choose Project:	ProjectSettingsWindow		Choose Project:
 Toggle ToolBar	IdeamWindow		Toggle ToolBar
 Font size:	SettingsWindow		Font size:
+update	IdeamWindow		update
 applied 	SettingsWindow		applied 
 available under the MIT license.\n\n	IdeamApp		available under the MIT license.\n\n
 Set to Mac	IdeamWindow		Set to Mac
@@ -95,6 +98,7 @@ There are modified files, do you want to save changes before quitting?	IdeamWind
 Convert to Dos	IdeamWindow		Convert to Dos
 Build	IdeamWindow		Build
 Redo	IdeamWindow		Redo
+NOTE: first compilation may take a long time to complete	NewProject Window		NOTE: first compilation may take a long time to complete
 Convert to Mac	IdeamWindow		Convert to Mac
 Find:	IdeamWindow		Find:
 Build Log	IdeamWindow		Build Log
@@ -116,7 +120,7 @@ Debug	IdeamWindow		Debug
 Wrap	IdeamWindow		Wrap
 Debug Project	IdeamWindow		Debug Project
 Set to Dos	IdeamWindow		Set to Dos
-) Select your Haiku app dir (from src/apps) or write full path in text control\n	NewProject Window		) Select your Haiku app dir (from src/apps) or write full path in text control\n
+Banner	ConsoleIOView		Banner
 Source control:	ProjectSettingsWindow		Source control:
 cargo binary not found!	NewProject Window		cargo binary not found!
 Revert	SettingsWindow		Revert
@@ -125,6 +129,7 @@ Save position	SettingsWindow		Save position
 Set buffer read-only	IdeamWindow		Set buffer read-only
  modified externally	IdeamWindow		 modified externally
 Open file	IdeamWindow		Open file
+Steps (read Haiku guides if unsure):	NewProject Window		Steps (read Haiku guides if unsure):
 Clean started: 	IdeamWindow		Clean started: 
 File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost	IdeamWindow		File \"%file%\" was removed externally,\ndo You want to keep the file or discard it?\nIf kept and modified save it or it will be lost
 Show Output panes	SettingsWindow		Show Output panes
@@ -143,7 +148,6 @@ File full path in window title	SettingsWindow		File full path in window title
 Wrap	ConsoleIOView		Wrap
 File \"%file%\" was modified externally, reload it?	IdeamWindow		File \"%file%\" was modified externally, reload it?
 Project target:	ProjectSettingsWindow		Project target:
- e.g. /boot/home/repodir/haiku/src/apps/clock\n\n	NewProject Window		 e.g. /boot/home/repodir/haiku/src/apps/clock\n\n
 Clear	ConsoleIOView		Clear
 A GUI application with menu bar and localization	NewProject Window		A GUI application with menu bar and localization
 stdout	ConsoleIOView		stdout
@@ -169,31 +173,35 @@ Exit	ProjectSettingsWindow		Exit
 File	IdeamWindow		File
 Show line number	SettingsWindow		Show line number
 Run in\nTerminal	NewProject Window		Run in\nTerminal
-) Accord \"/generated/\" target dir (in \"Project target:\") if needed\n\n	NewProject Window		) Accord \"/generated/\" target dir (in \"Project target:\") if needed\n\n
 \nDo you want to delete project sources too?\n	IdeamWindow		\nDo you want to delete project sources too?\n
 Font:	SettingsWindow		Font:
+* Click \"Create\" button	NewProject Window		* Click \"Create\" button
 No file selected	IdeamWindow		No file selected
 Previous Bookmark not found	IdeamWindow		Previous Bookmark not found
 Apply	SettingsWindow		Apply
+repodir>  git clone https://git.haiku-os.org/haiku	NewProject Window		repodir>  git clone https://git.haiku-os.org/haiku
 ERROR: Project 	NewProject Window		ERROR: Project 
 Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?	IdeamApp		Settings file for a previous version detected,\ndo You want to ignore, review or load to defaults?
 Open recent…	IdeamWindow		Open recent…
 Ideam	System name		Ideam
 Clean comand:	ProjectSettingsWindow		Clean comand:
+It may be filled in Project->Settings menu	NewProject Window		It may be filled in Project->Settings menu
 Ignore	IdeamWindow		Ignore
 closed	IdeamWindow		closed
 A rust cargo project.\n\nYou should make sure that the rust package (read cargo binary) is installed and working!	NewProject Window		A rust cargo project.\n\nYou should make sure that the rust package (read cargo binary) is installed and working!
+Cargo	IdeamWindow		Cargo
 Indexed File list	IdeamWindow		Indexed File list
 Copy	IdeamWindow		Copy
 Overwrite	IdeamWindow		Overwrite
 This is the font size preview	SettingsWindow		This is the font size preview
 Project name:	NewProject Window		Project name:
 Project only	IdeamWindow		Project only
+* Select your Haiku app dir (from src/apps) or write full path in text control	NewProject Window		* Select your Haiku app dir (from src/apps) or write full path in text control
 Save all	IdeamWindow		Save all
 Cancel	Editor		Cancel
 Don't save	IdeamWindow		Don't save
 Save dialog	Editor		Save dialog
-A project file with an empty project directory.\n\nIt may be filled in Project->Settings menu	NewProject Window		A project file with an empty project directory.\n\nIt may be filled in Project->Settings menu
+Once done get back here and:	NewProject Window		Once done get back here and:
 Browse…	SettingsWindow		Browse…
 App from Haiku sources	NewProject Window		App from Haiku sources
 Show edge line	SettingsWindow		Show edge line
@@ -201,7 +209,6 @@ Save all Files	IdeamWindow		Save all Files
 File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?	IdeamWindow		File \"%file%\" was moved externally,\ndo You want to ignore, close or reload it?
  replacements done: 	IdeamWindow		 replacements done: 
 Notifications	SettingsWindow		Notifications
- e.g. repodir>  git clone https://git.haiku-os.org/haiku\n	NewProject Window		 e.g. repodir>  git clone https://git.haiku-os.org/haiku\n
 Exit	SettingsWindow		Exit
 Reload	IdeamWindow		Reload
 Projects dir:	NewProject Window		Projects dir:
@@ -215,11 +222,10 @@ Release	IdeamWindow		Release
 Line endings	IdeamWindow		Line endings
 Settings	IdeamWindow		Settings
 Enable Brace matching	SettingsWindow		Enable Brace matching
-An application from Haiku sources repo.\n\n	NewProject Window		An application from Haiku sources repo.\n\n
+An application template for programs	NewProject Window		An application template for programs
 Whole word	IdeamWindow		Whole word
 Close all	IdeamWindow		Close all
 Replace selection	IdeamWindow		Replace selection
-Once done get back here and:\n\n	NewProject Window		Once done get back here and:\n\n
 Set for app ver: 	SettingsWindow		Set for app ver: 
 Close	IdeamWindow		Close
 Build comand:	ProjectSettingsWindow		Build comand:
@@ -236,9 +242,9 @@ Edit	IdeamWindow		Edit
 \nDeleting project: 	IdeamWindow		\nDeleting project: 
 \nRemoving stale dir: 	NewProject Window		\nRemoving stale dir: 
 Create	NewProject Window		Create
-Project (host architecture: 	NewProject Window		Project (host architecture: 
 cargo path:	NewProject Window		cargo path:
 NULL editor pointer	IdeamWindow		NULL editor pointer
+repodir/haiku> ./configure --use-gcc-pipe	NewProject Window		repodir/haiku> ./configure --use-gcc-pipe
 Fold	IdeamWindow		Fold
 Application	NewProject Window		Application
 \n\nERROR: Project creation failed\n\n	NewProject Window		\n\nERROR: Project creation failed\n\n
@@ -251,6 +257,7 @@ Save changes to file	Editor		Save changes to file
 Project closed:	IdeamWindow		Project closed:
 Replace all	IdeamWindow		Replace all
 Invalid selection	NewProject Window		Invalid selection
+* Accord \"generated\" target dir (in \"Project target:\") if needed	NewProject Window		* Accord \"generated\" target dir (in \"Project target:\") if needed
 Cancel	IdeamWindow		Cancel
 Enable folding	SettingsWindow		Enable folding
 \nRemoving stale project file: 	NewProject Window		\nRemoving stale project file: 
@@ -258,12 +265,14 @@ Fold toggle	IdeamWindow		Fold toggle
 Tab width:  	SettingsWindow		Tab width:  
 Project:	ProjectSettingsWindow		Project:
 See Credits for a complete list.	IdeamApp		See Credits for a complete list.
-) Click \"Create\" button\n\n\n	NewProject Window		) Click \"Create\" button\n\n\n
 Projects	IdeamWindow		Projects
 Projects directory:	SettingsWindow		Projects directory:
+An application from Haiku sources repo.	NewProject Window		An application from Haiku sources repo.
 General	SettingsWindow		General
+Select project directory and accord \"Project target:\" if needed	NewProject Window		Select project directory and accord \"Project target:\" if needed
  bytes written	IdeamWindow		 bytes written
  occurrences found: 	IdeamWindow		 occurrences found: 
+Put \"std_lib_facilities.h\" in:	NewProject Window		Put \"std_lib_facilities.h\" in:
  uses:	IdeamApp		 uses:
 Toggle white spaces	IdeamWindow		Toggle white spaces
  exists!	NewProject Window		 exists!

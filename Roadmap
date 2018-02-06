@@ -18,15 +18,16 @@ current Scintilla version: HaikuPorts version
 
 -] makefile-engine lacks $(CXXFLAGS) in .cpp pattern rules
 -] g++ include path in clang++ compilation
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.0.2) Storing window placement
 ===============================
 
 +) Ui settings file
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.0.3) Added ui elements
+========================
 
 +) Added toolbar & icons
 
@@ -36,15 +37,17 @@ current Scintilla version: HaikuPorts version
 
 +) Added Projects view
 +) Added Notifications view
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.0.4) Tab Interface
+====================
 
 -] Scintilla multitab has bad behaviour with layout
  ] Menubar messed up on resizing
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.0.5) File interface
+=====================
 
 +) Open file/s
 +) Save file/s
@@ -60,9 +63,10 @@ current Scintilla version: HaikuPorts version
 -] Scintilla automatically takes focus
 -] Scintilla may crash on leak detection
  ] Tabs & Projects split interaction should be reworked
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.0.6) File Interface
+=====================
 
 +) Edit menu
 +) Read-only buffer
@@ -71,9 +75,10 @@ current Scintilla version: HaikuPorts version
 
  ] Scintilla context menu is untranslated
  ] RecentFilesList seems to leak
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.0.7) File Interface
+=====================
 
 +) Node monitoring
 +) Open with
@@ -85,9 +90,10 @@ current Scintilla version: HaikuPorts version
 
  ] Pe and StyledEdit fire different messages of B_STAT_CHANGED fields
   on modifying the same file
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.0.8) Storing window settings
+==============================
 
 +) Settings window
 +) Load settings
@@ -97,14 +103,16 @@ current Scintilla version: HaikuPorts version
 
 +) File full path in title bar
 +) Reopen files at startup
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.0.9) Mapping window settings
+==============================
 
 +) Interface mappings
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.1.0) Integrate Scintilla
+==========================
 
 +) Bookmarks management
 +) File position in status bar
@@ -114,42 +122,43 @@ current Scintilla version: HaikuPorts version
 +) Toggle line endings
 +) Toggle white spaces
 
-
 -] Scintilla does not scroll on mouse selection
  ] Bookmarks seems to leak
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.1.1) Integrate Scintilla
+==========================
 
 +) Find interface
 +) Replace interface
 +) Overwrite
 
-
  ] Overwrite shortcut violates rules and displays wrong (none) key
  ] Scintilla goes Overwrite when Insert key pressed
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.2.0) Simple Extension management
+==================================
 
 +) Syntax highlight
 +) File folding
 +) Brace highlight
 +) Auto indent
 
-
  ] Should be extended to different languages/extensions
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.3.0) New Project management
+=============================
 
 +) Project creation
 +) Project import
 
  ] Leak analyzer marks as leaks undeleted BStringItems
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.4.0) Project management
+=========================
 
 +) Project list view
 +) Project menu
@@ -157,50 +166,54 @@ current Scintilla version: HaikuPorts version
 +) Project reopen at startup
 
  ] Context menu not working for already selected items
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.5.0) Project management
+=========================
 
 +) Project build, clean, run, debug
 +) Build log
 +) make catkeys,bindcatalogs
 
 --------------------------------------------------------------------------------
-
 0.5.1) Project management
+=========================
 
 +) Project settings
 
 --------------------------------------------------------------------------------
-
 0.5.2) Line ending management
+=============================
 
 +) Set/Convert line endings
 
  ] Is there a Haiku file attrs standard?
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.5.3) Fix nonexistent Project Directory bug
+============================================
 
-+] Create Project Directory (as in Settings->General) if not existent
++) Create Project Directory (as in Settings->General) if not existent
 
 --------------------------------------------------------------------------------
-
 0.5.4) Enable building in both intel variants
+=============================================
 
 +) Build x86_gcc2 (g++-x86, clang++)
 +) Build x86_64   (g++, clang++)
 
 -] clang++ build needs some headers hack
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.5.5) Fix x86_64 build
+=======================
 
  ] gcc 5.4.0 (x86_64) and gcc-x86 5.4.0 (x86_gcc2) have different behaviour
    when compiling the same sources
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.6.0) Preliminary rust support
+===============================
 
 +) Create cargo project
 +) Project build, clean
@@ -208,29 +221,35 @@ current Scintilla version: HaikuPorts version
 +) Rust "4 spaces tab" management
 +) Added Debug/Release flag
 
-
 -] Bad environment hack to allow "cargo new" succeed
  ] rust-gdb needs gdb which is not available in x86_64
  ] rustc and cargo-x86 do not work in x86_gcc2
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 0.6.1) New log/console management
+=================================
 
 +) New build log
 +) Added I/O console for terminal projects
 +) Terminal projects accept args when run
 
 --------------------------------------------------------------------------------
-
 0.6.2) Enhanced rust support
+============================
 
 +) Project run (debug and release mode)
 
 --------------------------------------------------------------------------------
-
 0.6.3) Console check boxes mapped in Settings
+=============================================
 
 +) Wrap and Banner console flags in Window->Settings->Build
+
+--------------------------------------------------------------------------------
+0.6.4) Fix x86_gcc2 New project creation
+========================================
+
++) All new project types build and run in x86_gcc2
 
 --------------------------------------------------------------------------------
 ________________________________________________________________________________

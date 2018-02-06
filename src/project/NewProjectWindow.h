@@ -74,6 +74,9 @@ private:
 			TPreferences*		fProjectFile;
 			BString				fProjectExtensionedName;
 
+			BString				f_primary_architecture;
+			BString				f_cargo_binary;
+
 			TitleItem*			haikuItem;
 			BStringItem*		appItem;
 			BStringItem* 		appMenuItem;
@@ -101,21 +104,21 @@ private:
 
 			BBox*				fProjectBox;
 			BTextControl*		fProjectNameText;
-			BTextControl*		fProjectTargetTC;
+			BTextControl*		fProjectTargetText;
 			BCheckBox*			fRunInTeminal;
 			BTextControl*		fProjectsDirectoryText;
-			BTextControl*		fAddFileTC;
+			BTextControl*		fAddFileText;
 			BCheckBox*			fAddHeader;
-			BTextControl*		fAddSecondFileTC;
+			BTextControl*		fAddSecondFileText;
 			BCheckBox*			fAddSecondHeader;
-			BTextControl*		fHaikuAppDirTC;
+			BTextControl*		fHaikuAppDirText;
 			BButton*			fBrowseHaikuAppButton;
 			BFilePanel*			fOpenPanel;
-			BTextControl*		fLocalAppDirTC;
+			BTextControl*		fLocalAppDirText;
 			BButton*			fBrowseLocalAppButton;
 			BTextControl*		fCargoPathText;
-			BCheckBox*			fCargoBin;
-			BCheckBox*			fCargoVcs;
+			BCheckBox*			fCargoBinEnabled;
+			BCheckBox*			fCargoVcsEnabled;
 
 			BButton*			fCreateButton;
 			BButton*			fCancelButton;
