@@ -1031,9 +1031,10 @@ NewProjectWindow::_MapItems()
 //		<< "\n"
 		<< B_TRANSLATE("NOTE: sources not copied or moved");
 
-	cargoItemString <<
-		B_TRANSLATE("A rust cargo project.\n\n"
-		"You should make sure that the rust package (read cargo binary) is installed and working!");
+	cargoItemString
+		<< B_TRANSLATE("A rust cargo project.")
+		<< "\n\n"
+		<< B_TRANSLATE("You should make sure that the rust package (read cargo binary) is installed and working!");
 
 	projectTypeMap.insert(ProjectTypePair(appItem, appItemString));
 	projectTypeMap.insert(ProjectTypePair(appMenuItem, appMenuItemString));

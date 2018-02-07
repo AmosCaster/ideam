@@ -12,8 +12,12 @@
 #include <String.h>
 
 enum {
-	EDITOR_BOOKMARK_MARK		= 'Ebma',
-	EDITOR_REPLACED_ONE			= 'Ereo',
+	EDITOR_FIND_COUNT			= 'Efco',
+	EDITOR_FIND_NEXT_MISS		= 'Efnm',
+	EDITOR_FIND_PREV_MISS		= 'Efpm',
+	EDITOR_FIND_SET_MARK		= 'Efsm',
+	EDITOR_REPLACE_ONE			= 'Ereo',
+	EDITOR_REPLACE_ALL_COUNT	= 'Erac',
 	EDITOR_SAVEPOINT_REACHED	= 'Esre',
 	EDITOR_SAVEPOINT_LEFT		= 'Esle',
 	EDITOR_SELECTION_CHANGED	= 'Esch',
@@ -107,7 +111,7 @@ public:
 			status_t			Reload();
 			int					ReplaceAndFindNext(const BString& selection,
 									const BString& replacement, int flags, bool wrap);
-			int					ReplaceAll(const BString& selection,
+			int32				ReplaceAll(const BString& selection,
 									const BString& replacement, int flags);
 			void 				ReplaceMessage(int position, const BString& selection,
 									const BString& replacement);

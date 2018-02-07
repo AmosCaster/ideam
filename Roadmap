@@ -251,6 +251,17 @@ current Scintilla version: HaikuPorts version
 
 +) All new project types build and run in x86_gcc2
 
+ ] scan-build make fails in x86_gcc2
+
+--------------------------------------------------------------------------------
+0.6.5) Notifications rework
+===========================
+
++) Mark all and Replace all count come last
++) Find prev,next miss notified
++) ReplaceOne, ReplaceAll, MarkAll, open Notifications tab to front
++) Bold mono font
+
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

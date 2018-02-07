@@ -410,7 +410,7 @@ Editor::FindMarkAll(const BString& text, int flags)
 			count++;
 
 			// Found occurrence, message window
-			BMessage message(EDITOR_BOOKMARK_MARK);
+			BMessage message(EDITOR_FIND_SET_MARK);
 			message.AddRef("ref", &fFileRef);
 			int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET) + 1;
 			message.AddInt32("line", line);
@@ -419,6 +419,11 @@ Editor::FindMarkAll(const BString& text, int flags)
 	}
 
 	SendMessage(SCI_GOTOPOS, firstMark, UNSET);
+
+	BMessage message(EDITOR_FIND_COUNT);
+	message.AddString("text_to_find", text);
+	message.AddInt32("count", count);
+	fTarget.SendMessage(&message);
 
 	return count;
 }
@@ -437,6 +442,8 @@ Editor::FindNext(const BString& search, int flags, bool wrap)
 		fFound = true;
 	else if (position == -1 && wrap == false) {
 		fFound = false;
+		BMessage message(EDITOR_FIND_NEXT_MISS);
+		fTarget.SendMessage(&message);
 	} else if (position == -1 && wrap == true) {
 		// If wrap and not found go to saved position
 		int savedPosition = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
@@ -462,6 +469,8 @@ Editor::FindPrevious(const BString& search, int flags, bool wrap)
 		fFound = true;
 	else if (position == -1 && wrap == false) {
 		fFound = false;
+		BMessage message(EDITOR_FIND_PREV_MISS);
+		fTarget.SendMessage(&message);
 	} else if (position == -1 && wrap == true) {
 		// If wrap and not found go to saved position
 		int savedPosition = SendMessage(SCI_GETCURRENTPOS, UNSET, UNSET);
@@ -781,10 +790,10 @@ Editor::ReplaceAndFindNext(const BString& selection, const BString& replacement,
 /*
  * Adapted from Koder EditorWindow::_FindReplace
  */
-int
+int32
 Editor::ReplaceAll(const BString& selection, const BString& replacement, int flags)
 {
-	int count = 0;
+	int32 count = 0;
 
 	SendMessage(SCI_TARGETWHOLEDOCUMENT, UNSET, UNSET);
 	SendMessage(SCI_SETSEARCHFLAGS, flags, UNSET);
@@ -810,6 +819,10 @@ Editor::ReplaceAll(const BString& selection, const BString& replacement, int fla
 
 	SendMessage(SCI_ENDUNDOACTION, 0, 0);
 
+	BMessage message(EDITOR_REPLACE_ALL_COUNT);
+	message.AddInt32("count", count);
+	fTarget.SendMessage(&message);
+
 	return count;
 }
 
@@ -817,7 +830,7 @@ void
 Editor::ReplaceMessage(int position, const BString& selection,
 							const BString& replacement)
 {
-	BMessage message(EDITOR_REPLACED_ONE);
+	BMessage message(EDITOR_REPLACE_ONE);
 	message.AddRef("ref", &fFileRef);
 	int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET) + 1;
 	int column = SendMessage(SCI_GETCOLUMN, position, UNSET) + 1;

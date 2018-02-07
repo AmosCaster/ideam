@@ -57,7 +57,8 @@ IdeamApp::AboutRequested()
 	window->AddAuthors(authors);
 
 	BString extraInfo;
-	extraInfo << B_TRANSLATE("available under the MIT license.\n\n");
+	extraInfo << B_TRANSLATE("available under the MIT license.");
+	extraInfo << "\n\n";
 	extraInfo << IdeamNames::kApplicationName <<  B_TRANSLATE(" uses:");
 	extraInfo << "\nScintilla lib";
 	extraInfo << "\nCopyright 1998-2003 by Neil Hodgson <neilh@scintilla.org>";
@@ -150,8 +151,9 @@ IdeamApp::_CheckSettingsVersion()
 	if (fileVersion.IsEmpty() || fileVersion == "0.0.0.0") {
 
 		BString text;
-		text << (B_TRANSLATE("Settings file is corrupted or deleted,\n"
-							"do You want to ignore, review or load to defaults?"));
+		text << B_TRANSLATE("Settings file is corrupted or deleted,")
+			 << "\n"
+			 << B_TRANSLATE("do You want to ignore, review or load to defaults?");
 
 		BAlert* alert = new BAlert("SettingsDeletedDialog", text,
 			B_TRANSLATE("Ignore"), B_TRANSLATE("Review"), B_TRANSLATE("Load"),
@@ -181,8 +183,9 @@ IdeamApp::_CheckSettingsVersion()
 		if (result > 0) {
 
 			BString text;
-			text << (B_TRANSLATE("Settings file for a previous version detected,\n"
-								"do You want to ignore, review or load to defaults?"));
+			text << B_TRANSLATE("Settings file for a previous version detected,")
+				 << "\n"
+				 << B_TRANSLATE("do You want to ignore, review or load to defaults?");
 
 			BAlert* alert = new BAlert("SettingsUpdateDialog", text,
 				B_TRANSLATE("Ignore"), B_TRANSLATE("Review"), B_TRANSLATE("Load"),

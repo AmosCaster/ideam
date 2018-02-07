@@ -444,7 +444,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
-		case EDITOR_BOOKMARK_MARK: {
+		case EDITOR_FIND_SET_MARK: {
 			entry_ref ref;
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index = _GetEditorIndex(&ref);
@@ -455,27 +455,67 @@ IdeamWindow::MessageReceived(BMessage* message)
 					if (message->FindInt32("line", &line) == B_OK) {
 						BString text;
 						text << fEditor->Name() << " :" << line;
-						_SendNotification( text.String(), "MARK_FOUND");
+						_SendNotification( text.String(), "FIND_MARK");
 					}
 				}
 			}
 			break;
 		}
-		case EDITOR_REPLACED_ONE: {
+		case EDITOR_FIND_NEXT_MISS: {
+			_SendNotification(B_TRANSLATE("Find next not found"),
+													"FIND_MISS");
+			break;
+		}
+		case EDITOR_FIND_PREV_MISS: {
+			_SendNotification(B_TRANSLATE("Find previous not found"),
+													"FIND_MISS");
+			break;
+		}
+		case EDITOR_FIND_COUNT: {
+			int32 count;
+			BString text;
+			if (message->FindString("text_to_find", &text) == B_OK
+				&& message->FindInt32("count", &count) == B_OK) {
+
+				BString notification;
+				notification << "\"" << text << "\""
+					<< " "
+					<< B_TRANSLATE("occurrences found:")
+					<< " " << count;
+
+				_ShowLog(kNotificationLog);
+				_SendNotification(notification, "FIND_COUNT");
+			}
+			break;
+		}
+		case EDITOR_REPLACE_ALL_COUNT: {
+			int32 count;
+			if (message->FindInt32("count", &count) == B_OK) {
+				BString notification;
+				notification << B_TRANSLATE("Replacements done:") << " " << count;
+
+				_ShowLog(kNotificationLog);
+				_SendNotification(notification, "REPL_COUNT");
+			}
+			break;
+		}
+		case EDITOR_REPLACE_ONE: {
 			entry_ref ref;
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index =  _GetEditorIndex(&ref);
 				if (index == fTabManager->SelectedTabIndex()) {
 					int32 line, column;
-					BString selection, replacement;
+					BString sel, repl;
 					if (message->FindInt32("line", &line) == B_OK
 						&& message->FindInt32("column", &column) == B_OK
-						&& message->FindString("selection", &selection) == B_OK
-						&& message->FindString("replacement", &replacement) == B_OK) {
-						BString text;
-						text << fEditor->Name() << " " << line  << ":" << column
-							 << " -- " << selection << " -> " << replacement;
-						_SendNotification( text.String(), "REPLACE_DONE");
+						&& message->FindString("selection", &sel) == B_OK
+						&& message->FindString("replacement", &repl) == B_OK) {
+						BString notification;
+						notification << fEditor->Name() << " " << line  << ":" << column
+							 << " \"" << sel << "\" => \""<< repl<< "\"";
+
+						_ShowLog(kNotificationLog);
+						_SendNotification(notification, "REPL_DONE");
 					}
 				}
 			}
@@ -547,7 +587,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 
 				if (found == false)
 					_SendNotification(B_TRANSLATE("Next Bookmark not found"),
-													"BOOKMARK");
+													"FIND_MISS");
 			}
 
 			break;
@@ -561,7 +601,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 
 				if (found == false)
 					_SendNotification(B_TRANSLATE("Previous Bookmark not found"),
-													"BOOKMARK");
+													"FIND_MISS");
 			}
 
 
@@ -764,12 +804,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			BString textToFind(fFindTextControl->Text());
 
 			if (!textToFind.IsEmpty()) {
-				int32 counts = _FindMarkAll(textToFind);
-				_ShowLog(kNotificationLog);
-				BString notification;
-				notification << "\"" << textToFind << "\""
-					<< B_TRANSLATE(" occurrences found: ") << counts;
-				_SendNotification( notification, "BOOKMARKS");
+				_FindMarkAll(textToFind);
 			}
 			break;
 		}
@@ -819,8 +854,11 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		case MSG_PROJECT_MENU_DELETE: {
 
 			BString text;
-			text << B_TRANSLATE("\nDeleting project: ") << "\"" << fSelectedProjectName << "\""
-				 << B_TRANSLATE("\nDo you want to delete project sources too?\n");
+			text << "\n"
+				 << B_TRANSLATE("Deleting project: ")
+				 << "\"" << fSelectedProjectName << "\"" << "\n"
+				 << B_TRANSLATE("Do you want to delete project sources too?")
+				 << "\n";
 
 			BAlert* alert = new BAlert(B_TRANSLATE("Delete project dialog"),
 				text.String(),
@@ -890,10 +928,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			_ReplaceGroupShow();
 			break;
 		case MSG_REPLACE_ALL: {
-			int32 counts = _Replace(REPLACE_ALL);
-			BString text;
-			text << B_TRANSLATE(" replacements done: ") << counts;
-			_SendNotification( text.String(), "REPLACEMENTS");
+			_Replace(REPLACE_ALL);
 			break;
 		}
 		case MSG_REPLACE_GROUP_TOGGLED:
@@ -1783,8 +1818,10 @@ IdeamWindow::_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRe
 
 	BString text;
 	text << IdeamNames::kApplicationName << ":\n";
-	text << (B_TRANSLATE("File \"%file%\" was moved externally,\n"
-							"do You want to ignore, close or reload it?"));
+	text << B_TRANSLATE("File \"%file%\" was moved externally,")
+		 << "\n"
+		 << B_TRANSLATE("do You want to ignore, close or reload it?");
+
 	text.ReplaceAll("%file%", oldRef->name);
 
 	BAlert* alert = new BAlert("FileMoveDialog", text,
@@ -1825,9 +1862,12 @@ IdeamWindow::_HandleExternalRemoveModification(int32 index)
 
 	BString text;
 	text << IdeamNames::kApplicationName << ":\n";
-	text << (B_TRANSLATE("File \"%file%\" was removed externally,\n"
-							"do You want to keep the file or discard it?\n"
-							"If kept and modified save it or it will be lost"));
+	text 	<< B_TRANSLATE("File \"%file%\" was removed externally,")
+			<< "\n"
+			<< B_TRANSLATE("do You want to keep the file or discard it?")
+			<< "\n"
+			<< B_TRANSLATE("If kept and modified save it or it will be lost");
+
 	text.ReplaceAll("%file%", fEditor->Name());
 
 	BAlert* alert = new BAlert("FileRemoveDialog", text,
@@ -2487,11 +2527,14 @@ IdeamWindow::_InitWindow()
 	fNotificationsListView = new BColumnListView(B_TRANSLATE("Notifications"),
 									B_NAVIGABLE, B_PLAIN_BORDER, true);
 	fNotificationsListView->AddColumn(new BDateColumn(B_TRANSLATE("Time"),
-								140.0, 140.0, 140.0), kTimeColumn);
+								200.0, 200.0, 200.0), kTimeColumn);
 	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Message"),
-								400.0, 400.0, 800.0, 0), kMessageColumn);
+								600.0, 600.0, 800.0, 0), kMessageColumn);
 	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Type"),
-								140.0, 140.0, 140.0, 0), kTypeColumn);
+								200.0, 200.0, 200.0, 0), kTypeColumn);
+	BFont font;
+	font.SetFamilyAndStyle("Noto Sans Mono", "Bold");
+	fNotificationsListView->SetFont(&font);
 
 	fBuildLogView = new ConsoleIOView(B_TRANSLATE("Build Log"), BMessenger(this));
 
