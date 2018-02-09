@@ -1414,7 +1414,7 @@ notification.SetTo("");
 	fEditor = fEditorObjectList->ItemAt(index);
 
 	if (fEditor == nullptr) {
-		notification << (B_TRANSLATE("NULL editor pointer"));
+		notification << B_TRANSLATE("NULL editor pointer");
 		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
@@ -1512,8 +1512,9 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 		fEditor = fEditorObjectList->ItemAt(index);
 
 		if (fEditor == nullptr) {
-			notification << ref.name << ": "
-						 << (B_TRANSLATE("NULL editor pointer"));
+			notification << ref.name
+				<< ": "
+				<< B_TRANSLATE("NULL editor pointer");
 			_SendNotification(notification, "FILE_ERR");
 			return B_ERROR;
 		}
@@ -1631,7 +1632,7 @@ IdeamWindow::_FileSaveAll()
 		if (fEditor == nullptr) {
 			BString notification;
 			notification << B_TRANSLATE("Index") << " " << index
-				<< (B_TRANSLATE(": NULL editor pointer"));
+				<< ": " << B_TRANSLATE("NULL editor pointer");
 			_SendNotification(notification, "FILE_ERR");
 			continue;
 		}
@@ -1667,7 +1668,7 @@ IdeamWindow::_FileSaveAs(int32 selection, BMessage* message)
 		BString notification;
 		notification
 			<< B_TRANSLATE("Index") << " " << selection
-			<< (B_TRANSLATE(": NULL editor pointer"));
+			<< ": " << B_TRANSLATE("NULL editor pointer");
 		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
@@ -1790,7 +1791,7 @@ IdeamWindow::_GetEditorIndex(entry_ref* ref)
 			BString notification;
 			notification
 				<< B_TRANSLATE("Index") << " " << index
-				<< (B_TRANSLATE(": NULL editor pointer"));
+				<< ": " << B_TRANSLATE("NULL editor pointer");
 			_SendNotification(notification, "FILE_ERR");
 			continue;
 		}
@@ -1816,7 +1817,7 @@ IdeamWindow::_GetEditorIndex(node_ref* nref)
 			BString notification;
 			notification
 				<< B_TRANSLATE("Index") << " " << index
-				<< B_TRANSLATE(": NULL editor pointer");
+				<< ": " << B_TRANSLATE("NULL editor pointer");
 			_SendNotification(notification, "FILE_ERR");
 			continue;
 		}
@@ -1961,9 +1962,7 @@ IdeamWindow::_HandleExternalRemoveModification(int32 index)
 		_FileClose(index, true);
 
 		BString notification;
-		notification
-			<< fEditor->Name() << " "
-			<< B_TRANSLATE(" removed externally");
+		notification << fEditor->Name() << " " << B_TRANSLATE("removed externally");
 		_SendNotification(notification, "FILE_INFO");
 	}
 }

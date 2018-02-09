@@ -59,7 +59,7 @@ IdeamApp::AboutRequested()
 	BString extraInfo;
 	extraInfo << B_TRANSLATE("available under the MIT license.");
 	extraInfo << "\n\n";
-	extraInfo << IdeamNames::kApplicationName <<  B_TRANSLATE(" uses:");
+	extraInfo << IdeamNames::kApplicationName << " " << B_TRANSLATE("uses:");
 	extraInfo << "\nScintilla lib";
 	extraInfo << "\nCopyright 1998-2003 by Neil Hodgson <neilh@scintilla.org>";
 	extraInfo << "\n\nScintilla for Haiku";

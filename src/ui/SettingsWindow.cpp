@@ -1222,9 +1222,9 @@ SettingsWindow::_UpdateText()
 	BString text;
 
 	text << fControlsDone << "/" << fControlsCount;
-	text <<  B_TRANSLATE(" Controls loaded.");
-	text << B_TRANSLATE(" Modifications ") << fModifiedList->CountItems();
-	text <<  ",\t" << B_TRANSLATE("applied ") << fAppliedModifications;
+	text <<  " " << B_TRANSLATE("Controls loaded.");
+	text << " " << B_TRANSLATE("Modifications") << " " << fModifiedList->CountItems();
+	text <<  ",\t" << B_TRANSLATE("applied") << " " << fAppliedModifications;
 	fStatusBar->SetText(text.String());
 }
 
@@ -1236,9 +1236,9 @@ SettingsWindow::_UpdateTrailing()
 	text << B_TRANSLATE("Set for app ver: ")
 		 << fWindowSettingsFile->FindString("app_version") << ",\t";
 
-	BString option = fUseCount == 1	? B_TRANSLATE(" time")
-										: B_TRANSLATE(" times");
-	text << B_TRANSLATE("tuned ") << fUseCount << option;
+	BString option = fUseCount == 1	? B_TRANSLATE("time")
+										: B_TRANSLATE("times");
+	text << B_TRANSLATE("tuned ") << fUseCount << " " << option;
 
 	fStatusBar->SetTrailingText(text.String());
 }

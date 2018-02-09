@@ -468,7 +468,7 @@ NewProjectWindow::_CreateProject()
 	if (entry.Exists()) {
 		BString warn;
 		warn << B_TRANSLATE("ERROR: Project ") << projectFile
-			<< B_TRANSLATE(" exists!");
+			<< " " << B_TRANSLATE("exists!");
 		fProjectDescription->SetText(warn.String());
 		return B_ERROR;
 	}
@@ -551,7 +551,11 @@ NewProjectWindow::_CreateProject()
 		PostMessage(B_QUIT_REQUESTED);
 	} else {
 		// Delete stale project files if any
-		fProjectDescription->Insert(B_TRANSLATE("\n\nERROR: Project creation failed\n\n"));
+		BString description;
+		description << "\n\n"
+			<< B_TRANSLATE("ERROR: Project creation failed")
+			<< "\n\n";
+		fProjectDescription->Insert(description);
 
 		_RemoveStaleEntries(dirPath.Path());
 
@@ -559,7 +563,8 @@ NewProjectWindow::_CreateProject()
 		if (entry.Exists()) {
 			entry.Remove();
 			BString text;
-			text << B_TRANSLATE("\nRemoving stale project dir: ") << entry.Name();
+			text <<  "\n" << B_TRANSLATE("Removing stale project dir:")
+				<< " " << entry.Name();
 			fProjectDescription->Insert(text);
 		}
 
@@ -567,7 +572,8 @@ NewProjectWindow::_CreateProject()
 		if (entry.Exists()) {
 			entry.Remove();
 			BString text;
-			text << B_TRANSLATE("\nRemoving stale project file: ") << entry.Name();
+			text << "\n" << B_TRANSLATE("Removing stale project file:")
+				<< " " << entry.Name();
 			fProjectDescription->Insert(text);
 		}
 	}
@@ -995,7 +1001,8 @@ NewProjectWindow::_MapItems()
 
 	principlesItemString
 		<< B_TRANSLATE("An application template for programs")
-		<< B_TRANSLATE(" contained in Bjarne Stroustrup' s book:")
+		<< " "
+		<< B_TRANSLATE("contained in Bjarne Stroustrup' s book:")
 		<< "\n\n"
 		<< B_TRANSLATE("Programming: Principles and Practice using C++ (2nd edition)")
 		<< "\n\n"
@@ -1133,18 +1140,21 @@ NewProjectWindow::_RemoveStaleEntries(const char* dirpath)
 
 				_RemoveStaleEntries(newPath.String());
 				entry.Remove();
-				text << B_TRANSLATE("\nRemoving stale dir: ") << entry.Name();
+				text << "\n" << B_TRANSLATE("Removing stale dir:")
+					<< " " << entry.Name();
 				fProjectDescription->Insert(text);
 			}
 			else {
 				entry.Remove();
-				text << B_TRANSLATE("\nRemoving stale dir: ") << entry.Name();
+				text << "\n" << B_TRANSLATE("Removing stale dir:")
+					<< " " << entry.Name();
 				fProjectDescription->Insert(text);
 			}
 		}
 		else {
 			entry.Remove();
-			text << B_TRANSLATE("\nRemoving stale file: ") << entry.Name();
+				text << "\n" << B_TRANSLATE("Removing stale file:")
+					<< " " << entry.Name();
 			fProjectDescription->Insert(text);
 		}
 	}
