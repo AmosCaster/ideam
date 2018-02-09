@@ -76,6 +76,7 @@ private:
 
 			BString				f_primary_architecture;
 			BString				f_cargo_binary;
+			BString				f_project_directory;
 
 			TitleItem*			haikuItem;
 			BStringItem*		appItem;
@@ -104,6 +105,7 @@ private:
 
 			BBox*				fProjectBox;
 			BTextControl*		fProjectNameText;
+			BCheckBox*			fGitEnabled;
 			BTextControl*		fProjectTargetText;
 			BCheckBox*			fRunInTeminal;
 			BTextControl*		fProjectsDirectoryText;

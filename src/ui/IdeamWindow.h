@@ -77,6 +77,7 @@ private:
 			int32				_GetEditorIndex(entry_ref* ref);
 			int32				_GetEditorIndex(node_ref* nref);
 			void				_GetFocusAndSelection(BTextControl* control);
+			status_t			_Git(const BString& git_command);
 			void				_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRef);
 			void				_HandleExternalRemoveModification(int32 index);
 			void				_HandleExternalStatModification(int32 index);
@@ -104,6 +105,7 @@ private:
 			bool				_ReplaceAllow();
 			void				_ReplaceGroupShow();
 			void				_ReplaceGroupToggled();
+			status_t			_RunInConsole(const BString& command);
 			void				_RunTarget();
 			void				_SendNotification(BString message, BString type);
 			void				_ShowLog(int32 index);
@@ -152,6 +154,16 @@ private:
 			BMenuItem*			fDebugItem;
 			BMenuItem*			fMakeCatkeysItem;
 			BMenuItem*			fMakeBindcatalogsItem;
+			BMenu*				fGitMenu;
+			BMenuItem*			fGitLogItem;
+			BMenuItem*			fGitLogOnelineItem;
+			BMenuItem*			fGitPullItem;
+			BMenuItem*			fGitPullRebaseItem;
+			BMenuItem*			fGitStatusItem;
+			BMenuItem*			fGitStatusShortItem;
+			BMenuItem*			fGitShowConfigItem;
+			BMenu*				fHgMenu;
+			BMenuItem*			fHgStatusItem;
 
 			BGroupLayout*		fRootLayout;
 			BGroupLayout* 		fToolBar;
@@ -170,6 +182,7 @@ private:
 			BIconButton*		fBuildButton;
 			BIconButton*		fRunButton;
 			BIconButton*		fDebugButton;
+			BIconButton*		fConsoleButton;
 			BIconButton*		fBuildModeButton;
 			BIconButton*		fFileUnlockedButton;
 			BIconButton*		fFilePreviousButton;
@@ -220,6 +233,10 @@ private:
 			BCheckBox*			fFindCaseSensitiveCheck;
 			BCheckBox*			fFindWholeWordCheck;
 			BCheckBox*			fFindWrapCheck;
+
+			BGroupLayout*		fRunConsoleProgramGroup;
+			BTextControl*		fRunConsoleProgramText;
+			BButton*			fRunConsoleProgramButton;
 
 		BObjectList<Editor>*	fEditorObjectList;
 			Editor*				fEditor;

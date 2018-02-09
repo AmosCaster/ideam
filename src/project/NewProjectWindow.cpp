@@ -52,24 +52,25 @@ ProjectTypeMap projectTypeMap;
 
 enum
 {
+	MSG_ADD_FILE_NAME				= 'afna',
+	MSG_ADD_HEADER_TOGGLED			= 'ahto',
+	MSG_ADD_SECOND_FILE_NAME		= 'asfn',
+	MSG_ADD_SECOND_HEADER_TOGGLED	= 'asht',
+	MSG_BROWSE_HAIKU_APP_CLICKED	= 'bhac',
+	MSG_BROWSE_LOCAL_APP_CLICKED	= 'blac',
+	MSG_GIT_ENABLED					= 'gien',
+	MSG_HAIKU_APP_EDITED			= 'haed',
+	MSG_HAIKU_APP_REFS_RECEIVED		= 'harr',
+	MSG_LOCAL_APP_EDITED			= 'laed',
+	MSG_LOCAL_APP_REFS_RECEIVED		= 'larr',
 	MSG_PROJECT_CANCEL				= 'prca',
 	MSG_PROJECT_CREATE				= 'prcr',
 	MSG_PROJECT_CHOSEN				= 'prch',
 	MSG_PROJECT_NAME_EDITED			= 'pned',
 	MSG_PROJECT_TARGET				= 'prta',
-	MSG_PROJECT_DIRECTORY			= 'prdi',
-	MSG_RUN_IN_TERMINAL				= 'rite',
-	MSG_ADD_FILE_NAME				= 'afna',
-	MSG_ADD_HEADER_TOGGLED			= 'ahto',
-	MSG_ADD_SECOND_FILE_NAME		= 'asfn',
-	MSG_ADD_SECOND_HEADER_TOGGLED	= 'asht',
 	MSG_PROJECT_TYPE_CHANGED		= 'ptch',
-	MSG_HAIKU_APP_EDITED			= 'haed',
-	MSG_BROWSE_HAIKU_APP_CLICKED	= 'bhac',
-	MSG_HAIKU_APP_REFS_RECEIVED		= 'harr',
-	MSG_LOCAL_APP_EDITED			= 'laed',
-	MSG_BROWSE_LOCAL_APP_CLICKED	= 'blac',
-	MSG_LOCAL_APP_REFS_RECEIVED		= 'larr',
+	MSG_PROJECT_DIRECTORY			= 'prdi',
+	MSG_RUN_IN_TERMINAL				= 'rite'
 };
 
 
@@ -182,12 +183,17 @@ NewProjectWindow::NewProjectWindow()
 	fProjectNameText->SetModificationMessage(new BMessage(MSG_PROJECT_NAME_EDITED));
 	fProjectNameText->SetEnabled(false);
 
+	fGitEnabled = new BCheckBox("GitEnabled",
+		B_TRANSLATE("Enable Git"), new BMessage(MSG_GIT_ENABLED));
+	fGitEnabled->SetEnabled(false);
+	fGitEnabled->SetValue(B_CONTROL_OFF);
+
 	fProjectTargetText = new BTextControl("ProjectTargetText",
 		B_TRANSLATE("Project target:"), "", new BMessage(MSG_PROJECT_TARGET));
 	fProjectTargetText->SetEnabled(false);
 
 	fRunInTeminal = new BCheckBox("RunInTeminal",
-		B_TRANSLATE("Run in\nTerminal"), new BMessage(MSG_RUN_IN_TERMINAL));
+		B_TRANSLATE("Run in Terminal"), new BMessage(MSG_RUN_IN_TERMINAL));
 	fRunInTeminal->SetEnabled(false);
 	fRunInTeminal->SetValue(B_CONTROL_OFF);
 
@@ -270,6 +276,7 @@ NewProjectWindow::NewProjectWindow()
 		.SetInsets(20, 20, 10, 10)
 		.Add(fProjectNameText->CreateLabelLayoutItem(), 0, 1)
 		.Add(fProjectNameText->CreateTextViewLayoutItem(), 1, 1, 2)
+		.Add(fGitEnabled, 3, 1)
 		.Add(fProjectTargetText->CreateLabelLayoutItem(), 0, 2)
 		.Add(fProjectTargetText->CreateTextViewLayoutItem(), 1, 2, 2)
 		.Add(fRunInTeminal, 3, 2)
@@ -433,7 +440,6 @@ NewProjectWindow::_CreateProject()
 
 	fCurrentItem = dynamic_cast<BStringItem*>(fTypeListView->ItemAt(selection));
 
-
 	// Little validation for controls
 	// Warn if project name is empty
 	if ((strcmp(fProjectNameText->Text(), "") == 0)) {
@@ -532,6 +538,11 @@ NewProjectWindow::_CreateProject()
 		status = _CreateCargoProject();
 
 	if (status == B_OK) {
+		// If git enabled, init
+		if (fGitEnabled->Value() == true) {
+			chdir(f_project_directory);
+			system("git init");
+		}
 		// Post a message
 		BMessage message(NEWPROJECTWINDOW_PROJECT_OPEN_NEW);
 		message.AddString("project_extensioned_name", fProjectExtensionedName);
@@ -573,7 +584,8 @@ NewProjectWindow::_CreateSkeleton()
 	path.Append(fProjectNameText->Text());
 	BDirectory projectDirectory;
 
-	status = projectDirectory.CreateDirectory(path.Path(), NULL);
+	status = projectDirectory.CreateDirectory(path.Path(), nullptr);
+	f_project_directory = path.Path();
 	if (status != B_OK)
 		return status;
 
@@ -581,14 +593,14 @@ NewProjectWindow::_CreateSkeleton()
 	BPath srcPath(path.Path());
 	srcPath.Append("src");
 	BDirectory srcDirectory;
-	status = srcDirectory.CreateDirectory(srcPath.Path(), NULL);
+	status = srcDirectory.CreateDirectory(srcPath.Path(), nullptr);
 	if (status != B_OK)
 		return status;
 
 	BPath appPath(path.Path());
 	appPath.Append("app");
 	BDirectory appDirectory;
-	status = appDirectory.CreateDirectory(appPath.Path(), NULL);
+	status = appDirectory.CreateDirectory(appPath.Path(), nullptr);
 	if (status != B_OK)
 		return status;
 
@@ -603,6 +615,9 @@ NewProjectWindow::_CreateSkeleton()
 	fProjectFile->SetBString("project_build_command", "make");
 	fProjectFile->SetBString("project_clean_command", "make clean rmapp");
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
+
+	if (fGitEnabled->Value() == true)
+		fProjectFile->SetBString("project_scm", "git");
 
 	// Set project target
 	BString target(appPath.Path());
@@ -789,6 +804,7 @@ NewProjectWindow::_CreateEmptyProject()
 
 	// TODO manage existing
 	status = projectDirectory.CreateDirectory(path.Path(), NULL);
+	f_project_directory = path.Path();
 	if (status != B_OK)
 		return status;
 
@@ -801,6 +817,8 @@ NewProjectWindow::_CreateEmptyProject()
 	fProjectFile->SetBString("project_name", fProjectNameText->Text());
 	fProjectFile->SetBString("project_directory", path.Path());
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
+	if (fGitEnabled->Value() == true)
+		fProjectFile->SetBString("project_scm", "git");
 
 	delete fProjectFile;
 
@@ -1248,6 +1266,7 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 
 	// Clean controls
 	fProjectNameText->SetText("");
+	fGitEnabled->SetValue(B_CONTROL_OFF);
 	fProjectTargetText->SetText("");
 	fRunInTeminal->SetValue(B_CONTROL_OFF);
 	fAddFileText->SetText("");
@@ -1259,6 +1278,7 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 
 	// Set controls
 	fProjectNameText->SetEnabled(true);
+	fGitEnabled->SetEnabled(true);
 	fProjectTargetText->SetEnabled(true);
 	fRunInTeminal->SetEnabled(false);
 	fAddFileText->SetEnabled(true);
@@ -1304,13 +1324,14 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 		fAddFileText->SetEnabled(false);
 
 	} else if (item == sourcesItem) {
+		fGitEnabled->SetEnabled(false);
 		fRunInTeminal->SetEnabled(true);
 		fAddFileText->SetEnabled(false);
 		fHaikuAppDirText->SetEnabled(true);
 		fBrowseHaikuAppButton->SetEnabled(true);
 
 	} else if (item == existingItem) {
-
+		fGitEnabled->SetEnabled(false);
 //		fProjectTargetText->SetEnabled(false);
 		fRunInTeminal->SetEnabled(true);
 		fAddFileText->SetEnabled(false);
@@ -1318,7 +1339,7 @@ NewProjectWindow::_UpdateControlsState(int32 selection)
 		fBrowseLocalAppButton->SetEnabled(true);
 
 	} else if (item == cargoItem) {
-
+		fGitEnabled->SetEnabled(false);
 		fProjectTargetText->SetEnabled(false);
 		fRunInTeminal->SetEnabled(true);
 		fRunInTeminal->SetValue(B_CONTROL_ON);

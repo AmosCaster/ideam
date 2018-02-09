@@ -263,6 +263,15 @@ current Scintilla version: HaikuPorts version
 +) Bold mono font
 
 --------------------------------------------------------------------------------
+0.7.0) Preliminary source code management support
+=================================================
+
++) Git,Hg menu
++) Running console programs (cwd: global Projects directory or base project
+   directory if active project)
+) New projects allow git initialization
+
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
 

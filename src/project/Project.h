@@ -28,6 +28,7 @@ public:
 			BString	const		Name() const { return fName; }
 			status_t			Open(bool activate);
 			bool				RunInTerminal() { return fRunInTerminal; }
+			BString	const		Scm() const { return fScm; }
 	std::vector<BString>		SourcesList() const { return fSourcesList; };
 			BString 			Target() const { return fTarget; }
 			ProjectTitleItem*	Title() const { return fProjectTitle; }

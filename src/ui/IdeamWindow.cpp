@@ -122,7 +122,9 @@ enum {
 	MSG_MAKE_CATKEYS			= 'maca',
 	MSG_MAKE_BINDCATALOGS		= 'mabi',
 
-	MSG_BUILD_DONE				= 'budo',
+	// Scm menu
+	MSG_GIT_COMMAND				= 'gitc',
+	MSG_HG_COMMAND				= 'hgco',
 
 	// Window menu
 	MSG_WINDOW_SETTINGS			= 'wise',
@@ -139,17 +141,19 @@ enum {
 	MSG_PROJECT_MENU_OPEN_FILE		= 'pmof',
 
 	// Toolbar
-	MSG_BUFFER_LOCK				= 'bulo',
-	MSG_BUILD_MODE				= 'bumo',
-	MSG_FILE_MENU_SHOW			= 'fmsh',
-	MSG_FILE_NEXT_SELECTED		= 'fnse',
-	MSG_FILE_PREVIOUS_SELECTED	= 'fpse',
-	MSG_FIND_GROUP_TOGGLED		= 'figt',
-	MSG_FIND_IN_FILES			= 'fifi',
-	MSG_LINE_TO_GOTO			= 'ltgt',
-	MSG_REPLACE_GROUP_TOGGLED	= 'regt',
-	MSG_SHOW_HIDE_PROJECTS		= 'shpr',
-	MSG_SHOW_HIDE_OUTPUT		= 'shou',
+	MSG_BUFFER_LOCK					= 'bulo',
+	MSG_BUILD_MODE					= 'bumo',
+	MSG_FILE_MENU_SHOW				= 'fmsh',
+	MSG_FILE_NEXT_SELECTED			= 'fnse',
+	MSG_FILE_PREVIOUS_SELECTED		= 'fpse',
+	MSG_FIND_GROUP_TOGGLED			= 'figt',
+	MSG_FIND_IN_FILES				= 'fifi',
+	MSG_RUN_CONSOLE_PROGRAM_SHOW	= 'rcps',
+	MSG_RUN_CONSOLE_PROGRAM			= 'rcpr',
+	MSG_LINE_TO_GOTO				= 'ltgt',
+	MSG_REPLACE_GROUP_TOGGLED		= 'regt',
+	MSG_SHOW_HIDE_PROJECTS			= 'shpr',
+	MSG_SHOW_HIDE_OUTPUT			= 'shou',
 
 	MSG_SELECT_TAB				= 'seta'
 };
@@ -218,50 +222,43 @@ IdeamWindow::IdeamWindow(BRect frame)
 	// Interface elements
 	if (IdeamNames::Settings.show_projects == false)
 		fProjectsTabView->Hide();
-
 	if (IdeamNames::Settings.show_output == false)
 		fOutputTabView->Hide();
-
 	if (IdeamNames::Settings.show_toolbar == false)
 		fToolBar->View()->Hide();
 
 	// Reopen projects
 	if (IdeamNames::Settings.reopen_projects == true) {
-
-		TPreferences* projects = new TPreferences(IdeamNames::kSettingsProjectsToReopen,
-												IdeamNames::kApplicationName, 'PRRE');
-
-		if (!projects->IsEmpty()) {
+		TPreferences projects(IdeamNames::kSettingsProjectsToReopen,
+								IdeamNames::kApplicationName, 'PRRE');
+		if (!projects.IsEmpty()) {
 			BString projectName, activeProject = "";
 
-			projects->FindString("active_project", &activeProject);
-			for (auto count = 0; projects->FindString("project_to_reopen",
-													count, &projectName) == B_OK; count++)
+			projects.FindString("active_project", &activeProject);
+			for (auto count = 0; projects.FindString("project_to_reopen",
+										count, &projectName) == B_OK; count++)
 					_ProjectOpen(projectName, projectName == activeProject);
 		}
-
-		delete projects;
 	}
 	// Reopen files
 	if (IdeamNames::Settings.reopen_files == true) {
-		TPreferences* files = new TPreferences(IdeamNames::kSettingsFilesToReopen,
-												IdeamNames::kApplicationName, 'FIRE');
-		if (!files->IsEmpty()) {
+		TPreferences files(IdeamNames::kSettingsFilesToReopen,
+							IdeamNames::kApplicationName, 'FIRE');
+		if (!files.IsEmpty()) {
 			entry_ref ref;
 			int32 index = -1, count;
 			BMessage *message = new BMessage(B_REFS_RECEIVED);
 
-			if (files->FindInt32("opened_index", &index) == B_OK) {
+			if (files.FindInt32("opened_index", &index) == B_OK) {
 				message->AddInt32("opened_index", index);
 
-				for (count = 0; files->FindRef("file_to_reopen", count, &ref) == B_OK; count++)
+				for (count = 0; files.FindRef("file_to_reopen", count, &ref) == B_OK; count++)
 					message->AddRef("refs", &ref);
 				// Found an index and found some files, post message
 				if (index > -1 && count > 0)
 					PostMessage(message);
 			}
 		}
-		delete files;
 	}
 }
 
@@ -430,11 +427,19 @@ IdeamWindow::MessageReceived(BMessage* message)
 
 			BString type;
 			if (message->FindString("cmd_type", &type) == B_OK) {
-				if (type == "build" || type == "clean" || type == "run")
+				if (type == "build" || type == "clean" || type == "run") {
 					_UpdateProjectActivation(true);
-				else if (type == "startfail") {
+				} else if (type.StartsWith("git")) {
 					_UpdateProjectActivation(true);
+				} else if (type == "startfail") {
+					if (fActiveProject != nullptr)
+						_UpdateProjectActivation(true);
 					break;
+				} else if (type == "catkeys" || type == "bindcatalogs") {
+					;
+				} else {
+					// user custom (run console program)
+					;
 				}
 			}
 
@@ -831,10 +836,46 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		case MSG_FIND_GROUP_TOGGLED:
 			_FindGroupToggled();
 			break;
+		case MSG_GIT_COMMAND: {
+			BString command;
+			if (message->FindString("command", &command) == B_OK)
+				_Git(command);
+			break;
+		}
 		case MSG_GOTO_LINE:
 			fGotoLine->Show();
 			fGotoLine->MakeFocus();
 			break;
+		case MSG_LINE_ENDINGS_TOGGLE: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index > -1 && index < fTabManager->CountTabs()) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				fEditor->ToggleLineEndings();
+			}
+			break;
+		}
+		case MSG_LINE_TO_GOTO: {
+			int32 index = fTabManager->SelectedTabIndex();
+
+			if (index < 0 || index >= fTabManager->CountTabs())
+				break;
+
+			std::string linestr(fGotoLine->Text());
+			int32 line;
+			std::istringstream (linestr) >>  line;
+
+			fEditor = fEditorObjectList->ItemAt(index);
+
+			if (line <= fEditor->CountLines())
+				fEditor->GoToLine(line);
+
+			fEditor->GrabFocus();
+			fGotoLine->SetText("");
+			fGotoLine->Hide();
+
+			break;
+		}
 		case MSG_MAKE_BINDCATALOGS: {
 			_MakeBindcatalogs();
 			break;
@@ -855,8 +896,8 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 
 			BString text;
 			text << "\n"
-				 << B_TRANSLATE("Deleting project: ")
-				 << "\"" << fSelectedProjectName << "\"" << "\n"
+				 << B_TRANSLATE("Deleting project:")
+				 << " \"" << fSelectedProjectName << "\"" << "\n"
 				 << B_TRANSLATE("Do you want to delete project sources too?")
 				 << "\n";
 
@@ -951,6 +992,23 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		case MSG_REPLACE_PREVIOUS:
 			_Replace(REPLACE_PREVIOUS);
 			break;
+		case MSG_RUN_CONSOLE_PROGRAM_SHOW: {
+			if (fRunConsoleProgramGroup->IsVisible()) {
+				fRunConsoleProgramGroup->SetVisible(false);
+				fRunConsoleProgramText->MakeFocus(false);
+			} else {
+				fRunConsoleProgramGroup->SetVisible(true);
+				fRunConsoleProgramText->MakeFocus(true);
+			}
+			break;
+		}
+		case MSG_RUN_CONSOLE_PROGRAM: {
+			const BString& command(fRunConsoleProgramText->Text());
+			if (!command.IsEmpty())
+				_RunInConsole(command);
+			fRunConsoleProgramText->SetText("");
+			break;
+		}
 		case MSG_RUN_TARGET:
 			_RunTarget();
 			break;
@@ -999,36 +1057,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			}
 			break;
 		}
-		case MSG_LINE_ENDINGS_TOGGLE: {
-			int32 index = fTabManager->SelectedTabIndex();
 
-			if (index > -1 && index < fTabManager->CountTabs()) {
-				fEditor = fEditorObjectList->ItemAt(index);
-				fEditor->ToggleLineEndings();
-			}
-			break;
-		}
-		case MSG_LINE_TO_GOTO: {
-			int32 index = fTabManager->SelectedTabIndex();
-
-			if (index < 0 || index >= fTabManager->CountTabs())
-				break;
-
-			std::string linestr(fGotoLine->Text());
-			int32 line;
-			std::istringstream (linestr) >>  line;
-
-			fEditor = fEditorObjectList->ItemAt(index);
-
-			if (line <= fEditor->CountLines())
-				fEditor->GoToLine(line);
-
-			fEditor->GrabFocus();
-			fGotoLine->SetText("");
-			fGotoLine->Hide();
-
-			break;
-		}
 		case MSG_TOGGLE_TOOLBAR: {
 			if (fToolBar->View()->IsHidden()) {
 				fToolBar->View()->Show();
@@ -1135,44 +1164,41 @@ IdeamWindow::QuitRequested()
 
 	// Files to reopen
 	if (IdeamNames::Settings.reopen_files == true) {
-
-		TPreferences* files = new TPreferences(IdeamNames::kSettingsFilesToReopen,
-												IdeamNames::kApplicationName, 'FIRE');
+		TPreferences files(IdeamNames::kSettingsFilesToReopen,
+							IdeamNames::kApplicationName, 'FIRE');
 		// Just empty it for now TODO check if equal
-		files->MakeEmpty();
-			// Save if there is an opened file
-			int32 index = fTabManager->SelectedTabIndex();
+		files.MakeEmpty();
 
-			if (index > -1 && index < fTabManager->CountTabs()) {
-				files->AddInt32("opened_index", index);
+		// Save if there is an opened file
+		int32 index = fTabManager->SelectedTabIndex();
 
-				for (int32 index = 0; index < fTabManager->CountTabs(); index++) {
-					fEditor = fEditorObjectList->ItemAt(index);
-					files->AddRef("file_to_reopen", fEditor->FileRef());
-				}
+		if (index > -1 && index < fTabManager->CountTabs()) {
+			files.AddInt32("opened_index", index);
+
+			for (int32 index = 0; index < fTabManager->CountTabs(); index++) {
+				fEditor = fEditorObjectList->ItemAt(index);
+				files.AddRef("file_to_reopen", fEditor->FileRef());
 			}
-		delete files;
+		}
 	}
 
 	// Projects to reopen
 	if (IdeamNames::Settings.reopen_projects == true) {
 
-		TPreferences* projects = new TPreferences(IdeamNames::kSettingsProjectsToReopen,
-												IdeamNames::kApplicationName, 'PRRE');
+		TPreferences projects(IdeamNames::kSettingsProjectsToReopen,
+								IdeamNames::kApplicationName, 'PRRE');
 
-		projects->MakeEmpty();
+		projects.MakeEmpty();
 
 		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 			Project * project = fProjectObjectList->ItemAt(index);
-			projects->AddString("project_to_reopen", project->ExtensionedName());
+			projects.AddString("project_to_reopen", project->ExtensionedName());
 			if (project->IsActive())
-				projects->AddString("active_project", project->ExtensionedName());
+				projects.AddString("active_project", project->ExtensionedName());
 			// Avoiding leaks
 			_ProjectOutlineDepopulate(project);
 			delete project;
 		}
-
-		delete projects;
 	}
 
 	be_app->PostMessage(B_QUIT_REQUESTED);
@@ -1294,9 +1320,10 @@ IdeamWindow::_CleanProject()
 	fBuildLogView->Clear();
 	_ShowLog(kBuildLog);
 
-	BString text;
-	text << B_TRANSLATE("Clean started: ") << fActiveProject->ExtensionedName();
-	_SendNotification( text.String(), "PROJ_BUILD");
+	BString notification;
+	notification << B_TRANSLATE("Clean started:")
+		 << " " << fActiveProject->ExtensionedName();
+	_SendNotification(notification, "PROJ_BUILD");
 
 	BString command;
 	command << fActiveProject->CleanCommand();
@@ -1411,7 +1438,7 @@ notification.SetTo("");
 		}
 	}
 
-	notification << fEditor->Name() << " " << B_TRANSLATE("closed");
+	notification << B_TRANSLATE("File close:") << " " << fEditor->Name();
 	_SendNotification(notification, "FILE_CLOSE");
 
 	BView* view = fTabManager->RemoveTab(index);
@@ -1503,8 +1530,9 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 		if (index > 0)
 			fTabManager->SelectTab(index, true);
 
-		notification << fEditor->Name() << " " << B_TRANSLATE("opened with index")
-			<< " " << fTabManager->CountTabs() - 1;
+		notification << B_TRANSLATE("File open:")  << "  "
+			<< fEditor->Name()
+			<< " [" << fTabManager->CountTabs() - 1 << "]";
 		_SendNotification(notification, "FILE_OPEN");
 		notification.SetTo("");
 	}
@@ -1575,9 +1603,16 @@ IdeamWindow::_FileSave(int32 index)
 	// Restart monitoring
 	fEditor->StartMonitoring();
 
-	notification << fEditor->Name()<< B_TRANSLATE(" saved.")
-		<< "\t\t" << B_TRANSLATE("length: ") << length << B_TRANSLATE(" bytes -> ")
-		<< written<< B_TRANSLATE(" bytes written");
+	notification << B_TRANSLATE("File save:")  << "  "
+		<< fEditor->Name()
+		<< "    "
+		<< length
+		<< " "
+		<< B_TRANSLATE("bytes")
+		<< " -> "
+		<< written
+		<< " "
+		<< B_TRANSLATE("written");
 
 	_SendNotification(notification, length == written ? "FILE_SAVE" : "FILE_ERR");
 
@@ -1595,7 +1630,7 @@ IdeamWindow::_FileSaveAll()
 
 		if (fEditor == nullptr) {
 			BString notification;
-			notification << B_TRANSLATE("Index ") << index
+			notification << B_TRANSLATE("Index") << " " << index
 				<< (B_TRANSLATE(": NULL editor pointer"));
 			_SendNotification(notification, "FILE_ERR");
 			continue;
@@ -1630,7 +1665,8 @@ IdeamWindow::_FileSaveAs(int32 selection, BMessage* message)
 
 	if (fEditor == nullptr) {
 		BString notification;
-		notification << B_TRANSLATE("Index ") << selection
+		notification
+			<< B_TRANSLATE("Index") << " " << selection
 			<< (B_TRANSLATE(": NULL editor pointer"));
 		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
@@ -1752,7 +1788,8 @@ IdeamWindow::_GetEditorIndex(entry_ref* ref)
 
 		if (fEditor == nullptr) {
 			BString notification;
-			notification << B_TRANSLATE("Index ") << index
+			notification
+				<< B_TRANSLATE("Index") << " " << index
 				<< (B_TRANSLATE(": NULL editor pointer"));
 			_SendNotification(notification, "FILE_ERR");
 			continue;
@@ -1777,8 +1814,9 @@ IdeamWindow::_GetEditorIndex(node_ref* nref)
 
 		if (fEditor == nullptr) {
 			BString notification;
-			notification << B_TRANSLATE("Index ") << index
-				<< (B_TRANSLATE(": NULL editor pointer"));
+			notification
+				<< B_TRANSLATE("Index") << " " << index
+				<< B_TRANSLATE(": NULL editor pointer");
 			_SendNotification(notification, "FILE_ERR");
 			continue;
 		}
@@ -1806,6 +1844,37 @@ IdeamWindow::_GetFocusAndSelection(BTextControl* control)
 		control->TextView()->Clear();
 }
 
+status_t
+IdeamWindow::_Git(const BString& git_command)
+{
+	status_t status;
+	// Should not happen
+	if (fActiveProject == nullptr)
+		return B_ERROR;
+
+	// Pretend building or running
+	_UpdateProjectActivation(false);
+
+	fConsoleIOView->Clear();
+	_ShowLog(kOutputLog);
+
+	BString command;
+	command	<< "git " << git_command;
+
+	BMessage message;
+	message.AddString("cmd", command);
+	message.AddString("cmd_type", command);
+
+	// Go to appropriate directory
+	chdir(fActiveProject->BasePath());
+
+	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
+		BMessenger(fConsoleIOView));
+
+	status = fConsoleIOThread->Start();
+
+	return status;
+}
 
 void
 IdeamWindow::_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRef)
@@ -1845,8 +1914,10 @@ IdeamWindow::_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRe
 		_UpdateLabel(index, fEditor->IsModified());
 
 		BString notification;
-		notification << oldPath.Path() << B_TRANSLATE(" moved externally to ");
-		notification << newPath.Path();
+		notification
+			<< oldPath.Path() << " "
+			<< B_TRANSLATE("moved externally to")
+			<< " " << newPath.Path();
 		_SendNotification(notification, "FILE_INFO");
 	}
 }
@@ -1890,7 +1961,9 @@ IdeamWindow::_HandleExternalRemoveModification(int32 index)
 		_FileClose(index, true);
 
 		BString notification;
-		notification << fEditor->Name() << B_TRANSLATE(" removed externally");
+		notification
+			<< fEditor->Name() << " "
+			<< B_TRANSLATE(" removed externally");
 		_SendNotification(notification, "FILE_INFO");
 	}
 }
@@ -1923,7 +1996,9 @@ IdeamWindow::_HandleExternalStatModification(int32 index)
 		fEditor->Reload();
 
 		BString notification;
-		notification << fEditor->Name() << B_TRANSLATE(" modified externally");
+		notification
+			<< fEditor->Name() << " "
+			<< B_TRANSLATE("modified externally");
 		_SendNotification(notification, "FILE_INFO");
 	}
 }
@@ -2236,6 +2311,59 @@ IdeamWindow::_InitMenu()
 
 	fMenuBar->AddItem(menu);
 
+	menu = new BMenu(B_TRANSLATE("Scm"));
+	fGitMenu = new BMenu(B_TRANSLATE("Git"));
+
+	fGitMenu->AddItem(fGitLogItem = new BMenuItem(B_TRANSLATE("Log"), nullptr));
+	BMessage* git_log_message = new BMessage(MSG_GIT_COMMAND);
+	git_log_message->AddString("command", "log");
+	fGitLogItem->SetMessage(git_log_message);
+
+	fGitMenu->AddItem(fGitPullItem = new BMenuItem(B_TRANSLATE("Pull"), nullptr));
+	BMessage* git_pull_message = new BMessage(MSG_GIT_COMMAND);
+	git_pull_message->AddString("command", "pull");
+	fGitPullItem->SetMessage(git_pull_message);
+
+	fGitMenu->AddItem(fGitStatusItem = new BMenuItem(B_TRANSLATE("Status"), nullptr));
+	BMessage* git_status_message = new BMessage(MSG_GIT_COMMAND);
+	git_status_message->AddString("command", "status");
+	fGitStatusItem->SetMessage(git_status_message);
+
+	fGitMenu->AddItem(fGitShowConfigItem = new BMenuItem(B_TRANSLATE("Show Config"), nullptr));
+	BMessage* git_config_message = new BMessage(MSG_GIT_COMMAND);
+	git_config_message->AddString("command", "config --list");
+	fGitShowConfigItem->SetMessage(git_config_message);
+
+	fGitMenu->AddSeparatorItem();
+
+	fGitMenu->AddItem(fGitLogOnelineItem = new BMenuItem(B_TRANSLATE("Log (Oneline)"), nullptr));
+	BMessage* git_log_oneline_message = new BMessage(MSG_GIT_COMMAND);
+	git_log_oneline_message->AddString("command", "log --oneline --decorate");
+	fGitLogOnelineItem->SetMessage(git_log_oneline_message);
+
+	fGitMenu->AddItem(fGitPullRebaseItem = new BMenuItem(B_TRANSLATE("Pull (Rebase)"), nullptr));
+	BMessage* git_pull_rebase_message = new BMessage(MSG_GIT_COMMAND);
+	git_pull_rebase_message->AddString("command", "pull --rebase");
+	fGitPullRebaseItem->SetMessage(git_pull_rebase_message);
+
+	fGitMenu->AddItem(fGitStatusShortItem = new BMenuItem(B_TRANSLATE("Status (Short)"), nullptr));
+	BMessage* git_status_short_message = new BMessage(MSG_GIT_COMMAND);
+	git_status_short_message->AddString("command", "status --short");
+	fGitStatusShortItem->SetMessage(git_status_short_message);
+
+	fHgMenu = new BMenu(B_TRANSLATE("Hg"));
+	fHgMenu->AddItem(fHgStatusItem = new BMenuItem(B_TRANSLATE("Status"), nullptr));
+	BMessage* hg_status_message = new BMessage(MSG_HG_COMMAND);
+	hg_status_message->AddString("command", "status");
+	fHgStatusItem->SetMessage(hg_status_message);
+
+	fGitMenu->SetEnabled(false);
+	fHgMenu->SetEnabled(false);
+
+	menu->AddItem(fGitMenu);
+	menu->AddItem(fHgMenu);
+	fMenuBar->AddItem(menu);
+
 	menu = new BMenu(B_TRANSLATE("Window"));
 	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
 		new BMessage(MSG_WINDOW_SETTINGS), 'P', B_OPTION_KEY));
@@ -2256,7 +2384,6 @@ IdeamWindow::_InitMenu()
 
 	fMenuBar->AddItem(menu);
 }
-
 
 void
 IdeamWindow::_InitWindow()
@@ -2292,6 +2419,9 @@ IdeamWindow::_InitWindow()
 						206, false, B_TRANSLATE("Save current File"));
 	fFileSaveAllButton = _LoadIconButton("FileSaveAllButton", MSG_FILE_SAVE_ALL,
 						207, false, B_TRANSLATE("Save all Files"));
+
+	fConsoleButton = _LoadIconButton("ConsoleButton", MSG_RUN_CONSOLE_PROGRAM_SHOW,
+		227, true, B_TRANSLATE("Run console program"));
 
 	fBuildModeButton = _LoadIconButton("BuildMode", MSG_BUILD_MODE,
 						221, true, B_TRANSLATE("Build mode: Debug"));
@@ -2339,6 +2469,8 @@ IdeamWindow::_InitWindow()
 			.Add(fFindButton)
 			.Add(fReplaceButton)
 			.Add(fFindinFilesButton)
+			.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
+			.Add(fConsoleButton)
 			.AddGlue()
 			.Add(fBuildModeButton)
 			.Add(fFileUnlockedButton)
@@ -2471,6 +2603,22 @@ IdeamWindow::_InitWindow()
 	;
 	fReplaceGroup->SetVisible(false);
 
+	// Run group
+	fRunConsoleProgramText = new BTextControl("ReplaceTextControl", "", "", nullptr);
+	fRunConsoleProgramButton = new BButton("RunConsoleProgramButton",
+		B_TRANSLATE("Run"), new BMessage(MSG_RUN_CONSOLE_PROGRAM));
+
+	fRunConsoleProgramGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+			.Add(fRunConsoleProgramText)
+			.Add(fRunConsoleProgramButton)
+			.AddGlue()
+			.SetInsets(2, 2, 2, 2)
+		)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+	;
+	fRunConsoleProgramGroup->SetVisible(false);
+
 	// Editor tab & view
 	fEditorObjectList = new BObjectList<Editor>();
 
@@ -2491,6 +2639,7 @@ IdeamWindow::_InitWindow()
 		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
 			.Add(fFindGroup)
 			.Add(fReplaceGroup)
+			.Add(fRunConsoleProgramGroup)
 			.Add(fTabManager->TabGroup())
 			.Add(fTabManager->ContainerView())
 			.Add(new BSeparatorView(B_HORIZONTAL))
@@ -2663,7 +2812,7 @@ IdeamWindow::_ProjectActivate(BString const& projectName)
 void
 IdeamWindow::_ProjectClose()
 {
-	BString closed(B_TRANSLATE("Project closed:"));
+	BString closed(B_TRANSLATE("Project close:"));
 	BString name = fSelectedProjectName;
 
 	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
@@ -2671,7 +2820,7 @@ IdeamWindow::_ProjectClose()
 		if (project->ExtensionedName() == fSelectedProjectName) {
 			if (project == fActiveProject) {
 				fActiveProject = nullptr;
-				closed = B_TRANSLATE("Active project closed:");
+				closed = B_TRANSLATE("Active project close:");
 				_UpdateProjectActivation(false);
 			}
 			_ProjectOutlineDepopulate(project);
@@ -2706,7 +2855,7 @@ IdeamWindow::_ProjectDelete(BString name, bool sourcesToo)
 
 	if (entry.Exists()) {
 		entry.Remove();
-		text << B_TRANSLATE("Project deleted: ")  << name.String();
+		text << B_TRANSLATE("Project delete:") << "  "  << name.String();
 		_SendNotification( text.String(), "PROJ_DELETE");
 	}
 
@@ -2878,8 +3027,10 @@ IdeamWindow::_ProjectOpen(BString const& projectName, bool activate)
 
 	if (currentProject->Open(activate) != B_OK) {
 		BString notification;
-		notification << B_TRANSLATE("Project opened failed: ")  << projectName;
-		_SendNotification( notification.String(), "PROJ_OPEN_FAILED");
+		notification
+			<< B_TRANSLATE("Project open fail:")
+			<< "  "  << projectName;
+		_SendNotification( notification.String(), "PROJ_OPEN_FAIL");
 		delete currentProject;
 
 		return;
@@ -2887,16 +3038,16 @@ IdeamWindow::_ProjectOpen(BString const& projectName, bool activate)
 
 	fProjectObjectList->AddItem(currentProject);
 
-	BString opened(B_TRANSLATE("Project opened:"));
+	BString opened(B_TRANSLATE("Project open:"));
 	if (activate == true) {
 		_ProjectActivate(projectName);
-		opened = B_TRANSLATE("Active project opened:");
+		opened = B_TRANSLATE("Active project open:");
 	}
 
 	_ProjectOutlinePopulate(currentProject);
 
 	BString notification;
-	notification << opened << " " << projectName;
+	notification << opened << "  " << projectName;
 	_SendNotification(notification, "PROJ_OPEN");
 }
 
@@ -3062,6 +3213,31 @@ IdeamWindow::_ReplaceGroupToggled()
 	}
 }
 
+status_t
+IdeamWindow::_RunInConsole(const BString& command)
+{
+	status_t status;
+	// If no active project go to projects directory
+	if (fActiveProject == nullptr)
+		chdir(IdeamNames::Settings.projects_directory);
+	else
+		chdir(fActiveProject->BasePath());
+
+	_ShowLog(kOutputLog);
+
+	BMessage message;
+	message.AddString("cmd", command);
+	message.AddString("cmd_type", command);
+
+	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
+		BMessenger(fConsoleIOView));
+
+	status = fConsoleIOThread->Start();
+
+	return status;
+}
+
+
 void
 IdeamWindow::_RunTarget()
 {
@@ -3200,6 +3376,10 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 		fMakeCatkeysItem->SetEnabled(true);
 		fMakeBindcatalogsItem->SetEnabled(true);
 		fBuildButton->SetEnabled(true);
+
+		// Is this a git project?
+		if (fActiveProject->Scm() == "git")
+			fGitMenu->SetEnabled(true);
 		// cargo projects
 		if (fActiveProject->Type() == "cargo") {
 			fRunItem->SetEnabled(true);
@@ -3236,6 +3416,7 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 		fDebugItem->SetEnabled(false);
 		fMakeCatkeysItem->SetEnabled(false);
 		fMakeBindcatalogsItem->SetEnabled(false);
+		fGitMenu->SetEnabled(false);
 		fBuildButton->SetEnabled(false);
 		fRunButton->SetEnabled(false);
 		fDebugButton->SetEnabled(false);
