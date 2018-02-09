@@ -3251,8 +3251,6 @@ IdeamWindow::_RunTarget()
 	if (!entry.Exists())
 		return;
 
-	_UpdateProjectActivation(false);
-
 	// Check if run args present
 	BString args("");
 	TPreferences prefs(fActiveProject->ExtensionedName(), IdeamNames::kApplicationName, 'PRSE');
@@ -3260,6 +3258,8 @@ IdeamWindow::_RunTarget()
 
 	// Differentiate terminal projects from window ones
 	if (fActiveProject->RunInTerminal() == true) {
+		// Don't do that in graphical mode
+		_UpdateProjectActivation(false);
 
 		fConsoleIOView->Clear();
 		_ShowLog(kOutputLog);
