@@ -184,12 +184,11 @@ IdeamWindow::IdeamWindow(BRect frame)
 	, fConsoleIOView(nullptr)
 	, fConsoleStdinLine("")
 {
-	_InitMenu();
-
-	_InitWindow();
-
 	// Fill Settings vars before using
 	IdeamNames::LoadSettingsVars();
+
+	_InitMenu();
+	_InitWindow();
 
 	// Layout
 	fRootLayout = BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
@@ -2607,6 +2606,10 @@ IdeamWindow::_InitWindow()
 	fRunConsoleProgramButton = new BButton("RunConsoleProgramButton",
 		B_TRANSLATE("Run"), new BMessage(MSG_RUN_CONSOLE_PROGRAM));
 
+	BString tooltip("cwd: ");
+	tooltip << IdeamNames::Settings.projects_directory;
+	fRunConsoleProgramText->SetToolTip(tooltip);
+
 	fRunConsoleProgramGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
 		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
 			.Add(fRunConsoleProgramText)
@@ -2806,6 +2809,10 @@ IdeamWindow::_ProjectActivate(BString const& projectName)
 
 	fProjectsOutline->Invalidate();
 
+	// Update run command working directory tooltip too
+	BString tooltip;
+	tooltip << "cwd: " << fActiveProject->BasePath();
+	fRunConsoleProgramText->SetToolTip(tooltip);
 }
 
 void
@@ -2817,10 +2824,15 @@ IdeamWindow::_ProjectClose()
 	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
 		Project *project = fProjectObjectList->ItemAt(index);
 		if (project->ExtensionedName() == fSelectedProjectName) {
+			// Active project closed
 			if (project == fActiveProject) {
 				fActiveProject = nullptr;
 				closed = B_TRANSLATE("Active project close:");
 				_UpdateProjectActivation(false);
+				// Update run command working directory tooltip too
+				BString tooltip;
+				tooltip << "cwd: " << IdeamNames::Settings.projects_directory;
+				fRunConsoleProgramText->SetToolTip(tooltip);
 			}
 			_ProjectOutlineDepopulate(project);
 			fProjectObjectList->RemoveItem(project);
