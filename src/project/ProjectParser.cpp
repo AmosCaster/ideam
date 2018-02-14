@@ -30,6 +30,7 @@ ProjectParser::ProjectParser(TPreferences* prefs)
 		throw;
 
 	fPreferences->FindString("project_extensioned_name", &fProjectFullName);
+	fPreferences->FindString("project_type", &fProjectType);
 }
 
 ProjectParser::~ProjectParser()
@@ -112,6 +113,12 @@ ProjectParser::_ScanDirectory(BString directory)
 			}
 			// Exclude app dir if any
 			else if (token_name == "app") {
+				;
+			}
+			// Cargo specific
+			else if (fProjectType == "cargo"
+				&& token_name == "target") {
+				// Exclude target dir TODO: better tune
 				;
 			}
 			// Mind recurse quirks

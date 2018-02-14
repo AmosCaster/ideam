@@ -71,6 +71,7 @@ private:
 	    std::vector<BString> 	parseless_items;
 	    std::vector<BString> 	parseless_found;
 	    BString					fProjectFullName;
+	    BString					fProjectType;
 	    int32					fParselessIn;
 	    int32					fParselessOut;
 	    int32					fSourcesCount;
