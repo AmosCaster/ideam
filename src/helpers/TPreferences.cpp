@@ -65,6 +65,7 @@ TPreferences::~TPreferences() {
 	// IDSE = Ideam Settings
 	// UISE = UI Settings
 	// PRSE = Project Settings
+	// LOPR = Local project
 	if (what == 'XXXX')
 		PrintToStream();
 

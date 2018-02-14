@@ -1,5 +1,5 @@
 /*
- * Copyright 2017  A. Mosca <amoscaster@gmail.com>
+ * Copyright 2017..2018  A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -28,9 +28,24 @@ Project::Activate()
 	fProjectTitle->Activate();
 }
 
-void
-Project::Close()
+BString  const
+Project::BuildCommand()
 {
+	BString command("");
+	TPreferences prefs(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
+	prefs.FindString("project_build_command", &command);
+
+	return command;
+}
+
+BString const
+Project::CleanCommand()
+{
+	BString command("");
+	TPreferences prefs(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
+	prefs.FindString("project_clean_command", &command);
+
+	return command;
 }
 
 void
@@ -40,64 +55,79 @@ Project::Deactivate()
 	fProjectTitle->Deactivate();
 }
 
+std::vector<BString> const
+Project::FilesList()
+{
+	fFilesList.clear();
+
+	TPreferences prefs(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
+	BString file;
+	int count = 0;
+
+	while (prefs.FindString("project_file", count++, &file) == B_OK)
+		fFilesList.push_back(file);
+
+	return fFilesList;
+}
+
 status_t
 Project::Open(bool activate)
 {
 	if (fExtensionedName.IsEmpty())
 		throw std::logic_error("Empty name");
 
-	fIdmproFile = new TPreferences(fExtensionedName, IdeamNames::kApplicationName, 'PRSE');
+	TPreferences idmproFile(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
 
 	isActive = activate;
 
 	fProjectTitle = new ProjectTitleItem(fExtensionedName.String(), activate);
 
 	// name without extension
-	if (fIdmproFile->FindString("project_name", &fName) != B_OK)
+	if (idmproFile.FindString("project_name", &fName) != B_OK)
 		throw std::logic_error("Empty name");
 
-	// Update project data
-	if (fIdmproFile->FindString("project_build_command", &fBuildCommand) != B_OK)
-		fBuildCommand = "";
-
-	if (fIdmproFile->FindString("project_clean_command", &fCleanCommand) != B_OK)
-		fCleanCommand = "";
-
-	if (fIdmproFile->FindString("project_directory", &fProjectDirectory) != B_OK)
+	if (idmproFile.FindString("project_directory", &fProjectDirectory) != B_OK)
 		fProjectDirectory = "";
 
-	if (fIdmproFile->FindString("project_target", &fTarget) != B_OK)
-		fTarget = "";
-
-	if (fIdmproFile->FindString("project_scm", &fScm) != B_OK)
-		fScm = "";
-
-	if (fIdmproFile->FindString("project_type", &fType) != B_OK)
+	if (idmproFile.FindString("project_type", &fType) != B_OK)
 		fType = "";
 
-	if (fIdmproFile->FindBool("run_in_terminal", &fRunInTerminal) != B_OK)
+	if (idmproFile.FindBool("run_in_terminal", &fRunInTerminal) != B_OK)
 		fRunInTerminal = false;
 
-	// Source files
-	int32 refsCount = 0;
-	BString sources;
-
-	while (fIdmproFile->FindString("project_source", refsCount, &sources) == B_OK) {
-
-		fSourcesList.push_back(sources);
-		refsCount++;
-	}
-	// Other files
-	BString files;
-	refsCount = 0;
-
-	while (fIdmproFile->FindString("project_file", refsCount, &files) == B_OK) {
-
-		fFilesList.push_back(files);
-		refsCount++;
-	}
-
-	delete fIdmproFile;	
-
 	return B_OK;
+}
+
+BString const
+Project::Scm()
+{
+	BString	scm("");
+	TPreferences prefs(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
+	prefs.FindString("project_scm", &scm);
+
+	return scm;
+}
+
+std::vector<BString> const
+Project::SourcesList()
+{
+	fSourcesList.clear();
+	TPreferences prefs(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
+	BString file;
+	int count = 0;
+
+	while (prefs.FindString("project_source", count++, &file) == B_OK)
+		fSourcesList.push_back(file);
+
+	return fSourcesList;
+}
+
+BString const
+Project::Target()
+{
+	BString target("");
+	TPreferences prefs(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
+	prefs.FindString("project_target", &target);
+
+	return target;
 }

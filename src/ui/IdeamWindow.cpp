@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 A. Mosca <amoscaster@gmail.com>
+ * Copyright 2017..2018 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -61,6 +61,7 @@ BRect dirtyFrameHack;
 
 // Self enum names begin with MSG_ and values are all lowercase
 // External enum names begin with MODULENAME_ and values are Capitalized
+// 'NOTI' temporary
 enum {
 	// Project menu
 	MSG_PROJECT_CLOSE			= 'prcl',
@@ -135,6 +136,7 @@ enum {
 	MSG_PROJECT_MENU_CLOSE			= 'pmcl',
 	MSG_PROJECT_MENU_DELETE			= 'pmde',
 	MSG_PROJECT_MENU_SET_ACTIVE		= 'pmsa',
+	MSG_PROJECT_MENU_RESCAN			= 'pmre',
 	MSG_PROJECT_MENU_ADD_FILE		= 'pmaf',
 	MSG_PROJECT_MENU_DELETE_FILE	= 'pmdf',
 	MSG_PROJECT_MENU_EXCLUDE_FILE	= 'pmef',
@@ -343,6 +345,14 @@ void
 IdeamWindow::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
+		case 'NOTI': {
+			BString notification, type;
+			if (message->FindString("notification", &notification) == B_OK
+				&& message->FindString("type", &type) == B_OK) {
+					_SendNotification(notification, type);
+			}
+			break;
+		}
 		case B_ABOUT_REQUESTED:
 			be_app->PostMessage(B_ABOUT_REQUESTED);
 			break;
@@ -459,7 +469,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 					if (message->FindInt32("line", &line) == B_OK) {
 						BString text;
 						text << fEditor->Name() << " :" << line;
-						_SendNotification( text.String(), "FIND_MARK");
+						_SendNotification(text, "FIND_MARK");
 					}
 				}
 			}
@@ -941,6 +951,10 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		}
 		case MSG_PROJECT_MENU_OPEN_FILE: {
 			_ProjectFileOpen();
+			break;
+		}
+		case MSG_PROJECT_MENU_RESCAN: {
+			_ProjectRescan(fSelectedProjectName);
 			break;
 		}
 		case MSG_PROJECT_MENU_SET_ACTIVE: {
@@ -2309,8 +2323,12 @@ IdeamWindow::_InitMenu()
 
 	fMenuBar->AddItem(menu);
 
-	menu = new BMenu(B_TRANSLATE("Scm"));
 	fGitMenu = new BMenu(B_TRANSLATE("Git"));
+
+	fGitMenu->AddItem(fGitBranchItem = new BMenuItem(B_TRANSLATE("Branch"), nullptr));
+	BMessage* git_branch_message = new BMessage(MSG_GIT_COMMAND);
+	git_branch_message->AddString("command", "branch");
+	fGitBranchItem->SetMessage(git_branch_message);
 
 	fGitMenu->AddItem(fGitLogItem = new BMenuItem(B_TRANSLATE("Log"), nullptr));
 	BMessage* git_log_message = new BMessage(MSG_GIT_COMMAND);
@@ -2349,18 +2367,18 @@ IdeamWindow::_InitMenu()
 	git_status_short_message->AddString("command", "status --short");
 	fGitStatusShortItem->SetMessage(git_status_short_message);
 
+	fGitMenu->SetEnabled(false);
+	fMenuBar->AddItem(fGitMenu);
+/*
 	fHgMenu = new BMenu(B_TRANSLATE("Hg"));
 	fHgMenu->AddItem(fHgStatusItem = new BMenuItem(B_TRANSLATE("Status"), nullptr));
 	BMessage* hg_status_message = new BMessage(MSG_HG_COMMAND);
 	hg_status_message->AddString("command", "status");
 	fHgStatusItem->SetMessage(hg_status_message);
 
-	fGitMenu->SetEnabled(false);
 	fHgMenu->SetEnabled(false);
-
-	menu->AddItem(fGitMenu);
 	menu->AddItem(fHgMenu);
-	fMenuBar->AddItem(menu);
+*/
 
 	menu = new BMenu(B_TRANSLATE("Window"));
 	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
@@ -2502,6 +2520,8 @@ IdeamWindow::_InitWindow()
 		new BMessage(MSG_PROJECT_MENU_DELETE));
 	fSetActiveProjectMenuItem = new BMenuItem(B_TRANSLATE("Set Active"),
 		new BMessage(MSG_PROJECT_MENU_SET_ACTIVE));
+	fRescanProjectMenuItem = new BMenuItem(B_TRANSLATE("Rescan"),
+		new BMessage(MSG_PROJECT_MENU_RESCAN));
 	fAddFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Add file"),
 		new BMessage(MSG_PROJECT_MENU_ADD_FILE));
 	fDeleteFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Delete file"),
@@ -2514,6 +2534,7 @@ IdeamWindow::_InitWindow()
 	fProjectMenu->AddItem(fCloseProjectMenuItem);
 	fProjectMenu->AddItem(fDeleteProjectMenuItem);
 	fProjectMenu->AddItem(fSetActiveProjectMenuItem);
+	fProjectMenu->AddItem(fRescanProjectMenuItem);
 	fProjectMenu->AddSeparatorItem();
 	fProjectMenu->AddItem(fAddFileProjectMenuItem);
 	fProjectMenu->AddItem(fDeleteFileProjectMenuItem);
@@ -2809,6 +2830,9 @@ IdeamWindow::_ProjectActivate(BString const& projectName)
 
 	fProjectsOutline->Invalidate();
 
+	if (fActiveProject == nullptr)
+		return;
+
 	// Update run command working directory tooltip too
 	BString tooltip;
 	tooltip << "cwd: " << fActiveProject->BasePath();
@@ -2888,8 +2912,8 @@ IdeamWindow::_ProjectFileDelete()
 void
 IdeamWindow::_ProjectFileExclude()
 {
-	TPreferences* idmproFile  = new TPreferences(fSelectedProjectName,
-											IdeamNames::kApplicationName, 'PRSE');
+	TPreferences idmproFile(fSelectedProjectName,
+											IdeamNames::kApplicationName, 'LOPR');
 
 	int32 index = 0;
 	BString superItem(""), file;
@@ -2911,16 +2935,17 @@ IdeamWindow::_ProjectFileExclude()
 	else if (superItem == B_TRANSLATE("Project Files"))
 		superItem = "project_file";
 
-	while ((idmproFile->FindString(superItem, index, &file)) != B_BAD_INDEX) {
+	while ((idmproFile.FindString(superItem, index, &file)) != B_BAD_INDEX) {
 		if (_ProjectFileFullPath() == file) {
-			idmproFile->RemoveData(superItem, index);
+			idmproFile.RemoveData(superItem, index);
 			fProjectsOutline->RemoveItem(fSelectedProjectItem);
+			// Excluded items go to "parseless_item" array in settings file so
+			// subsequent calls to ProjectParser::ParseProjectFiles() will keep hiding them
+			idmproFile.AddString("parseless_item", file);
 			break;
 		}
 		index++;
 	}
-
-	delete idmproFile;
 }
 
 BString
@@ -2956,6 +2981,7 @@ IdeamWindow::_ProjectItemChosen()
 	fCloseProjectMenuItem->SetEnabled(false);
 	fDeleteProjectMenuItem->SetEnabled(false);
 	fSetActiveProjectMenuItem->SetEnabled(false);
+	fRescanProjectMenuItem->SetEnabled(false);
 	fAddFileProjectMenuItem->SetEnabled(false);
 	fDeleteFileProjectMenuItem->SetEnabled(false);
 	fExcludeFileProjectMenuItem->SetEnabled(false);
@@ -2998,10 +3024,12 @@ IdeamWindow::_ProjectItemChosen()
 		fDeleteProjectMenuItem->SetEnabled(true);
 		if (!isActive)
 			fSetActiveProjectMenuItem->SetEnabled(true);
-		else
+		else {
 			// Active building project: return
 			if (fIsBuilding)
 				return;
+		}
+		fRescanProjectMenuItem->SetEnabled(true);
 	} else if (fSelectedProjectName == B_TRANSLATE("Project Files")
 			|| fSelectedProjectName == B_TRANSLATE("Project Sources")) {
 		// Not getting here but leave it
@@ -3063,6 +3091,12 @@ IdeamWindow::_ProjectOpen(BString const& projectName, bool activate)
 }
 
 void
+IdeamWindow::_ProjectOutlineDepopulate(Project* project)
+{
+	fProjectsOutline->RemoveItem(project->Title());
+}
+
+void
 IdeamWindow::_ProjectOutlinePopulate(Project* project)
 {
 	BString basepath(project->BasePath());
@@ -3101,9 +3135,39 @@ IdeamWindow::_ProjectOutlinePopulate(Project* project)
 }
 
 void
-IdeamWindow::_ProjectOutlineDepopulate(Project* project)
+IdeamWindow::_ProjectRescan(BString const& projectName)
 {
-	fProjectsOutline->RemoveItem(project->Title());
+	BString projectDirectory("");
+	Project * project(nullptr);
+
+	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+		project = fProjectObjectList->ItemAt(index);
+		if (project->ExtensionedName() == projectName) {
+			projectDirectory.SetTo(project->BasePath());
+		}
+	}
+
+	if (project == nullptr || projectDirectory.IsEmpty())
+		return;
+
+	TPreferences* prefs = new TPreferences(projectName,
+		IdeamNames::kApplicationName, 'LOPR');
+	ProjectParser parser(prefs);
+	parser.ParseProjectFiles(projectDirectory.String());
+	delete prefs;
+
+	// If active project was git inited (or git removed) and then rescaned
+	// set Git menu accordingly
+	if (project->IsActive()) {
+		if (project->Scm() == "git")
+			fGitMenu->SetEnabled(true);
+		else
+			fGitMenu->SetEnabled(false);
+	}
+
+	_ProjectOutlineDepopulate(project);
+	_ProjectOutlinePopulate(project);
+	fProjectsOutline->Invalidate();
 }
 
 int
@@ -3265,7 +3329,7 @@ IdeamWindow::_RunTarget()
 
 	// Check if run args present
 	BString args("");
-	TPreferences prefs(fActiveProject->ExtensionedName(), IdeamNames::kApplicationName, 'PRSE');
+	TPreferences prefs(fActiveProject->ExtensionedName(), IdeamNames::kApplicationName, 'LOPR');
 	prefs.FindString("project_run_args", &args);
 
 	// Differentiate terminal projects from window ones
@@ -3391,6 +3455,8 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 		// Is this a git project?
 		if (fActiveProject->Scm() == "git")
 			fGitMenu->SetEnabled(true);
+		else
+			fGitMenu->SetEnabled(false);
 		// cargo projects
 		if (fActiveProject->Type() == "cargo") {
 			fRunItem->SetEnabled(true);

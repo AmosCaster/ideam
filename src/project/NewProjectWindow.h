@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 A. Mosca <amoscaster@gmail.com>
+ * Copyright 2017..2018 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 #ifndef NEW_PROJECT_WINDOW_H
@@ -15,6 +15,7 @@
 #include <TextView.h>
 #include <Window.h>
 
+#include "ProjectParser.h"
 #include "TitleItem.h"
 #include "TPreferences.h"
 
@@ -50,7 +51,6 @@ private:
 			status_t			_CreateHaikuSourcesProject();
 			status_t			_CreateLocalSourcesProject();
 			status_t			_CreateSkeleton();
-			status_t			_GetSourcesFiles(const char* dirpath);
 			void				_MapItems();
 			void				_OnEditingHaikuAppText();
 			void				_OnEditingLocalAppText();

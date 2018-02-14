@@ -269,11 +269,20 @@ current Scintilla version: HaikuPorts version
 +) Git,Hg menu
 +) Running console programs (cwd: global Projects directory or base project
    directory if active project)
-) New projects allow git initialization
++) New projects allow git initialization
+
+--------------------------------------------------------------------------------
+0.7.1) Project files parser reworked
+====================================
+
++) Project Rescan context menu
++) Project Settings reworked
++) Excluded files remain hidden on rescan
++) Git command added (branch)
++) Scm menu Git only
+
+ ] "object." and "app" directories excluded automatically
 
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________
-
-
-

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 A. Mosca <amoscaster@gmail.com>
+ * Copyright 2017..2018 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 #ifndef PROJECT_H
@@ -18,19 +18,18 @@ public:
 
 			void				Activate();
 			BString				BasePath() const { return fProjectDirectory; }
-			BString				BuildCommand() const { return fBuildCommand; }
-			BString				CleanCommand() const { return fCleanCommand; }
-			void				Close();
+			BString	const		BuildCommand();
+			BString	const		CleanCommand();
 			void				Deactivate();
 			BString	const		ExtensionedName() const { return fExtensionedName; }
-	std::vector<BString>		FilesList() const { return fFilesList; };
+	std::vector<BString> const	FilesList();
 			bool				IsActive() { return isActive; }
 			BString	const		Name() const { return fName; }
 			status_t			Open(bool activate);
 			bool				RunInTerminal() { return fRunInTerminal; }
-			BString	const		Scm() const { return fScm; }
-	std::vector<BString>		SourcesList() const { return fSourcesList; };
-			BString 			Target() const { return fTarget; }
+			BString	const		Scm();
+	std::vector<BString> const	SourcesList();
+			BString	const	 	Target();
 			ProjectTitleItem*	Title() const { return fProjectTitle; }
 			BString				Type() const { return fType; }
 
@@ -39,18 +38,14 @@ private:
 private:
 			BString				fName;
 			BString const		fExtensionedName;
-			BString				fBuildCommand;
-			BString				fCleanCommand;
 			BString				fProjectDirectory;
-			BString				fTarget;
-			BString				fScm;
 			BString				fType;
 			bool				fRunInTerminal;
-		std::vector<BString>	fFilesList;
-		std::vector<BString>	fSourcesList;
 			bool				isActive;
 			ProjectTitleItem*	fProjectTitle;
-			TPreferences*		fIdmproFile;
+		std::vector<BString>	fFilesList;
+		std::vector<BString>	fSourcesList;
+
 };
 
 

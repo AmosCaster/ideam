@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 A. Mosca <amoscaster@gmail.com>
+ * Copyright 2017..2018 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 #ifndef PROJECT_SETTINGS_WINDOW_H
@@ -9,8 +9,11 @@
 #include <Button.h>
 #include <CheckBox.h>
 #include <MenuField.h>
+#include <ScrollView.h>
+#include <StringView.h>
 #include <TextControl.h>
 #include <Window.h>
+#include <vector>
 
 #include "Project.h"
 #include "TPreferences.h"
@@ -27,6 +30,7 @@ public:
 private:
 			void				_CloseProject();
 			int32				_GetProjects();
+			void				_InitWindow();
 			void				_LoadProject(BString name);
 			void				_SaveChanges();
 
@@ -36,18 +40,24 @@ private:
 			BString		 		fProjectBoxLabel;
 			BString		 		fProjectBoxProjectLabel;
 
+			BBox* 				fEditablesBox;
 			BMenuField*			fProjectMenuField;
 			BTextControl* 		fProjectTargetText;
 			BTextControl* 		fBuildCommandText;
 			BTextControl* 		fCleanCommandText;
-			BTextControl* 		fRunArgsText;
 			BTextControl* 		fProjectScmText;
 			BString				fTargetString;
 			BString				fBuildString;
 			BString				fCleanString;
-			BString				fRunArgsString;
 			BString				fProjectScmString;
-
+			BBox* 				fRuntimeBox;
+			BTextControl* 		fRunArgsText;
+			BString				fRunArgsString;
+			BBox* 				fProjectParselessBox;
+			BStringView*		fProjectParselessBoxLabel;
+			BTextView*			fParselessText;
+			BScrollView*		fParselessScroll;
+		std::vector<BString>	fParselessList;
 			TPreferences*		fIdmproFile;
 };
 

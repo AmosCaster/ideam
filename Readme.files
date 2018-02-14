@@ -33,54 +33,56 @@ Ideam files
 |  --src
 |	+ 
 |	|  --IdeamApp.cpp....................Main Application class
-|	|  --IdeamApp.h......................Main Application header
+|	|  --IdeamApp.h......................
 |	|  --IdeamNamespace.cpp..............Global namespace
-|	|  --IdeamNamespace.h................Global namespace header
+|	|  --IdeamNamespace.h................
 |	|
 |	|  --helpers.........................Helper classes
 |	|	+
 |	|	|  --ShellView.cpp...............Shell view class (obsoleted)
-|	|	|  --ShellView.h.................Shell view header (obsoleted)
+|	|	|  --ShellView.h.................
 |	|	|  --TitleItem.h.................OutlineListView title class
 |	|	|  --TPreferences.cpp............Settings storage helper class
-|	|	|  --TPreferences.h..............Settings storage helper header
+|	|	|  --TPreferences.h..............
 |	|	|  --keywords.h..................Keywords for syntax highlighting
 |	|	|
 |	|	|  --console_io..................Console I/O classes
 |	|	|	+
 |	|	|	|  --ConsoleIOThread.cpp.....Console I/O worker class
-|	|	|	|  --ConsoleIOThread.h.......Console I/O worker header
+|	|	|	|  --ConsoleIOThread.h.......
 |	|	|	|  --ConsoleIOView.cpp.......Console I/O visual class
-|	|	|	|  --ConsoleIOView.h.........Console I/O visual header
+|	|	|	|  --ConsoleIOView.h.........
 |	|	|	|  --GenericThread.cpp.......Generic Thread class
-|	|	|	|  --GenericThread.h.........Generic Thread header
+|	|	|	|  --GenericThread.h.........
 |	|
 |	|	|  --tabview.....................Tabview classes
 |	|	|	+
 |	|	|	|  --TabContainerView.cpp....Tab container class
-|	|	|	|  --TabContainerView.h......Tab container header
+|	|	|	|  --TabContainerView.h......
 |	|	|	|  --TabManager.cpp..........Tab manager class
-|	|	|	|  --TabManager.h............Tab manager header
+|	|	|	|  --TabManager.h............
 |	|	|	|  --TabView.cpp.............Tab view class
-|	|	|	|  --TabView.h...............Tab view header
+|	|	|	|  --TabView.h...............
 |	|
 |	|  --project.........................Project classes
 |	|	+
 |	|	|  --NewProjectWindow.cpp........Project creation window class
-|	|	|  --NewProjectWindow.h..........Project creation window header
+|	|	|  --NewProjectWindow.h..........
 |	|	|  --Project.cpp.................Project class
-|	|	|  --Project.h...................Project header
+|	|	|  --Project.h...................
+|	|	|  --ProjectParser.cpp...........Project files parser class
+|	|	|  --ProjectParser.h.............
 |	|	|  --ProjectTitleItem.h..........Project Title class
 |	|
 |	|  --ui..............................Graphical user interface classes
 |	|	+
 |	|	|  --DefaultSettingsKeys.h.......Settings Keys default values
 |	|	|  --Editor.cpp..................Scintilla editor class
-|	|	|  --Editor.h....................Main window header
+|	|	|  --Editor.h....................
 |	|	|  --IdeamWindow.cpp.............Main window class
-|	|	|  --IdeamWindow.h...............Main window header
+|	|	|  --IdeamWindow.h...............
 |	|	|  --SettingsWindow.cpp..........General settings window class
-|	|	|  --SettingsWindow.h............General settings window header
+|	|	|  --SettingsWindow.h............
 
 
 /boot/home/config/settings/Ideam

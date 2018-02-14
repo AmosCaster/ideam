@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 A. Mosca <amoscaster@gmail.com>
+ * Copyright 2017..2018 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -237,7 +237,9 @@ NewProjectWindow::NewProjectWindow()
 
 	fBrowseHaikuAppButton = new BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
 								new BMessage(MSG_BROWSE_HAIKU_APP_CLICKED));
+	fBrowseHaikuAppButton->SetExplicitMaxSize(fHaikuAppDirText->MinSize());
 	fBrowseHaikuAppButton->SetEnabled(false);
+
 
 	// Local sources app
 	fLocalAppDirText = new BTextControl("LocalAppDirText",
@@ -247,6 +249,7 @@ NewProjectWindow::NewProjectWindow()
 
 	fBrowseLocalAppButton = new BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
 								new BMessage(MSG_BROWSE_LOCAL_APP_CLICKED));
+	fBrowseLocalAppButton->SetExplicitMaxSize(fLocalAppDirText->MinSize());
 	fBrowseLocalAppButton->SetEnabled(false);
 
 	// Cargo app
@@ -301,6 +304,7 @@ NewProjectWindow::NewProjectWindow()
 		.Add(fCargoPathText->CreateTextViewLayoutItem(), 1, 10)
 		.Add(fCargoBinEnabled, 2, 10)
 		.Add(fCargoVcsEnabled, 3, 10)
+		.Add(new BSeparatorView(B_HORIZONTAL), 0, 11, 4)
 		.AddGlue(0, 12)
 		;
 
@@ -312,7 +316,7 @@ NewProjectWindow::NewProjectWindow()
 				.Add(typeListScrollView, 2)
 					.Add(fProjectBox, 5)
 		.End()	
-		.AddGroup(B_VERTICAL, 0, 3)	
+		.AddGroup(B_VERTICAL, 0, 2)
 			.Add(fScrollText)
 					.AddGroup(B_HORIZONTAL)
 						.Add(fCancelButton)
@@ -613,7 +617,7 @@ NewProjectWindow::_CreateSkeleton()
 	// Project file
 	fProjectExtensionedName = fProjectNameText->Text();
 	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
+	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'LOPR');
 
 	fProjectFile->SetBString("project_extensioned_name", fProjectExtensionedName);
 	fProjectFile->SetBString("project_name", fProjectNameText->Text());
@@ -706,7 +710,7 @@ NewProjectWindow::_CreateCargoProject()
 	// Project file
 	fProjectExtensionedName = fProjectNameText->Text();
 	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	TPreferences projectFile(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
+	TPreferences projectFile(fProjectExtensionedName, IdeamNames::kApplicationName, 'LOPR');
 
 	projectFile.SetBString("project_extensioned_name", fProjectExtensionedName);
 	projectFile.SetBString("project_name", fProjectNameText->Text());
@@ -817,7 +821,7 @@ NewProjectWindow::_CreateEmptyProject()
 	// Project file
 	fProjectExtensionedName = fProjectNameText->Text();
 	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
+	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'LOPR');
 
 	fProjectFile->SetBString("project_extensioned_name", fProjectExtensionedName);
 	fProjectFile->SetBString("project_name", fProjectNameText->Text());
@@ -839,7 +843,7 @@ NewProjectWindow::_CreateHaikuSourcesProject()
 	// Project file
 	fProjectExtensionedName = fProjectNameText->Text();
 	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
+	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'LOPR');
 
 	fProjectFile->SetBString("project_extensioned_name", fProjectExtensionedName);
 	fProjectFile->SetBString("project_name", fProjectNameText->Text());
@@ -850,7 +854,8 @@ NewProjectWindow::_CreateHaikuSourcesProject()
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
 
 	// Scan dir for files
-	_GetSourcesFiles(fHaikuAppDirText->Text());
+	ProjectParser parser(fProjectFile);
+	parser.ParseProjectFiles(fHaikuAppDirText->Text());
 
 	delete fProjectFile;
 
@@ -865,7 +870,7 @@ NewProjectWindow::_CreateLocalSourcesProject()
 	// Project file
 	fProjectExtensionedName = fProjectNameText->Text();
 	fProjectExtensionedName.Append(IdeamNames::kProjectExtension); // ".idmpro"
-	fProjectFile =  new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'PRSE');
+	fProjectFile = new TPreferences(fProjectExtensionedName, IdeamNames::kApplicationName, 'LOPR');
 
 	fProjectFile->SetBString("project_extensioned_name", fProjectExtensionedName);
 	fProjectFile->SetBString("project_name", fProjectNameText->Text());
@@ -876,102 +881,12 @@ NewProjectWindow::_CreateLocalSourcesProject()
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
 
 	// Scan dir for files
-	_GetSourcesFiles(fLocalAppDirText->Text());
+	ProjectParser parser(fProjectFile);
+	parser.ParseProjectFiles(fLocalAppDirText->Text());
 
 	delete fProjectFile;
 
 	return status;
-}
-
-status_t
-NewProjectWindow::_GetSourcesFiles(const char* dirpath)
-{
-	status_t status;
-
-	BDirectory dir(dirpath);
-//	int32 entries = dir.CountEntries();
-	BEntry entry;
-	entry_ref ref;
-	char sname[B_FILE_NAME_LENGTH];
-
-	while ((status = dir.GetNextEntry(&entry)) == B_OK) {
-
-		entry.GetName(sname);
-		BString name(sname);
-
-		// Manage directories
-		if (entry.IsDirectory()) {
-
-			// Exclude scm dirs TODO: more scms
-			if (name == ".git") {
-				fProjectFile->SetBString("project_scm", "git");
-			} else if (name == ".hg") {
-				fProjectFile->SetBString("project_scm", "hg");
-			} else if (name == ".bzr") {
-				fProjectFile->SetBString("project_scm", "bzr");
-			}
-			// Exclude objects dir ?
-			else if (name.StartsWith("objects.")) {
-				;
-			}
-			// Exclude app dir if any
-			else if (name == "app") {
-				;
-			}
-			else {
-				BString newPath(dirpath);
-				newPath << "/" << entry.Name();
-				_GetSourcesFiles(newPath.String());
-			}
-
-		} else {
-			// Entry is a file, get it
-			if ((status = entry.GetRef(&ref)) == B_OK) {
-				BPath path(&entry);
-				// TODO Exclude target
-
-/*				if (name == "Jamfile"
-						|| name == "Makefile"
-						|| name == "makefile")
-						// TODO Exclude makefile.xxx ?
-					fProjectFile->AddString("project_make", path.Path());
-
-				else if (name.EndsWith(".rdef"))
-					fProjectFile->AddString("project_rdef", path.Path());
-
-				else */ if (name.EndsWith(".cpp")
-						|| name.EndsWith(".c")
-						|| name.EndsWith(".h")
-						|| name.EndsWith(".S")
-						|| name.EndsWith(".awk")
-						|| name.EndsWith(".inc"))
-					fProjectFile->AddString("project_source", path.Path());
-				else if (name.EndsWith(".txt")
-						|| name == "LICENSE"
-						|| name == "TODO"
-						|| name.StartsWith("README")
-						||	name.EndsWith(".html"))
-					fProjectFile->AddString("project_file", path.Path());
-//					fProjectFile->AddString("project_source", path.Path());
-				else if (name.EndsWith(".bin")
-						|| name == "usbdevs"
-						|| name.EndsWith(".hk3d")
-						|| name.EndsWith(".png"))
-					fProjectFile->AddString("project_file", path.Path());
-//					fProjectFile->AddString("project_source", path.Path());
-				// Files to exclude, do nothing
-				else if (name.EndsWith(".d")
-						|| name.EndsWith(".o"))
-					;
-				else
-					fProjectFile->AddString("project_file", path.Path());
-//					fProjectFile->AddString("project_source", path.Path());
-			}
-			else
-				return status;
-		}
-	}
-	return B_OK;
 }
 
 void

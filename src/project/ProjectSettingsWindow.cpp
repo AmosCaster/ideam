@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 A. Mosca <amoscaster@gmail.com>
+ * Copyright 2017..2018 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -7,11 +7,11 @@
 #include "ProjectSettingsWindow.h"
 
 #include <Alignment.h>
-
 #include <Catalog.h>
 #include <Directory.h>
 #include <LayoutBuilder.h>
 #include <SeparatorView.h>
+#include <iostream>
 #include <string>
 
 #include "IdeamNamespace.h"
@@ -38,60 +38,7 @@ ProjectSettingsWindow::ProjectSettingsWindow(BString name)
 	, fProjectsCount(0)
 	, fIdmproFile(nullptr)
 {
-	// Button
-	BButton* exitButton = new BButton("exit",
-		B_TRANSLATE("Exit"), new BMessage(MSG_EXIT_CLICKED));
-
-	// "Project" Box
-	fProjectBox = new BBox("projectBox");
-	fProjectBoxLabel = B_TRANSLATE("Project:");
-	fProjectBox->SetLabel(fProjectBoxLabel);
-
-	// Projects Menu
-	fProjectMenuField = new BMenuField("ProjectMenuField", nullptr,
-										new BMenu(B_TRANSLATE("Choose Project:")));
-
-	fProjectTargetText = new BTextControl(B_TRANSLATE("Project target:"), "", nullptr);
-
-	fBuildCommandText = new BTextControl(B_TRANSLATE("Build comand:"), "", nullptr);
-
-	fCleanCommandText = new BTextControl(B_TRANSLATE("Clean comand:"), "", nullptr);
-
-	fRunArgsText = new BTextControl(B_TRANSLATE("Run args:"), "", nullptr);
-
-	fProjectScmText = new BTextControl(B_TRANSLATE("Source control:"), "", nullptr);
-
-	// Layout
-	BLayoutBuilder::Grid<>(fProjectBox)
-	.SetInsets(20, 40, 10, 10)
-	.Add(fProjectMenuField, 0, 1, 4)
-	.Add(fProjectTargetText->CreateLabelLayoutItem(), 0, 2, 1)
-	.Add(fProjectTargetText->CreateTextViewLayoutItem(), 1, 2, 3)
-	.Add(fBuildCommandText->CreateLabelLayoutItem(), 0, 3)
-	.Add(fBuildCommandText->CreateTextViewLayoutItem(), 1, 3)
-	.Add(fCleanCommandText->CreateLabelLayoutItem(), 2, 3)
-	.Add(fCleanCommandText->CreateTextViewLayoutItem(), 3, 3)
-	.Add(fRunArgsText->CreateLabelLayoutItem(), 0, 4)
-	.Add(fRunArgsText->CreateTextViewLayoutItem(), 1, 4)
-	.Add(fProjectScmText->CreateLabelLayoutItem(), 0, 5)
-	.Add(fProjectScmText->CreateTextViewLayoutItem(), 1, 5)
-	.Add(new BSeparatorView(B_HORIZONTAL), 0, 7, 4)
-	.AddGlue(0, 10)
-	;
-
-	// Window layout
-	BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
-		.AddGroup(B_HORIZONTAL)
-			.AddGroup(B_VERTICAL, 0, 3)
-				.Add(fProjectBox)
-				.AddGroup(B_HORIZONTAL)
-					.AddGlue()
-					.Add(exitButton)
-					.AddGlue()
-				.End()					
-			.End()
-		.End()
-	;
+	_InitWindow();
 
 	CenterOnScreen();
 
@@ -173,6 +120,106 @@ ProjectSettingsWindow::_GetProjects()
 }
 
 void
+ProjectSettingsWindow::_InitWindow()
+{
+	// Projects Menu
+	fProjectMenuField = new BMenuField("ProjectMenuField", nullptr,
+										new BMenu(B_TRANSLATE("Choose Project:")));
+
+	// "Editables" Box
+	fEditablesBox = new BBox("EditablesBox");
+	fEditablesBox->SetLabel(B_TRANSLATE("Editables"));
+
+	fProjectTargetText = new BTextControl(B_TRANSLATE("Project target:"), "", nullptr);
+
+	fBuildCommandText = new BTextControl(B_TRANSLATE("Build comand:"), "", nullptr);
+
+	fCleanCommandText = new BTextControl(B_TRANSLATE("Clean comand:"), "", nullptr);
+
+	fProjectScmText = new BTextControl(B_TRANSLATE("Source control:"), "", nullptr);
+
+	BLayoutBuilder::Grid<>(fEditablesBox)
+	.SetInsets(10.0f, 24.0f, 10.0f, 10.0f)
+	.Add(fProjectTargetText->CreateLabelLayoutItem(), 0, 1, 1)
+	.Add(fProjectTargetText->CreateTextViewLayoutItem(), 1, 1, 3)
+	.Add(fBuildCommandText->CreateLabelLayoutItem(), 0, 2)
+	.Add(fBuildCommandText->CreateTextViewLayoutItem(), 1, 2)
+	.Add(fCleanCommandText->CreateLabelLayoutItem(), 2, 2)
+	.Add(fCleanCommandText->CreateTextViewLayoutItem(), 3, 2)
+	.Add(fProjectScmText->CreateLabelLayoutItem(), 0, 3)
+	.Add(fProjectScmText->CreateTextViewLayoutItem(), 1, 3)
+	.End()
+	;
+
+	// "Runtime" Box
+	fRuntimeBox = new BBox("RuntimeBox");
+	fRuntimeBox->SetLabel(B_TRANSLATE("Runtime"));
+
+	fRunArgsText = new BTextControl(B_TRANSLATE("Runtime args:"), "", nullptr);
+
+	BLayoutBuilder::Grid<>(fRuntimeBox)
+	.SetInsets(10.0f, 24.0f, 10.0f, 10.0f)
+	.Add(fRunArgsText->CreateLabelLayoutItem(), 0, 1, 2)
+	.Add(fRunArgsText->CreateTextViewLayoutItem(), 2, 1, 2)
+	.End()
+	;
+
+	// "Parseless" Box
+	fProjectParselessBox = new BBox("ParselessBox");
+	fProjectParselessBoxLabel = new BStringView("ParselessBoxLabel",
+		B_TRANSLATE("Parseless files"));
+	fProjectParselessBox->SetLabel(fProjectParselessBoxLabel);
+
+	// Parseless scroll
+	fParselessText = new BTextView("ParselessText");
+	fParselessText->MakeEditable(false);
+	fParselessText->MakeSelectable(false);
+	fParselessScroll = new BScrollView("ParselessScroll", fParselessText,
+		B_WILL_DRAW | B_FRAME_EVENTS, true, true, B_FANCY_BORDER);
+
+	BLayoutBuilder::Grid<>(fProjectParselessBox)
+	.SetInsets(10.0f, 24.0f, 10.0f, 10.0f)
+	.Add(fParselessScroll, 0, 1, 4)
+	.End()
+	;
+
+	// "Project" global Box
+	fProjectBox = new BBox("projectBox");
+	fProjectBoxLabel = B_TRANSLATE("Project:");
+	fProjectBox->SetLabel(fProjectBoxLabel);
+
+	BLayoutBuilder::Grid<>(fProjectBox)
+	.SetInsets(10.0f, 24.0f, 10.0f, 10.0f)
+	.Add(fProjectMenuField, 0, 1, 4)
+	.Add(new BSeparatorView(B_HORIZONTAL), 0, 2, 4)
+//	.AddGlue(0, 3, 4)
+	.Add(fEditablesBox, 0, 4, 4)
+	.Add(fRuntimeBox, 0, 5, 4)
+	.AddGlue(0, 6, 4)
+	.Add(fProjectParselessBox, 0, 7, 4)
+	;
+
+	// Exit button
+	BButton* exitButton = new BButton("exit",
+		B_TRANSLATE("Exit"), new BMessage(MSG_EXIT_CLICKED));
+
+	// Window layout
+	BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
+		.SetInsets(4.0f, 4.0f, 4.0f, 4.0f)
+		.AddGroup(B_HORIZONTAL)
+			.AddGroup(B_VERTICAL, 0, 3)
+				.Add(fProjectBox)
+				.AddGroup(B_HORIZONTAL)
+					.AddGlue()
+					.Add(exitButton)
+					.AddGlue()
+				.End()
+			.End()
+		.End()
+	;
+}
+
+void
 ProjectSettingsWindow::_LoadProject(BString name)
 {
 	if (name == "")
@@ -183,13 +230,14 @@ ProjectSettingsWindow::_LoadProject(BString name)
 	fProjectTargetText->SetText("");
 	fBuildCommandText->SetText("");
 	fCleanCommandText->SetText("");
-	fRunArgsText->SetText("");
 	fProjectScmText->SetText("");
+	fRunArgsText->SetText("");
+	fParselessText->SetText("");
 
 	fProjectBoxProjectLabel << fProjectBoxLabel << "\t\t" << name;
 	fProjectBox->SetLabel(fProjectBoxProjectLabel);
 
-	fIdmproFile = new TPreferences(name, IdeamNames::kApplicationName, 'PRSE');
+	fIdmproFile = new TPreferences(name, IdeamNames::kApplicationName, 'LOPR');
 
 	if (fIdmproFile->FindString("project_target", &fTargetString) == B_OK)
 		fProjectTargetText->SetText(fTargetString);
@@ -200,11 +248,19 @@ ProjectSettingsWindow::_LoadProject(BString name)
 	if (fIdmproFile->FindString("project_clean_command", &fCleanString) == B_OK)
 		fCleanCommandText->SetText(fCleanString);
 
+	if (fIdmproFile->FindString("project_scm", &fProjectScmString) == B_OK)
+		fProjectScmText->SetText(fProjectScmString);
+
 	if (fIdmproFile->FindString("project_run_args", &fRunArgsString) == B_OK)
 		fRunArgsText->SetText(fRunArgsString);
 
-	if (fIdmproFile->FindString("project_scm", &fProjectScmString) == B_OK)
-		fProjectScmText->SetText(fProjectScmString);
+	BString file;
+	int count = 0;
+
+	while (fIdmproFile->FindString("parseless_item", count++, &file) == B_OK) {
+		file.Append("\n");
+		fParselessText->Insert(file);
+	}
 }
 
 void

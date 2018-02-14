@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 A. Mosca <amoscaster@gmail.com>
+ * Copyright 2017..2018 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 #ifndef IDEAMWINDOW_H
@@ -26,6 +26,7 @@
 #include "ConsoleIOView.h"
 #include "Editor.h"
 #include "Project.h"
+#include "ProjectParser.h"
 #include "TabManager.h"
 #include "TPreferences.h"
 
@@ -101,6 +102,7 @@ private:
 			void				_ProjectOpen(BString const& projectName, bool activate);
 			void				_ProjectOutlineDepopulate(Project* project);
 			void				_ProjectOutlinePopulate(Project* project);
+			void				_ProjectRescan(BString const& projectName);
 			int					_Replace(int what);
 			bool				_ReplaceAllow();
 			void				_ReplaceGroupShow();
@@ -155,6 +157,7 @@ private:
 			BMenuItem*			fMakeCatkeysItem;
 			BMenuItem*			fMakeBindcatalogsItem;
 			BMenu*				fGitMenu;
+			BMenuItem*			fGitBranchItem;
 			BMenuItem*			fGitLogItem;
 			BMenuItem*			fGitLogOnelineItem;
 			BMenuItem*			fGitPullItem;
@@ -207,6 +210,8 @@ private:
 			BMenuItem*			fCloseProjectMenuItem;
 			BMenuItem*			fDeleteProjectMenuItem;
 			BMenuItem*			fSetActiveProjectMenuItem;
+			BMenuItem*			fRescanProjectMenuItem
+			;
 			BMenuItem*			fAddFileProjectMenuItem;
 			BMenuItem*			fExcludeFileProjectMenuItem;
 			BMenuItem*			fDeleteFileProjectMenuItem;

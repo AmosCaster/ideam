@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	1599563732
+1	English	application/x-vnd.Ideam-Ideam	3686495547
 tuned 	SettingsWindow		settato
 bytes	IdeamWindow		bytes
 A C command line \"Hello World!\" application	NewProject Window		Applicazione C \"Hello World!\" da linea di comando
@@ -27,6 +27,7 @@ Startup	SettingsWindow		Avvio
 Please fill \"Local app dir\" field	NewProject Window		Riempire campo \"Dir. locale\"
 Enable Git	NewProject Window		Enable Git
 uses:	IdeamApp		uses:
+Parseless files	ProjectSettingsWindow		Parseless files
 You should make sure that the rust package (read cargo binary) is installed and working!	NewProject Window		You should make sure that the rust package (read cargo binary) is installed and working!
 Find Next	IdeamWindow		Trova successivo
 Help	IdeamWindow		Aiuto
@@ -57,6 +58,7 @@ Save current File	IdeamWindow		Salva il File corrente
 e.g. /boot/home/repodir/haiku/src/apps/clock	NewProject Window		e.g. /boot/home/repodir/haiku/src/apps/clock
 Project open:	IdeamWindow		Project open:
 Sources too	IdeamWindow		Sources too
+Project scan	ProjectParser		Project scan
 Pull	IdeamWindow		Pull
 Add header	NewProject Window		Add header
 applied	SettingsWindow		applied
@@ -86,7 +88,7 @@ Editor	SettingsWindow		Editor
 Select all	IdeamWindow		Seleziona tutto
 Delete	IdeamWindow		Elimina
 do You want to ignore, review or load to defaults?	IdeamApp		do You want to ignore, review or load to defaults?
-Close project	IdeamWindow		Close project
+Close project	IdeamWindow		Chiudi progetto
 Undo	IdeamWindow		Annulla
 Type	IdeamWindow		Tipo
 Go to next	IdeamWindow		Vai al prossimo
@@ -106,6 +108,7 @@ Font size:	SettingsWindow		Dimensione Font:
 update	IdeamWindow		update
 Set to Mac	IdeamWindow		Set to Mac
 Select previous File	IdeamWindow		Seleziona il File precedente
+Runtime	ProjectSettingsWindow		Runtime
 Save caret position	SettingsWindow		Salva posizione cursore
 New	IdeamWindow		Nuovo
 There are modified files, do you want to save changes before quitting?	IdeamWindow		Ci sono file modificati, vuoi salvare le modifiche prima di uscire?
@@ -132,7 +135,6 @@ Window	IdeamWindow		Finestra
 Set Active	IdeamWindow		Set Active
 Edge column:	SettingsWindow		Colonna di margine a:
 Log	IdeamWindow		Log
-Run args:	ProjectSettingsWindow		Run args:
 Debug	IdeamWindow		Debug
 Wrap	IdeamWindow		Wrap
 Debug Project	IdeamWindow		Debug Project
@@ -144,6 +146,7 @@ cargo binary not found!	NewProject Window		cargo binary not found!
 Find next not found	IdeamWindow		Find next not found
 Revert	SettingsWindow		Ripristina
 ERROR: empty \"NAME\" in Makefile	NewProject Window		ERROR: empty \"NAME\" in Makefile
+Branch	IdeamWindow		Branch
 Save position	SettingsWindow		Salva posizione
 Set buffer read-only	IdeamWindow		Imposta il buffer a sola lettura
 Open file	IdeamWindow		Open file
@@ -167,6 +170,7 @@ Project target:	ProjectSettingsWindow		Project target:
 A rust cargo project.	NewProject Window		A rust cargo project.
 Clear	ConsoleIOView		Clear
 A GUI application with menu bar and localization	NewProject Window		A GUI application with menu bar and localization
+Editables	ProjectSettingsWindow		Editables
 stdout	ConsoleIOView		stdout
 Scm	IdeamWindow		Scm
 A simple GUI \"Hello World!\" application	NewProject Window		A simple GUI \"Hello World!\" application
@@ -209,6 +213,7 @@ Copy	IdeamWindow		Copia
 Overwrite	IdeamWindow		Sovrascrivi
 This is the font size preview	SettingsWindow		This is the font size preview
 Project name:	NewProject Window		Nome del Progetto:
+Rescan	IdeamWindow		Rescan
 Project only	IdeamWindow		Project only
 * Select your Haiku app dir (from src/apps) or write full path in text control	NewProject Window		* Select your Haiku app dir (from src/apps) or write full path in text control
 Modifications	SettingsWindow		Modifications
@@ -257,13 +262,13 @@ Replace and find previous	IdeamWindow		Sostituisci e trova precedente
 Go to previous	IdeamWindow		Vai al precedente
 Settings file is corrupted or deleted,	IdeamApp		Settings file is corrupted or deleted,
 Find previous	IdeamWindow		Trova precedente
-Hg	IdeamWindow		Hg
 Please fill \"Project target\" field	NewProject Window		Please fill \"Project target\" field
 or edit Makefile variable (SYSTEM_INCLUDE_PATHS) accordingly	NewProject Window		or edit Makefile variable (SYSTEM_INCLUDE_PATHS) accordingly
 Edit	IdeamWindow		Modifica
 Create	NewProject Window		Create
 cargo path:	NewProject Window		cargo path:
 NULL editor pointer	IdeamWindow		puntatore dell' editor NULL
+Runtime args:	ProjectSettingsWindow		Runtime args:
 repodir/haiku> ./configure --use-gcc-pipe	NewProject Window		repodir/haiku> ./configure --use-gcc-pipe
 Fold	IdeamWindow		Fold
 Application	NewProject Window		Application
