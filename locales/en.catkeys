@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	635951094
+1	English	application/x-vnd.Ideam-Ideam	2296244921
 tuned 	SettingsWindow		tuned 
 bytes	IdeamWindow		bytes
 A C command line \"Hello World!\" application	NewProject Window		A C command line \"Hello World!\" application
@@ -24,8 +24,8 @@ Project [host architecture: 	NewProject Window		Project [host architecture:
 Import	NewProject Window		Import
 Console I/O	IdeamWindow		Console I/O
 Startup	SettingsWindow		Startup
-Please fill \"Local app dir\" field	NewProject Window		Please fill \"Local app dir\" field
 Enable Git	NewProject Window		Enable Git
+Please fill \"Local app dir\" field	NewProject Window		Please fill \"Local app dir\" field
 uses:	IdeamApp		uses:
 Parseless files	ProjectSettingsWindow		Parseless files
 You should make sure that the rust package (read cargo binary) is installed and working!	NewProject Window		You should make sure that the rust package (read cargo binary) is installed and working!
@@ -49,7 +49,6 @@ A C++ command line \"Hello World!\" application	NewProject Window		A C++ command
 Please fill \"Project name\" field	NewProject Window		Please fill \"Project name\" field
 contained in Bjarne Stroustrup' s book:	NewProject Window		contained in Bjarne Stroustrup' s book:
 Show ToolBar	SettingsWindow		Show ToolBar
-Cancel	NewProject Window		Cancel
 Replace	IdeamWindow		Replace
 occurrences found:	IdeamWindow		occurrences found:
 Go to line…	IdeamWindow		Go to line…
@@ -297,9 +296,11 @@ moved externally to	IdeamWindow		moved externally to
 Removing stale project file:	NewProject Window		Removing stale project file:
 General	SettingsWindow		General
 Select project directory and accord \"Project target:\" if needed	NewProject Window		Select project directory and accord \"Project target:\" if needed
+Tag	IdeamWindow		Tag
 If kept and modified save it or it will be lost	IdeamWindow		If kept and modified save it or it will be lost
 Put \"std_lib_facilities.h\" in:	NewProject Window		Put \"std_lib_facilities.h\" in:
 Toggle white spaces	IdeamWindow		Toggle white spaces
+Exit	NewProject Window		Exit
 Convert to Unix	IdeamWindow		Convert to Unix
 Add file:	NewProject Window		Add file:
 Haiku app dir:	NewProject Window		Haiku app dir:

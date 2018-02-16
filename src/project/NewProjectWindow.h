@@ -51,6 +51,7 @@ private:
 			status_t			_CreateHaikuSourcesProject();
 			status_t			_CreateLocalSourcesProject();
 			status_t			_CreateSkeleton();
+			void				_InitWindow();
 			void				_MapItems();
 			void				_OnEditingHaikuAppText();
 			void				_OnEditingLocalAppText();
@@ -123,7 +124,7 @@ private:
 			BCheckBox*			fCargoVcsEnabled;
 
 			BButton*			fCreateButton;
-			BButton*			fCancelButton;
+			BButton*			fExitButton;
 
 			BStringItem*		fCurrentItem;
 			int32				fYear;

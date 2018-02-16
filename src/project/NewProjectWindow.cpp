@@ -84,247 +84,9 @@ NewProjectWindow::NewProjectWindow()
 													B_AUTO_UPDATE_SIZE_LIMITS |
 													B_CLOSE_ON_ESCAPE)
 {
-	// Project types OutlineListView
-	fTypeListView = new BOutlineListView("typeview", B_SINGLE_SELECTION_LIST);
-	fTypeListView->SetSelectionMessage(new BMessage(MSG_PROJECT_CHOSEN));
-
-	typeListScrollView = new BScrollView("typescrollview",
-		fTypeListView, B_FRAME_EVENTS | B_WILL_DRAW, false, true, B_FANCY_BORDER);
-	
-	// Items
-	haikuItem = new TitleItem("Haiku");
-	haikuItem->SetEnabled(false);
-	haikuItem->SetExpanded(false);
-	fTypeListView->AddItem(haikuItem);
-
-	appItem = new BStringItem(B_TRANSLATE("Application"), 1, true);
-	appMenuItem = new BStringItem(B_TRANSLATE("Application with menu"), 1, true);
-/*
-	appLayoutItem = new BStringItem(B_TRANSLATE("Application with layout"), 1, true);
-	sharedItem = new BStringItem(B_TRANSLATE("Shared Library"), 1, true);
-	staticItem = new BStringItem(B_TRANSLATE("Static Library"), 1, true);
-	driverItem = new BStringItem(B_TRANSLATE("Driver"), 1, true);
-	trackerItem = new BStringItem(B_TRANSLATE("Tracker add-on"), 1, true);
-*/
-	fTypeListView->AddItem(appItem);
-	fTypeListView->AddItem(appMenuItem);
-/*
-	fTypeListView->AddItem(appLayoutItem);
-	fTypeListView->AddItem(sharedItem);
-	fTypeListView->AddItem(staticItem);
-	fTypeListView->AddItem(driverItem);
-	fTypeListView->AddItem(trackerItem);
-*/
-	genericItem = new TitleItem("Generic");
-	genericItem->SetEnabled(false);
-	genericItem->SetExpanded(false);
-	fTypeListView->AddItem(genericItem);
-	helloCplusItem = new BStringItem(B_TRANSLATE("C++ Hello World!"), 1, true);
-	helloCItem = new BStringItem(B_TRANSLATE("C Hello World!"), 1, true);
-	principlesItem = new BStringItem(B_TRANSLATE("Principles and Practice (2nd)"), 1, true);
-	emptyItem = new BStringItem(B_TRANSLATE("Empty Project"), 1, true);
-	fTypeListView->AddItem(helloCplusItem);
-	fTypeListView->AddItem(helloCItem);
-	fTypeListView->AddItem(principlesItem);
-	fTypeListView->AddItem(emptyItem);
-
-	importItem = new TitleItem(B_TRANSLATE("Import"));
-	importItem->SetEnabled(false);
-	importItem->SetExpanded(false);
-	fTypeListView->AddItem(importItem);
-	sourcesItem = new BStringItem(B_TRANSLATE("App from Haiku sources"), 1, true);
-	existingItem = new BStringItem(B_TRANSLATE("C/C++ Project with Makefile"), 1, true);
-	fTypeListView->AddItem(sourcesItem);
-	fTypeListView->AddItem(existingItem);
-
-	rustItem = new TitleItem(B_TRANSLATE("Rust"));
-	rustItem->SetEnabled(false);
-	rustItem->SetExpanded(false);
-	cargoItem = new BStringItem(B_TRANSLATE("Cargo project"), 1, true);
-	fTypeListView->AddItem(rustItem);
-	fTypeListView->AddItem(cargoItem);
-
+	_InitWindow();
 	// Map Items description
 	_MapItems();
-
-	// Project Description TextView
-	fProjectDescription = new BTextView("projecttext");
-	fProjectDescription->SetInsets(4.0f, 4.0f, 4.0f, 4.0f);
-	fProjectDescription->MakeEditable(false);
-
-	fScrollText = new BScrollView("scrolltext",
-		fProjectDescription, B_WILL_DRAW | B_FRAME_EVENTS, false,
-		true, B_FANCY_BORDER);
-
-	// Buttons
-	fCancelButton = new BButton("cancel",
-		B_TRANSLATE("Cancel"), new BMessage(MSG_PROJECT_CANCEL));
-
-	fCreateButton = new BButton("create", B_TRANSLATE("Create"),
-		new BMessage(MSG_PROJECT_CREATE) );
-	fCreateButton->SetEnabled(false);
-
-	// "Project" Box
-	f_primary_architecture << get_primary_architecture();
-
-	// cargo hack
-	f_cargo_binary.SetTo("cargo");
-	if (f_primary_architecture == "x86_gcc2")
-		f_cargo_binary.SetTo("cargo-x86");
-
-
-	fProjectBox = new BBox("projectBox");
-	BString boxLabel = B_TRANSLATE("Project [host architecture: ");
-	boxLabel << f_primary_architecture << "]";
-	fProjectBox->SetLabel(boxLabel);
-
-	fProjectNameText = new BTextControl("ProjectNameText",
-		B_TRANSLATE("Project name:"), "", nullptr); //new BMessage(MSG_PROJECT_NAME));
-	fProjectNameText->SetModificationMessage(new BMessage(MSG_PROJECT_NAME_EDITED));
-	fProjectNameText->SetEnabled(false);
-
-	fGitEnabled = new BCheckBox("GitEnabled",
-		B_TRANSLATE("Enable Git"), new BMessage(MSG_GIT_ENABLED));
-	fGitEnabled->SetEnabled(false);
-	fGitEnabled->SetValue(B_CONTROL_OFF);
-
-	fProjectTargetText = new BTextControl("ProjectTargetText",
-		B_TRANSLATE("Project target:"), "", new BMessage(MSG_PROJECT_TARGET));
-	fProjectTargetText->SetEnabled(false);
-
-	fRunInTeminal = new BCheckBox("RunInTeminal",
-		B_TRANSLATE("Run in Terminal"), new BMessage(MSG_RUN_IN_TERMINAL));
-	fRunInTeminal->SetEnabled(false);
-	fRunInTeminal->SetValue(B_CONTROL_OFF);
-
-	fProjectsDirectoryText = new BTextControl("ProjectsDirectoryText",
-		B_TRANSLATE("Projects dir:"), "", new BMessage(MSG_PROJECT_DIRECTORY));
-	fProjectsDirectoryText->SetEnabled(false);
-
-	// Peep settings
-	TPreferences* prefs = new TPreferences(IdeamNames::kSettingsFileName,
-								IdeamNames::kApplicationName, 'IDSE');
-	fProjectsDirectoryText->SetText(prefs->GetString("projects_directory"));
-	delete prefs;
-
-	fAddFileText = new BTextControl("AddFileText", B_TRANSLATE("Add file:"), "",
-			new BMessage(MSG_ADD_FILE_NAME));
-	fAddFileText->SetEnabled(false);
-
-	fAddHeader = new BCheckBox("AddHeader",
-		B_TRANSLATE("Add header"), new BMessage(MSG_ADD_HEADER_TOGGLED));
-	fAddHeader->SetEnabled(false);
-	fAddHeader->SetValue(B_CONTROL_OFF);
-
-	fAddSecondFileText = new BTextControl("AddSecondFileText",
-		B_TRANSLATE("Add file:"), "", new BMessage(MSG_ADD_SECOND_FILE_NAME));
-	fAddSecondFileText->SetEnabled(false);
-
-
-	fAddSecondHeader = new BCheckBox("AddSecondHeader",
-		B_TRANSLATE("Add header"), new BMessage(MSG_ADD_SECOND_HEADER_TOGGLED));
-	fAddSecondHeader->SetEnabled(false);
-	fAddSecondHeader->SetValue(B_CONTROL_OFF);
-
-//	BOptionPopUp* fProjectTypeOPU = new BOptionPopUp("ProjectTypeOPU",
-//		B_TRANSLATE("Project type:"), new BMessage(MSG_PROJECT_TYPE_CHANGED));
-
-	// Haiku sources app
-	fHaikuAppDirText = new BTextControl("HaikuAppDirText",
-		B_TRANSLATE("Haiku app dir:"), "", nullptr);
-	fHaikuAppDirText->SetModificationMessage(new BMessage(MSG_HAIKU_APP_EDITED));
-	fHaikuAppDirText->SetEnabled(false);
-
-	fBrowseHaikuAppButton = new BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
-								new BMessage(MSG_BROWSE_HAIKU_APP_CLICKED));
-	fBrowseHaikuAppButton->SetExplicitMaxSize(fHaikuAppDirText->MinSize());
-	fBrowseHaikuAppButton->SetEnabled(false);
-
-
-	// Local sources app
-	fLocalAppDirText = new BTextControl("LocalAppDirText",
-		B_TRANSLATE("Local app dir:"), "", nullptr);
-	fLocalAppDirText->SetModificationMessage(new BMessage(MSG_LOCAL_APP_EDITED));
-	fLocalAppDirText->SetEnabled(false);
-
-	fBrowseLocalAppButton = new BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
-								new BMessage(MSG_BROWSE_LOCAL_APP_CLICKED));
-	fBrowseLocalAppButton->SetExplicitMaxSize(fLocalAppDirText->MinSize());
-	fBrowseLocalAppButton->SetEnabled(false);
-
-	// Cargo app
-	fCargoPathText = new BTextControl("CargoPathText",
-		B_TRANSLATE("cargo path:"), "", nullptr);
-	BString cargoPath;
-	cargoPath << "/bin/" << f_cargo_binary;
-	fCargoPathText->SetText(cargoPath);
-	fCargoPathText->SetEnabled(false);
-
-	fCargoBinEnabled = new BCheckBox("CargoBin", "--bin", nullptr);
-	fCargoBinEnabled->SetEnabled(false);
-	fCargoBinEnabled->SetValue(B_CONTROL_ON);
-	fCargoBinEnabled->SetToolTip(B_TRANSLATE("Library target when unchecked"));
-
-	fCargoVcsEnabled = new BCheckBox("CargoVcs", "--vcs none", nullptr);
-	fCargoVcsEnabled->SetEnabled(false);
-	fCargoVcsEnabled->SetValue(B_CONTROL_OFF);
-	fCargoVcsEnabled->SetToolTip(B_TRANSLATE("Disables vcs management when checked"));
-
-	// Open panel
-	// TODO read settings file for sources dir
-	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), NULL,
-							B_DIRECTORY_NODE, false, NULL);
-
-	BLayoutBuilder::Grid<>(fProjectBox)
-		.SetInsets(20, 20, 10, 10)
-		.Add(fProjectNameText->CreateLabelLayoutItem(), 0, 1)
-		.Add(fProjectNameText->CreateTextViewLayoutItem(), 1, 1, 2)
-		.Add(fGitEnabled, 3, 1)
-		.Add(fProjectTargetText->CreateLabelLayoutItem(), 0, 2)
-		.Add(fProjectTargetText->CreateTextViewLayoutItem(), 1, 2, 2)
-		.Add(fRunInTeminal, 3, 2)
-		.Add(fProjectsDirectoryText->CreateLabelLayoutItem(), 0, 3)
-		.Add(fProjectsDirectoryText->CreateTextViewLayoutItem(), 1, 3, 2)
-		.Add(fAddFileText->CreateLabelLayoutItem(), 0, 4)
-		.Add(fAddFileText->CreateTextViewLayoutItem(), 1, 4, 2)
-		.Add(fAddHeader, 3, 4)
-		.Add(fAddSecondFileText->CreateLabelLayoutItem(), 0, 5)
-		.Add(fAddSecondFileText->CreateTextViewLayoutItem(), 1, 5, 2)
-		.Add(fAddSecondHeader, 3, 5)
-//		.Add(fProjectTypeOPU, 0, 6, 2)
-		.Add(new BSeparatorView(B_HORIZONTAL), 0, 6, 4)
-		.Add(fHaikuAppDirText->CreateLabelLayoutItem(), 0, 7)
-		.Add(fHaikuAppDirText->CreateTextViewLayoutItem(), 1, 7, 2)
-		.Add(fBrowseHaikuAppButton, 3, 7)
-		.Add(fLocalAppDirText->CreateLabelLayoutItem(), 0, 8)
-		.Add(fLocalAppDirText->CreateTextViewLayoutItem(), 1, 8, 2)
-		.Add(fBrowseLocalAppButton, 3, 8)
-		.Add(new BSeparatorView(B_HORIZONTAL), 0, 9, 4)
-		.Add(fCargoPathText->CreateLabelLayoutItem(), 0, 10)
-		.Add(fCargoPathText->CreateTextViewLayoutItem(), 1, 10)
-		.Add(fCargoBinEnabled, 2, 10)
-		.Add(fCargoVcsEnabled, 3, 10)
-		.Add(new BSeparatorView(B_HORIZONTAL), 0, 11, 4)
-		.AddGlue(0, 12)
-		;
-
-	// Window layout
-	BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
-		.SetInsets(2)
-
-		.AddGroup(B_HORIZONTAL, 0, 5)
-				.Add(typeListScrollView, 2)
-					.Add(fProjectBox, 5)
-		.End()	
-		.AddGroup(B_VERTICAL, 0, 2)
-			.Add(fScrollText)
-					.AddGroup(B_HORIZONTAL)
-						.Add(fCancelButton)
-						.Add(fCreateButton)
-						.AddGlue()
-					.End()
-		.End()
-	;
 
 	CenterOnScreen();			
 }
@@ -887,6 +649,251 @@ NewProjectWindow::_CreateLocalSourcesProject()
 	delete fProjectFile;
 
 	return status;
+}
+
+void
+NewProjectWindow::_InitWindow()
+{
+	// Project types OutlineListView
+	fTypeListView = new BOutlineListView("typeview", B_SINGLE_SELECTION_LIST);
+	fTypeListView->SetSelectionMessage(new BMessage(MSG_PROJECT_CHOSEN));
+
+	typeListScrollView = new BScrollView("typescrollview",
+		fTypeListView, B_FRAME_EVENTS | B_WILL_DRAW, false, true, B_FANCY_BORDER);
+
+	// Items
+	haikuItem = new TitleItem("Haiku");
+	haikuItem->SetEnabled(false);
+	haikuItem->SetExpanded(false);
+	fTypeListView->AddItem(haikuItem);
+
+	appItem = new BStringItem(B_TRANSLATE("Application"), 1, true);
+	appMenuItem = new BStringItem(B_TRANSLATE("Application with menu"), 1, true);
+/*
+	appLayoutItem = new BStringItem(B_TRANSLATE("Application with layout"), 1, true);
+	sharedItem = new BStringItem(B_TRANSLATE("Shared Library"), 1, true);
+	staticItem = new BStringItem(B_TRANSLATE("Static Library"), 1, true);
+	driverItem = new BStringItem(B_TRANSLATE("Driver"), 1, true);
+	trackerItem = new BStringItem(B_TRANSLATE("Tracker add-on"), 1, true);
+*/
+	fTypeListView->AddItem(appItem);
+	fTypeListView->AddItem(appMenuItem);
+/*
+	fTypeListView->AddItem(appLayoutItem);
+	fTypeListView->AddItem(sharedItem);
+	fTypeListView->AddItem(staticItem);
+	fTypeListView->AddItem(driverItem);
+	fTypeListView->AddItem(trackerItem);
+*/
+	genericItem = new TitleItem("Generic");
+	genericItem->SetEnabled(false);
+	genericItem->SetExpanded(false);
+	fTypeListView->AddItem(genericItem);
+	helloCplusItem = new BStringItem(B_TRANSLATE("C++ Hello World!"), 1, true);
+	helloCItem = new BStringItem(B_TRANSLATE("C Hello World!"), 1, true);
+	principlesItem = new BStringItem(B_TRANSLATE("Principles and Practice (2nd)"), 1, true);
+	emptyItem = new BStringItem(B_TRANSLATE("Empty Project"), 1, true);
+	fTypeListView->AddItem(helloCplusItem);
+	fTypeListView->AddItem(helloCItem);
+	fTypeListView->AddItem(principlesItem);
+	fTypeListView->AddItem(emptyItem);
+
+	importItem = new TitleItem(B_TRANSLATE("Import"));
+	importItem->SetEnabled(false);
+	importItem->SetExpanded(false);
+	fTypeListView->AddItem(importItem);
+	sourcesItem = new BStringItem(B_TRANSLATE("App from Haiku sources"), 1, true);
+	existingItem = new BStringItem(B_TRANSLATE("C/C++ Project with Makefile"), 1, true);
+	fTypeListView->AddItem(sourcesItem);
+	fTypeListView->AddItem(existingItem);
+
+	rustItem = new TitleItem(B_TRANSLATE("Rust"));
+	rustItem->SetEnabled(false);
+	rustItem->SetExpanded(false);
+	cargoItem = new BStringItem(B_TRANSLATE("Cargo project"), 1, true);
+	fTypeListView->AddItem(rustItem);
+	fTypeListView->AddItem(cargoItem);
+
+	// Project Description TextView
+	fProjectDescription = new BTextView("projecttext");
+	fProjectDescription->SetInsets(4.0f, 4.0f, 4.0f, 4.0f);
+	fProjectDescription->MakeEditable(false);
+
+	fScrollText = new BScrollView("scrolltext",
+		fProjectDescription, B_WILL_DRAW | B_FRAME_EVENTS, false,
+		true, B_FANCY_BORDER);
+
+	// "Project" Box
+	f_primary_architecture << get_primary_architecture();
+
+	// cargo hack
+	f_cargo_binary.SetTo("cargo");
+	if (f_primary_architecture == "x86_gcc2")
+		f_cargo_binary.SetTo("cargo-x86");
+
+
+	fProjectBox = new BBox("projectBox");
+	BString boxLabel = B_TRANSLATE("Project [host architecture: ");
+	boxLabel << f_primary_architecture << "]";
+	fProjectBox->SetLabel(boxLabel);
+
+	fProjectNameText = new BTextControl("ProjectNameText",
+		B_TRANSLATE("Project name:"), "", nullptr); //new BMessage(MSG_PROJECT_NAME));
+	fProjectNameText->SetModificationMessage(new BMessage(MSG_PROJECT_NAME_EDITED));
+	fProjectNameText->SetEnabled(false);
+
+	fGitEnabled = new BCheckBox("GitEnabled",
+		B_TRANSLATE("Enable Git"), new BMessage(MSG_GIT_ENABLED));
+	fGitEnabled->SetEnabled(false);
+	fGitEnabled->SetValue(B_CONTROL_OFF);
+
+	fProjectTargetText = new BTextControl("ProjectTargetText",
+		B_TRANSLATE("Project target:"), "", new BMessage(MSG_PROJECT_TARGET));
+	fProjectTargetText->SetEnabled(false);
+
+	fRunInTeminal = new BCheckBox("RunInTeminal",
+		B_TRANSLATE("Run in Terminal"), new BMessage(MSG_RUN_IN_TERMINAL));
+	fRunInTeminal->SetEnabled(false);
+	fRunInTeminal->SetValue(B_CONTROL_OFF);
+
+	fProjectsDirectoryText = new BTextControl("ProjectsDirectoryText",
+		B_TRANSLATE("Projects dir:"), "", new BMessage(MSG_PROJECT_DIRECTORY));
+	fProjectsDirectoryText->SetEnabled(false);
+
+	// Peep settings
+	TPreferences* prefs = new TPreferences(IdeamNames::kSettingsFileName,
+								IdeamNames::kApplicationName, 'IDSE');
+	fProjectsDirectoryText->SetText(prefs->GetString("projects_directory"));
+	delete prefs;
+
+	fAddFileText = new BTextControl("AddFileText", B_TRANSLATE("Add file:"), "",
+			new BMessage(MSG_ADD_FILE_NAME));
+	fAddFileText->SetEnabled(false);
+
+	fAddHeader = new BCheckBox("AddHeader",
+		B_TRANSLATE("Add header"), new BMessage(MSG_ADD_HEADER_TOGGLED));
+	fAddHeader->SetEnabled(false);
+	fAddHeader->SetValue(B_CONTROL_OFF);
+
+	fAddSecondFileText = new BTextControl("AddSecondFileText",
+		B_TRANSLATE("Add file:"), "", new BMessage(MSG_ADD_SECOND_FILE_NAME));
+	fAddSecondFileText->SetEnabled(false);
+
+
+	fAddSecondHeader = new BCheckBox("AddSecondHeader",
+		B_TRANSLATE("Add header"), new BMessage(MSG_ADD_SECOND_HEADER_TOGGLED));
+	fAddSecondHeader->SetEnabled(false);
+	fAddSecondHeader->SetValue(B_CONTROL_OFF);
+
+//	BOptionPopUp* fProjectTypeOPU = new BOptionPopUp("ProjectTypeOPU",
+//		B_TRANSLATE("Project type:"), new BMessage(MSG_PROJECT_TYPE_CHANGED));
+
+	// Haiku sources app
+	fHaikuAppDirText = new BTextControl("HaikuAppDirText",
+		B_TRANSLATE("Haiku app dir:"), "", nullptr);
+	fHaikuAppDirText->SetModificationMessage(new BMessage(MSG_HAIKU_APP_EDITED));
+	fHaikuAppDirText->SetEnabled(false);
+
+	fBrowseHaikuAppButton = new BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
+								new BMessage(MSG_BROWSE_HAIKU_APP_CLICKED));
+	fBrowseHaikuAppButton->SetExplicitMaxSize(fHaikuAppDirText->MinSize());
+	fBrowseHaikuAppButton->SetEnabled(false);
+
+
+	// Local sources app
+	fLocalAppDirText = new BTextControl("LocalAppDirText",
+		B_TRANSLATE("Local app dir:"), "", nullptr);
+	fLocalAppDirText->SetModificationMessage(new BMessage(MSG_LOCAL_APP_EDITED));
+	fLocalAppDirText->SetEnabled(false);
+
+	fBrowseLocalAppButton = new BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
+								new BMessage(MSG_BROWSE_LOCAL_APP_CLICKED));
+	fBrowseLocalAppButton->SetExplicitMaxSize(fLocalAppDirText->MinSize());
+	fBrowseLocalAppButton->SetEnabled(false);
+
+	// Cargo app
+	fCargoPathText = new BTextControl("CargoPathText",
+		B_TRANSLATE("cargo path:"), "", nullptr);
+	BString cargoPath;
+	cargoPath << "/bin/" << f_cargo_binary;
+	fCargoPathText->SetText(cargoPath);
+	fCargoPathText->SetEnabled(false);
+
+	fCargoBinEnabled = new BCheckBox("CargoBin", "--bin", nullptr);
+	fCargoBinEnabled->SetEnabled(false);
+	fCargoBinEnabled->SetValue(B_CONTROL_ON);
+	fCargoBinEnabled->SetToolTip(B_TRANSLATE("Library target when unchecked"));
+
+	fCargoVcsEnabled = new BCheckBox("CargoVcs", "--vcs none", nullptr);
+	fCargoVcsEnabled->SetEnabled(false);
+	fCargoVcsEnabled->SetValue(B_CONTROL_OFF);
+	fCargoVcsEnabled->SetToolTip(B_TRANSLATE("Disables vcs management when checked"));
+
+	// Buttons
+	fExitButton = new BButton("ExitButton",
+		B_TRANSLATE("Exit"), new BMessage(MSG_PROJECT_CANCEL));
+
+	fCreateButton = new BButton("create", B_TRANSLATE("Create"),
+		new BMessage(MSG_PROJECT_CREATE) );
+	fCreateButton->SetEnabled(false);
+
+	// Open panel
+	// TODO read settings file for sources dir
+	fOpenPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), NULL,
+							B_DIRECTORY_NODE, false, NULL);
+
+	BLayoutBuilder::Grid<>(fProjectBox)
+		.SetInsets(20, 20, 10, 10)
+		.Add(fProjectNameText->CreateLabelLayoutItem(), 0, 1)
+		.Add(fProjectNameText->CreateTextViewLayoutItem(), 1, 1, 2)
+		.Add(fGitEnabled, 3, 1)
+		.Add(fProjectTargetText->CreateLabelLayoutItem(), 0, 2)
+		.Add(fProjectTargetText->CreateTextViewLayoutItem(), 1, 2, 2)
+		.Add(fRunInTeminal, 3, 2)
+		.Add(fProjectsDirectoryText->CreateLabelLayoutItem(), 0, 3)
+		.Add(fProjectsDirectoryText->CreateTextViewLayoutItem(), 1, 3, 2)
+		.Add(fAddFileText->CreateLabelLayoutItem(), 0, 4)
+		.Add(fAddFileText->CreateTextViewLayoutItem(), 1, 4, 2)
+		.Add(fAddHeader, 3, 4)
+		.Add(fAddSecondFileText->CreateLabelLayoutItem(), 0, 5)
+		.Add(fAddSecondFileText->CreateTextViewLayoutItem(), 1, 5, 2)
+		.Add(fAddSecondHeader, 3, 5)
+//		.Add(fProjectTypeOPU, 0, 6, 2)
+		.Add(new BSeparatorView(B_HORIZONTAL), 0, 6, 4)
+		.Add(fHaikuAppDirText->CreateLabelLayoutItem(), 0, 7)
+		.Add(fHaikuAppDirText->CreateTextViewLayoutItem(), 1, 7, 2)
+		.Add(fBrowseHaikuAppButton, 3, 7)
+		.Add(fLocalAppDirText->CreateLabelLayoutItem(), 0, 8)
+		.Add(fLocalAppDirText->CreateTextViewLayoutItem(), 1, 8, 2)
+		.Add(fBrowseLocalAppButton, 3, 8)
+		.Add(new BSeparatorView(B_HORIZONTAL), 0, 9, 4)
+		.Add(fCargoPathText->CreateLabelLayoutItem(), 0, 10)
+		.Add(fCargoPathText->CreateTextViewLayoutItem(), 1, 10)
+		.Add(fCargoBinEnabled, 2, 10)
+		.Add(fCargoVcsEnabled, 3, 10)
+		.Add(new BSeparatorView(B_HORIZONTAL), 0, 11, 4)
+		.AddGlue(0, 12)
+		;
+
+	// Window layout
+	BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
+		.SetInsets(2)
+
+		.AddGroup(B_HORIZONTAL, 0, 5)
+				.Add(typeListScrollView, 2)
+					.Add(fProjectBox, 5)
+		.End()
+		.AddGroup(B_VERTICAL, 0, 2)
+			.Add(fScrollText)
+				.AddGroup(B_HORIZONTAL)
+					.AddGlue(1)
+					.Add(fExitButton)
+					.AddGlue(5)
+					.Add(fCreateButton)
+					.AddGlue(1)
+				.End()
+		.End()
+	;
 }
 
 void

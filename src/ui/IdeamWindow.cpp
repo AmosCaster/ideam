@@ -1442,7 +1442,7 @@ IdeamWindow::_FileClose(int32 index, bool ignoreModifications /* = false */)
 		}
 	}
 
-	notification << B_TRANSLATE("File close:") << "  " << fEditor->Name();
+	notification << B_TRANSLATE("File close:") << " " << fEditor->Name();
 	_SendNotification(notification, "FILE_CLOSE");
 
 	BView* view = fTabManager->RemoveTab(index);
