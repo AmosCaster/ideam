@@ -10,7 +10,7 @@ CC   := gcc-x86
 CXX  := g++-x86
 #CXX  := clang++
 else
-CXX  := clang++
+#CXX  := clang++
 endif
 
 NAME := Ideam
