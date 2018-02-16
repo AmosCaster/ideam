@@ -2472,6 +2472,11 @@ IdeamWindow::_InitMenu()
 	git_config_message->AddString("command", "config --list");
 	fGitShowConfigItem->SetMessage(git_config_message);
 
+	fGitMenu->AddItem(fGitTagItem = new BMenuItem(B_TRANSLATE("Tag"), nullptr));
+	BMessage* git_tag_message = new BMessage(MSG_GIT_COMMAND);
+	git_tag_message->AddString("command", "tag");
+	fGitTagItem->SetMessage(git_tag_message);
+
 	fGitMenu->AddSeparatorItem();
 
 	fGitMenu->AddItem(fGitLogOnelineItem = new BMenuItem(B_TRANSLATE("Log (Oneline)"), nullptr));

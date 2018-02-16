@@ -168,9 +168,10 @@ private:
 			BMenuItem*			fGitLogOnelineItem;
 			BMenuItem*			fGitPullItem;
 			BMenuItem*			fGitPullRebaseItem;
+			BMenuItem*			fGitShowConfigItem;
 			BMenuItem*			fGitStatusItem;
 			BMenuItem*			fGitStatusShortItem;
-			BMenuItem*			fGitShowConfigItem;
+			BMenuItem*			fGitTagItem;
 			BMenu*				fHgMenu;
 			BMenuItem*			fHgStatusItem;
 
