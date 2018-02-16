@@ -936,7 +936,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			break;
 		}
 		case MSG_PROJECT_MENU_DELETE_FILE: {
-
+			_ProjectFileDelete();
 			break;
 		}
 		case MSG_PROJECT_MENU_EXCLUDE_FILE: {
@@ -1414,14 +1414,7 @@ IdeamWindow::_FileClose(int32 index, bool ignoreModifications /* = false */)
 		_SendNotification(notification, "FILE_ERR");
 		return B_ERROR;
 	}
-#ifdef DEBUG
-BView* myview = dynamic_cast<BView*>(fTabManager->ViewForTab(index));
-notification << "Child name is: " << myview->ChildAt(0)->Name();
-//notification << "NextSibling name is: " << myview->NextSibling()->Name();
-notification << " View name is: " << myview->Name();
-_SendNotification(notification, "FILE_ERR");
-notification.SetTo("");
-#endif
+
 	fEditor = fEditorObjectList->ItemAt(index);
 
 	if (fEditor == nullptr) {
@@ -1449,7 +1442,7 @@ notification.SetTo("");
 		}
 	}
 
-	notification << B_TRANSLATE("File close:") << " " << fEditor->Name();
+	notification << B_TRANSLATE("File close:") << "  " << fEditor->Name();
 	_SendNotification(notification, "FILE_CLOSE");
 
 	BView* view = fTabManager->RemoveTab(index);
@@ -1926,7 +1919,7 @@ IdeamWindow::_HandleExternalMoveModification(entry_ref* oldRef, entry_ref* newRe
 		_UpdateLabel(index, fEditor->IsModified());
 
 		BString notification;
-		notification
+		notification << B_TRANSLATE("File info:") << "  "
 			<< oldPath.Path() << " "
 			<< B_TRANSLATE("moved externally to")
 			<< " " << newPath.Path();
@@ -1942,6 +1935,7 @@ IdeamWindow::_HandleExternalRemoveModification(int32 index)
 	}
 
 	fEditor = fEditorObjectList->ItemAt(index);
+	BString fileName(fEditor->Name());
 
 	BString text;
 	text << IdeamNames::kApplicationName << ":\n";
@@ -1951,7 +1945,7 @@ IdeamWindow::_HandleExternalRemoveModification(int32 index)
 			<< "\n"
 			<< B_TRANSLATE("If kept and modified save it or it will be lost");
 
-	text.ReplaceAll("%file%", fEditor->Name());
+	text.ReplaceAll("%file%", fileName);
 
 	BAlert* alert = new BAlert("FileRemoveDialog", text,
  		B_TRANSLATE("Keep"), B_TRANSLATE("Discard"), nullptr,
@@ -1973,7 +1967,8 @@ IdeamWindow::_HandleExternalRemoveModification(int32 index)
 		_FileClose(index, true);
 
 		BString notification;
-		notification << fEditor->Name() << " " << B_TRANSLATE("removed externally");
+		notification << B_TRANSLATE("File info:") << "  "
+			<< fileName << " " << B_TRANSLATE("removed externally");
 		_SendNotification(notification, "FILE_INFO");
 	}
 }
@@ -2006,7 +2001,7 @@ IdeamWindow::_HandleExternalStatModification(int32 index)
 		fEditor->Reload();
 
 		BString notification;
-		notification
+		notification << B_TRANSLATE("File info:") << "  "
 			<< fEditor->Name() << " "
 			<< B_TRANSLATE("modified externally");
 		_SendNotification(notification, "FILE_INFO");
@@ -2925,50 +2920,35 @@ IdeamWindow::_ProjectFileAdd()
 {
 }
 
+// As of version 0.7.2 deleting a file that is open AND modified issues
+// an external modification warning.
+// Keep it this way as a safety measure.
 void
 IdeamWindow::_ProjectFileDelete()
 {
+	entry_ref ref;
+	int32 openedIndex;
+	BEntry entry(_ProjectFileFullPath());
+	// Close the file if open
+	if ((openedIndex = _GetEditorIndex(&ref)) != -1)
+		_FileClose(openedIndex, true);
+	// Remove the entry
+	if (entry.Exists())
+		entry.Remove();
+
+	_ProjectFileRemoveItem(false);
 }
 
 void
 IdeamWindow::_ProjectFileExclude()
 {
-	TPreferences idmproFile(fSelectedProjectName,
-											IdeamNames::kApplicationName, 'LOPR');
-
-	int32 index = 0;
-	BString superItem(""), file;
-	BStringItem *itemType;
-	BListItem *item = fSelectedProjectItem, *parent;
-
-	while ((parent = fProjectsOutline->Superitem(item)) != nullptr) {
-		itemType = dynamic_cast<BStringItem*>(parent);
-		superItem = itemType->Text();
-		if (superItem == B_TRANSLATE("Project Files")
-			|| superItem == B_TRANSLATE("Project Sources"))
-			break;
-
-		item = parent;
-	}
-
-	if (superItem == B_TRANSLATE("Project Sources"))
-		superItem = "project_source";
-	else if (superItem == B_TRANSLATE("Project Files"))
-		superItem = "project_file";
-
-	while ((idmproFile.FindString(superItem, index, &file)) != B_BAD_INDEX) {
-		if (_ProjectFileFullPath() == file) {
-			idmproFile.RemoveData(superItem, index);
-			fProjectsOutline->RemoveItem(fSelectedProjectItem);
-			// Excluded items go to "parseless_item" array in settings file so
-			// subsequent calls to ProjectParser::ParseProjectFiles() will keep hiding them
-			idmproFile.AddString("parseless_item", file);
-			break;
-		}
-		index++;
-	}
+	_ProjectFileRemoveItem(true);
 }
 
+/*
+ * Full path of a file selected in Project Outline List
+ *
+ */
 BString
 IdeamWindow::_ProjectFileFullPath()
 {
@@ -2994,6 +2974,48 @@ IdeamWindow::_ProjectFileOpen()
 	BMessage msg(B_REFS_RECEIVED);
 	msg.AddRef("refs", &ref);
 	_FileOpen(&msg);
+}
+
+void
+IdeamWindow::_ProjectFileRemoveItem(bool addToParseless)
+{
+	TPreferences idmproFile(fSelectedProjectName,
+							IdeamNames::kApplicationName, 'LOPR');
+
+	int32 index = 0;
+	BString superItem(""), file;
+	BStringItem *itemType;
+	BListItem *item = fSelectedProjectItem, *parent;
+
+	while ((parent = fProjectsOutline->Superitem(item)) != nullptr) {
+		itemType = dynamic_cast<BStringItem*>(parent);
+		superItem = itemType->Text();
+		if (superItem == B_TRANSLATE("Project Files")
+			|| superItem == B_TRANSLATE("Project Sources"))
+			break;
+
+		item = parent;
+	}
+
+	if (superItem == B_TRANSLATE("Project Sources"))
+		superItem = "project_source";
+	else if (superItem == B_TRANSLATE("Project Files"))
+		superItem = "project_file";
+	else
+		return;
+
+	while ((idmproFile.FindString(superItem, index, &file)) != B_BAD_INDEX) {
+		if (_ProjectFileFullPath() == file) {
+			idmproFile.RemoveData(superItem, index);
+			fProjectsOutline->RemoveItem(fSelectedProjectItem);
+			// Excluded items go to "parseless_item" array in settings file so
+			// subsequent calls to ProjectParser::ParseProjectFiles() will keep hiding them
+			if (addToParseless == true)
+				idmproFile.AddString("parseless_item", file);
+			break;
+		}
+		index++;
+	}
 }
 
 void
@@ -3057,7 +3079,7 @@ IdeamWindow::_ProjectItemChosen()
 		;
 	} else {
 //		fAddFileProjectMenuItem->SetEnabled(true);
-//		fDeleteFileProjectMenuItem->SetEnabled(true);
+		fDeleteFileProjectMenuItem->SetEnabled(true);
 		fExcludeFileProjectMenuItem->SetEnabled(true);
 		fOpenFileProjectMenuItem->SetEnabled(true);
 	}

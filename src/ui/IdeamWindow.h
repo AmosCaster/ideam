@@ -103,6 +103,7 @@ private:
 			void				_ProjectFileExclude();
 			BString				_ProjectFileFullPath();
 			void				_ProjectFileOpen();
+			void				_ProjectFileRemoveItem(bool addToParseless);
 			void				_ProjectItemChosen();
 			void				_ProjectOpen(BString const& projectName, bool activate);
 			void				_ProjectOutlineDepopulate(Project* project);

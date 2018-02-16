@@ -284,5 +284,14 @@ current Scintilla version: HaikuPorts version
  ] "object." and "app" directories excluded automatically
 
 --------------------------------------------------------------------------------
+0.7.2) Project file delete context menu
+=======================================
+
++) Project file delete context menu
+
+ ] If deleted file is open and modified an external modification warning is
+   given, let's keep it this way for now
+
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

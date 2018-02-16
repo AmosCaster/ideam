@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	3686495547
+1	English	application/x-vnd.Ideam-Ideam	635951094
 tuned 	SettingsWindow		tuned 
 bytes	IdeamWindow		bytes
 A C command line \"Hello World!\" application	NewProject Window		A C command line \"Hello World!\" application
@@ -75,8 +75,8 @@ Build mode	IdeamWindow		Build mode
 Wrap console	SettingsWindow		Wrap console
 Reload files	SettingsWindow		Reload files
 Save changes to file \"%file%\"	IdeamWindow		Save changes to file \"%file%\"
-Replace:	IdeamWindow		Replace:
 Cut	IdeamWindow		Cut
+Replace:	IdeamWindow		Replace:
 Library target when unchecked	NewProject Window		Library target when unchecked
 Please choose a project first	NewProject Window		Please choose a project first
 Log (Oneline)	IdeamWindow		Log (Oneline)
@@ -172,7 +172,6 @@ Clear	ConsoleIOView		Clear
 A GUI application with menu bar and localization	NewProject Window		A GUI application with menu bar and localization
 Editables	ProjectSettingsWindow		Editables
 stdout	ConsoleIOView		stdout
-Scm	IdeamWindow		Scm
 A simple GUI \"Hello World!\" application	NewProject Window		A simple GUI \"Hello World!\" application
 Delete file	IdeamWindow		Delete file
 Bookmark	IdeamWindow		Bookmark
@@ -289,6 +288,7 @@ Enable folding	SettingsWindow		Enable folding
 Fold toggle	IdeamWindow		Fold toggle
 Tab width:  	SettingsWindow		Tab width:  
 Project:	ProjectSettingsWindow		Project:
+File info:	IdeamWindow		File info:
 See Credits for a complete list.	IdeamApp		See Credits for a complete list.
 Projects	IdeamWindow		Projects
 Projects directory:	SettingsWindow		Projects directory:
