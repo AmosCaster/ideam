@@ -39,7 +39,6 @@ SRCS +=  src/helpers/tabview/TabManager.cpp
 SRCS +=  src/helpers/tabview/TabView.cpp
 
 
-
 RDEFS := Ideam.rdef
 
 LIBS = be shared translation localestub $(STDCPPLIBS)
@@ -48,10 +47,9 @@ LIBS += scintilla columnlistview tracker
 LIBPATHS = $(shell findpaths -a $(platform) B_FIND_PATH_DEVELOP_LIB_DIRECTORY)
 #$(info LIBPATHS="$(LIBPATHS)")
 
-SYSTEM_INCLUDE_PATHS = \
-	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/interface) \
-	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/shared) \
-	$(shell findpaths -a $(platform) -e B_FIND_PATH_HEADERS_DIRECTORY scintilla)
+SYSTEM_INCLUDE_PATHS  = $(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/interface)
+SYSTEM_INCLUDE_PATHS +=	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/shared)
+SYSTEM_INCLUDE_PATHS +=	$(shell findpaths -a $(platform) -e B_FIND_PATH_HEADERS_DIRECTORY scintilla)
 
 ################################################################################
 ## clang++ headers hack

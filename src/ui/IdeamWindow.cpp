@@ -29,9 +29,6 @@
 #include "SettingsWindow.h"
 #include "TPreferences.h"
 
-
-
-
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "IdeamWindow"
 
@@ -190,6 +187,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 	IdeamNames::LoadSettingsVars();
 
 	_InitMenu();
+
 	_InitWindow();
 
 	// Layout
@@ -202,7 +200,7 @@ IdeamWindow::IdeamWindow(BRect frame)
 				.AddSplit(B_HORIZONTAL, 0.0f) // sidebar split
 					.Add(fProjectsTabView)
 					.AddGroup(B_VERTICAL, 0, kEditorWeight)  // Editor
-						.SetInsets(2.0f, 2.0f, 0.0f, 2.0f)
+						//.SetInsets(2.0f, 2.0f, 0.0f, 2.0f)
 						.Add(fEditorTabsGroup)
 					.End() // editor group
 				.End() // sidebar split
@@ -2139,6 +2137,135 @@ std::cerr << __PRETTY_FUNCTION__ << "fields is: 0x" << std::hex << fields << std
 	}
 }
 
+
+void
+IdeamWindow::_InitCentralSplit()
+{
+	// Find group
+	fFindMenuField = new BMenuField("FindMenuField", NULL, new BMenu(B_TRANSLATE("Find:")));
+	fFindMenuField->SetExplicitMaxSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
+	fFindMenuField->SetExplicitMinSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
+
+	fFindTextControl = new BTextControl("FindTextControl", "" , "", nullptr);
+	fFindTextControl->TextView()->SetMaxBytes(kFindReplaceMaxBytes);
+	float charWidth = fFindTextControl->StringWidth("0", 1);
+	fFindTextControl->SetExplicitMinSize(
+						BSize(charWidth * kFindReplaceMinBytes + 10.0f,
+						B_SIZE_UNSET));
+	fFindTextControl->SetExplicitMaxSize(fFindTextControl->MinSize());
+
+	fFindNextButton = _LoadIconButton("FindNextButton", MSG_FIND_NEXT, 164, true,
+						B_TRANSLATE("Find Next"));
+	fFindPreviousButton = _LoadIconButton("FindPreviousButton", MSG_FIND_PREVIOUS,
+							165, true, B_TRANSLATE("Find previous"));
+	fFindMarkAllButton = _LoadIconButton("FindMarkAllButton", MSG_FIND_MARK_ALL,
+							202, true, B_TRANSLATE("Mark all"));
+//	AddShortcut(B_DOWN_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
+//	AddShortcut(B_UP_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
+//	AddShortcut(B_PAGE_DOWN, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
+//	AddShortcut(B_PAGE_UP, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
+
+	fFindCaseSensitiveCheck = new BCheckBox(B_TRANSLATE("Match case"));
+	fFindWholeWordCheck = new BCheckBox(B_TRANSLATE("Whole word"));
+	fFindWrapCheck = new BCheckBox(B_TRANSLATE("Wrap"));
+
+	fFindGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+			.Add(fFindMenuField)
+			.Add(fFindTextControl)
+			.Add(fFindNextButton)
+			.Add(fFindPreviousButton)
+			.Add(fFindWrapCheck)
+			.Add(fFindWholeWordCheck)
+			.Add(fFindCaseSensitiveCheck)
+			.Add(fFindMarkAllButton)
+			.AddGlue()
+		)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+	;
+	fFindGroup->SetVisible(false);
+
+	// Replace group
+	fReplaceMenuField = new BMenuField("ReplaceMenu", NULL,
+										new BMenu(B_TRANSLATE("Replace:")));
+	fReplaceMenuField->SetExplicitMaxSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
+	fReplaceMenuField->SetExplicitMinSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
+
+	fReplaceTextControl = new BTextControl("ReplaceTextControl", "", "", NULL);
+	fReplaceTextControl->TextView()->SetMaxBytes(kFindReplaceMaxBytes);
+	fReplaceTextControl->SetExplicitMaxSize(fFindTextControl->MaxSize());
+	fReplaceTextControl->SetExplicitMinSize(fFindTextControl->MinSize());
+
+	fReplaceOneButton = _LoadIconButton("ReplaceOneButton", MSG_REPLACE_ONE,
+						166, true, B_TRANSLATE("Replace selection"));
+	fReplaceAndFindNextButton = _LoadIconButton("ReplaceFindNextButton", MSG_REPLACE_NEXT,
+								167, true, B_TRANSLATE("Replace and find next"));
+	fReplaceAndFindPrevButton = _LoadIconButton("ReplaceFindPrevButton", MSG_REPLACE_PREVIOUS,
+								168, true, B_TRANSLATE("Replace and find previous"));
+	fReplaceAllButton = _LoadIconButton("ReplaceAllButton", MSG_REPLACE_ALL,
+							169, true, B_TRANSLATE("Replace all"));
+
+	fReplaceGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+			.Add(fReplaceMenuField)
+			.Add(fReplaceTextControl)
+			.Add(fReplaceOneButton)
+			.Add(fReplaceAndFindNextButton)
+			.Add(fReplaceAndFindPrevButton)
+			.Add(fReplaceAllButton)
+			.AddGlue()
+///			.SetInsets(2, 2, 2, 2)
+		)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+	;
+	fReplaceGroup->SetVisible(false);
+
+	// Run group
+	fRunConsoleProgramText = new BTextControl("ReplaceTextControl", "", "", nullptr);
+	fRunConsoleProgramButton = new BButton("RunConsoleProgramButton",
+		B_TRANSLATE("Run"), new BMessage(MSG_RUN_CONSOLE_PROGRAM));
+
+	BString tooltip("cwd: ");
+	tooltip << IdeamNames::Settings.projects_directory;
+	fRunConsoleProgramText->SetToolTip(tooltip);
+
+	fRunConsoleProgramGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+			.Add(fRunConsoleProgramText)
+			.Add(fRunConsoleProgramButton)
+			.AddGlue()
+			.SetInsets(2, 2, 2, 2)
+		)
+		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+	;
+	fRunConsoleProgramGroup->SetVisible(false);
+
+	// Editor tab & view
+	fEditorObjectList = new BObjectList<Editor>();
+
+	fTabManager = new TabManager(BMessenger(this));
+	fTabManager->TabGroup()->SetExplicitMaxSize(BSize(B_SIZE_UNSET, kTabBarHeight));
+
+	dirtyFrameHack = fTabManager->TabGroup()->Frame();
+
+	// Status Bar
+	fStatusBar = new BStatusBar("StatusBar");
+	fStatusBar->SetBarHeight(1.0);
+
+	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+//		.SetInsets(1, 1, 1, 1)
+		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+			.Add(fFindGroup)
+			.Add(fReplaceGroup)
+			.Add(fRunConsoleProgramGroup)
+			.Add(fTabManager->TabGroup())
+			.Add(fTabManager->ContainerView())
+//			.Add(new BSeparatorView(B_HORIZONTAL))
+			.Add(fStatusBar)
+		)
+	;
+}
+
 void
 IdeamWindow::_InitMenu()
 {
@@ -2402,7 +2529,7 @@ IdeamWindow::_InitMenu()
 }
 
 void
-IdeamWindow::_InitWindow()
+IdeamWindow::_InitToolbar()
 {
 	// toolbar group
 	fProjectsButton = _LoadIconButton("ProjectsButton", MSG_SHOW_HIDE_PROJECTS,
@@ -2501,7 +2628,38 @@ IdeamWindow::_InitWindow()
 		)
 		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 	;
+}
 
+void
+IdeamWindow::_InitOutputSplit()
+{
+	// Output
+	fOutputTabView = new BTabView("OutputTabview");
+
+	fNotificationsListView = new BColumnListView(B_TRANSLATE("Notifications"),
+									B_NAVIGABLE, B_PLAIN_BORDER, true);
+	fNotificationsListView->AddColumn(new BDateColumn(B_TRANSLATE("Time"),
+								200.0, 200.0, 200.0), kTimeColumn);
+	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Message"),
+								600.0, 600.0, 800.0, 0), kMessageColumn);
+	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Type"),
+								200.0, 200.0, 200.0, 0), kTypeColumn);
+	BFont font;
+	font.SetFamilyAndStyle("Noto Sans Mono", "Bold");
+	fNotificationsListView->SetFont(&font);
+
+	fBuildLogView = new ConsoleIOView(B_TRANSLATE("Build Log"), BMessenger(this));
+
+	fConsoleIOView = new ConsoleIOView(B_TRANSLATE("Console I/O"), BMessenger(this));
+
+	fOutputTabView->AddTab(fNotificationsListView);
+	fOutputTabView->AddTab(fBuildLogView);
+	fOutputTabView->AddTab(fConsoleIOView);
+}
+
+void
+IdeamWindow::_InitSideSplit()
+{
 	// Projects View
 	fProjectsTabView = new BTabView("ProjectsTabview");
 	fProjectsOutline = new BOutlineListView("ProjectsOutline", B_SINGLE_SELECTION_LIST);
@@ -2542,139 +2700,27 @@ IdeamWindow::_InitWindow()
 	fProjectMenu->AddItem(fOpenFileProjectMenuItem);
 	fProjectMenu->SetTargetForItems(this);
 
-	// Find group
-	fFindMenuField = new BMenuField("FindMenuField", NULL, new BMenu(B_TRANSLATE("Find:")));
-	fFindMenuField->SetExplicitMaxSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
-	fFindMenuField->SetExplicitMinSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
-
-	fFindTextControl = new BTextControl("FindTextControl", "" , "", nullptr);
-	fFindTextControl->TextView()->SetMaxBytes(kFindReplaceMaxBytes);
-	float charWidth = fFindTextControl->StringWidth("0", 1);
-	fFindTextControl->SetExplicitMinSize(
-						BSize(charWidth * kFindReplaceMinBytes + 10.0f,
-						B_SIZE_UNSET));
-	fFindTextControl->SetExplicitMaxSize(fFindTextControl->MinSize());
-
-	fFindNextButton = _LoadIconButton("FindNextButton", MSG_FIND_NEXT, 164, true,
-						B_TRANSLATE("Find Next"));
-	fFindPreviousButton = _LoadIconButton("FindPreviousButton", MSG_FIND_PREVIOUS,
-							165, true, B_TRANSLATE("Find previous"));
-	fFindMarkAllButton = _LoadIconButton("FindMarkAllButton", MSG_FIND_MARK_ALL,
-							202, true, B_TRANSLATE("Mark all"));
-//	AddShortcut(B_DOWN_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
-//	AddShortcut(B_UP_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
-//	AddShortcut(B_PAGE_DOWN, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
-//	AddShortcut(B_PAGE_UP, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
-
-	fFindCaseSensitiveCheck = new BCheckBox(B_TRANSLATE("Match case"));
-	fFindWholeWordCheck = new BCheckBox(B_TRANSLATE("Whole word"));
-	fFindWrapCheck = new BCheckBox(B_TRANSLATE("Wrap"));
-
-	fFindGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
-			.Add(fFindMenuField)
-			.Add(fFindTextControl)
-			.Add(fFindNextButton)
-			.Add(fFindPreviousButton)
-			.Add(fFindWrapCheck)
-			.Add(fFindWholeWordCheck)
-			.Add(fFindCaseSensitiveCheck)
-			.Add(fFindMarkAllButton)
-			.AddGlue()
-///			.SetInsets(2, 2, 2, 2)
-		)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
-	;
-	fFindGroup->SetVisible(false);
-
-	// Replace group
-	fReplaceMenuField = new BMenuField("ReplaceMenu", NULL,
-										new BMenu(B_TRANSLATE("Replace:")));
-	fReplaceMenuField->SetExplicitMaxSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
-	fReplaceMenuField->SetExplicitMinSize(BSize(kFindReplaceOPSize, B_SIZE_UNSET));
-
-	fReplaceTextControl = new BTextControl("ReplaceTextControl", "", "", NULL);
-	fReplaceTextControl->TextView()->SetMaxBytes(kFindReplaceMaxBytes);
-	fReplaceTextControl->SetExplicitMaxSize(fFindTextControl->MaxSize());
-	fReplaceTextControl->SetExplicitMinSize(fFindTextControl->MinSize());
-
-	fReplaceOneButton = _LoadIconButton("ReplaceOneButton", MSG_REPLACE_ONE,
-						166, true, B_TRANSLATE("Replace selection"));
-	fReplaceAndFindNextButton = _LoadIconButton("ReplaceFindNextButton", MSG_REPLACE_NEXT,
-								167, true, B_TRANSLATE("Replace and find next"));
-	fReplaceAndFindPrevButton = _LoadIconButton("ReplaceFindPrevButton", MSG_REPLACE_PREVIOUS,
-								168, true, B_TRANSLATE("Replace and find previous"));
-	fReplaceAllButton = _LoadIconButton("ReplaceAllButton", MSG_REPLACE_ALL,
-							169, true, B_TRANSLATE("Replace all"));
-
-	fReplaceGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
-			.Add(fReplaceMenuField)
-			.Add(fReplaceTextControl)
-			.Add(fReplaceOneButton)
-			.Add(fReplaceAndFindNextButton)
-			.Add(fReplaceAndFindPrevButton)
-			.Add(fReplaceAllButton)
-			.AddGlue()
-///			.SetInsets(2, 2, 2, 2)
-		)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
-	;
-	fReplaceGroup->SetVisible(false);
-
-	// Run group
-	fRunConsoleProgramText = new BTextControl("ReplaceTextControl", "", "", nullptr);
-	fRunConsoleProgramButton = new BButton("RunConsoleProgramButton",
-		B_TRANSLATE("Run"), new BMessage(MSG_RUN_CONSOLE_PROGRAM));
-
-	BString tooltip("cwd: ");
-	tooltip << IdeamNames::Settings.projects_directory;
-	fRunConsoleProgramText->SetToolTip(tooltip);
-
-	fRunConsoleProgramGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
-			.Add(fRunConsoleProgramText)
-			.Add(fRunConsoleProgramButton)
-			.AddGlue()
-			.SetInsets(2, 2, 2, 2)
-		)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
-	;
-	fRunConsoleProgramGroup->SetVisible(false);
-
-	// Editor tab & view
-	fEditorObjectList = new BObjectList<Editor>();
-
-	fTabManager = new TabManager(BMessenger(this));
-	fTabManager->TabGroup()->SetExplicitMaxSize(BSize(B_SIZE_UNSET, kTabBarHeight));
-
-	dirtyFrameHack = fTabManager->TabGroup()->Frame();
-
 	// Project list
 	fProjectObjectList = new BObjectList<Project>();
+}
 
-	// Status Bar
-	fStatusBar = new BStatusBar("StatusBar");
-	fStatusBar->SetBarHeight(1.0);
+void
+IdeamWindow::_InitWindow()
+{
 
-	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.SetInsets(1, 1, 1, 1)
-		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-			.Add(fFindGroup)
-			.Add(fReplaceGroup)
-			.Add(fRunConsoleProgramGroup)
-			.Add(fTabManager->TabGroup())
-			.Add(fTabManager->ContainerView())
-			.Add(new BSeparatorView(B_HORIZONTAL))
-			.Add(fStatusBar)
-		)
-	;
+	_InitToolbar();
+
+	_InitSideSplit();
+
+	_InitCentralSplit();
+
+	_InitOutputSplit();
 
 	// Panels
-	TPreferences* prefs = new TPreferences(IdeamNames::kSettingsFileName,
-											IdeamNames::kApplicationName, 'PRSE');
+	TPreferences prefs(IdeamNames::kSettingsFileName,
+		IdeamNames::kApplicationName, 'PRSE');
 
-	BEntry entry(prefs->GetString("projects_directory"), true);
+	BEntry entry(prefs.GetString("projects_directory"), true);
 
 	entry_ref ref;
 	entry.GetRef(&ref);
@@ -2690,31 +2736,6 @@ IdeamWindow::_InitWindow()
 	fOpenProjectPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), &ref, B_FILE_NODE,
 							false, nullptr, new ProjectRefFilter());
 
-	// No longer needed now
-	delete prefs;
-
-	// Output
-	fOutputTabView = new BTabView("OutputTabview");
-
-	fNotificationsListView = new BColumnListView(B_TRANSLATE("Notifications"),
-									B_NAVIGABLE, B_PLAIN_BORDER, true);
-	fNotificationsListView->AddColumn(new BDateColumn(B_TRANSLATE("Time"),
-								200.0, 200.0, 200.0), kTimeColumn);
-	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Message"),
-								600.0, 600.0, 800.0, 0), kMessageColumn);
-	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Type"),
-								200.0, 200.0, 200.0, 0), kTypeColumn);
-	BFont font;
-	font.SetFamilyAndStyle("Noto Sans Mono", "Bold");
-	fNotificationsListView->SetFont(&font);
-
-	fBuildLogView = new ConsoleIOView(B_TRANSLATE("Build Log"), BMessenger(this));
-
-	fConsoleIOView = new ConsoleIOView(B_TRANSLATE("Console I/O"), BMessenger(this));
-
-	fOutputTabView->AddTab(fNotificationsListView);
-	fOutputTabView->AddTab(fBuildLogView);
-	fOutputTabView->AddTab(fConsoleIOView);
 }
 
 BIconButton*

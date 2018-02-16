@@ -30,6 +30,7 @@
 #include "TabManager.h"
 #include "TPreferences.h"
 
+
 enum {
 	kTimeColumn = 0,
 	kMessageColumn,
@@ -83,7 +84,11 @@ private:
 			void				_HandleExternalRemoveModification(int32 index);
 			void				_HandleExternalStatModification(int32 index);
 			void				_HandleNodeMonitorMsg(BMessage* msg);
+			void				_InitCentralSplit();
 			void				_InitMenu();
+			void				_InitOutputSplit();
+			void				_InitSideSplit();
+			void				_InitToolbar();
 			void				_InitWindow();
 			BIconButton*		_LoadIconButton(const char* name, int32 msg,
 									int32 resIndex, bool enabled, const char* tooltip);
@@ -238,10 +243,10 @@ private:
 			BCheckBox*			fFindCaseSensitiveCheck;
 			BCheckBox*			fFindWholeWordCheck;
 			BCheckBox*			fFindWrapCheck;
-
 			BGroupLayout*		fRunConsoleProgramGroup;
 			BTextControl*		fRunConsoleProgramText;
 			BButton*			fRunConsoleProgramButton;
+
 
 		BObjectList<Editor>*	fEditorObjectList;
 			Editor*				fEditor;
