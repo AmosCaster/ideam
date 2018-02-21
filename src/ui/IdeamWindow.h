@@ -101,13 +101,14 @@ private:
 			void				_ProjectFileAdd();
 			void				_ProjectFileDelete();
 			void				_ProjectFileExclude();
-			BString				_ProjectFileFullPath();
-			void				_ProjectFileOpen();
+			BString	const		_ProjectFileFullPath();
+			void				_ProjectFileOpen(const BString& filePath);
 			void				_ProjectFileRemoveItem(bool addToParseless);
 			void				_ProjectItemChosen();
 			void				_ProjectOpen(BString const& projectName, bool activate);
 			void				_ProjectOutlineDepopulate(Project* project);
 			void				_ProjectOutlinePopulate(Project* project);
+			Project*			_ProjectPointerFromName(BString const& projectName);
 			void				_ProjectRescan(BString const& projectName);
 			int					_Replace(int what);
 			bool				_ReplaceAllow();
@@ -219,7 +220,7 @@ private:
 			BMenuItem*			fSetActiveProjectMenuItem;
 			BMenuItem*			fRescanProjectMenuItem
 			;
-			BMenuItem*			fAddFileProjectMenuItem;
+			BMenuItem*			fAddProjectMenuItem;
 			BMenuItem*			fExcludeFileProjectMenuItem;
 			BMenuItem*			fDeleteFileProjectMenuItem;
 			BMenuItem*			fOpenFileProjectMenuItem;

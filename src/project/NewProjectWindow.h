@@ -20,12 +20,6 @@
 #include "TPreferences.h"
 
 
-enum {
-	// Project context menu
-	NEWPROJECTWINDOW_PROJECT_CARGO_NEW	= 'Npcn',
-	NEWPROJECTWINDOW_PROJECT_OPEN_NEW	= 'Npon',
-};
-
 typedef std::map<BStringItem*, BString const> ProjectTypeMap;
 typedef std::pair<BStringItem*, BString const> ProjectTypePair;
 typedef std::map<BStringItem*, BString const>::const_iterator ProjectTypeIterator;
@@ -127,7 +121,6 @@ private:
 			BButton*			fExitButton;
 
 			BStringItem*		fCurrentItem;
-			int32				fYear;
 
 };
 

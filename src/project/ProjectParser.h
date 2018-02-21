@@ -10,7 +10,7 @@
 BString "project_extensioned_name"			// Project name with .idmpro
 BString "project_name"						// Project name
 BString "project_directory"					// Base directory
-BString "project_type" (c++, cargo,)
+BString "project_type" (c++, cargo, haiku_source)
 Bool    "run_in_terminal"
  
 // These are "runtime" data read from file when requested

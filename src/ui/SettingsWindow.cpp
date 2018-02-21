@@ -466,20 +466,14 @@ SettingsWindow::_InitWindow()
 	fApplyButton->SetEnabled(false);
 
 	// Window layout
-	BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
-		.SetInsets(0.0f, 0.0f, 0.0f, 0.0f)		
+	BLayoutBuilder::Group<>(this, B_VERTICAL, B_USE_DEFAULT_SPACING)
+//		.SetInsets(2.0f)
 		.AddGroup(B_HORIZONTAL)
-
 			.Add(fSettingsScroll, 4.0f)
-			.Add(new BSeparatorView(B_VERTICAL))
 			.Add(fSettingsBaseView, 9.0f)
-			.SetInsets(2.0f, 2.0f, 2.0f, 2.0f)
 		.End() // central group
 		.Add(fStatusBar)
-
 		.AddGroup(B_HORIZONTAL)
-			.SetInsets(B_USE_WINDOW_SPACING, B_USE_DEFAULT_SPACING,
-				B_USE_WINDOW_SPACING, B_USE_DEFAULT_SPACING)
 			.Add(fRevertButton)
 			.Add(fDefaultButton)
 			.AddGlue()

@@ -46,10 +46,12 @@ private:
 			BTextControl* 		fBuildCommandText;
 			BTextControl* 		fCleanCommandText;
 			BTextControl* 		fProjectScmText;
+			BTextControl* 		fProjectTypeText;
 			BString				fTargetString;
 			BString				fBuildString;
 			BString				fCleanString;
 			BString				fProjectScmString;
+			BString				fProjectTypeString;
 			BBox* 				fRuntimeBox;
 			BTextControl* 		fRunArgsText;
 			BString				fRunArgsString;

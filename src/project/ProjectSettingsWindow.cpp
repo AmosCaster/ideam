@@ -30,7 +30,7 @@ ProjectSettingsWindow::ProjectSettingsWindow(BString name)
 	BWindow(BRect(0, 0, 799, 599), "ProjectSettingsWindow", B_MODAL_WINDOW,
 													B_ASYNCHRONOUS_CONTROLS | 
 													B_NOT_ZOOMABLE |
-													B_NOT_RESIZABLE |
+//													B_NOT_RESIZABLE |
 													B_AVOID_FRONT |
 													B_AUTO_UPDATE_SIZE_LIMITS |
 													B_CLOSE_ON_ESCAPE)
@@ -138,6 +138,8 @@ ProjectSettingsWindow::_InitWindow()
 
 	fProjectScmText = new BTextControl(B_TRANSLATE("Source control:"), "", nullptr);
 
+	fProjectTypeText = new BTextControl(B_TRANSLATE("Project type:"), "", nullptr);
+
 	BLayoutBuilder::Grid<>(fEditablesBox)
 	.SetInsets(10.0f, 24.0f, 10.0f, 10.0f)
 	.Add(fProjectTargetText->CreateLabelLayoutItem(), 0, 1, 1)
@@ -148,6 +150,8 @@ ProjectSettingsWindow::_InitWindow()
 	.Add(fCleanCommandText->CreateTextViewLayoutItem(), 3, 2)
 	.Add(fProjectScmText->CreateLabelLayoutItem(), 0, 3)
 	.Add(fProjectScmText->CreateTextViewLayoutItem(), 1, 3)
+	.Add(fProjectTypeText->CreateLabelLayoutItem(), 2, 3)
+	.Add(fProjectTypeText->CreateTextViewLayoutItem(), 3, 3)
 	.End()
 	;
 
@@ -191,7 +195,7 @@ ProjectSettingsWindow::_InitWindow()
 	BLayoutBuilder::Grid<>(fProjectBox)
 	.SetInsets(10.0f, 24.0f, 10.0f, 10.0f)
 	.Add(fProjectMenuField, 0, 1, 4)
-	.Add(new BSeparatorView(B_HORIZONTAL), 0, 2, 4)
+//	.Add(new BSeparatorView(B_HORIZONTAL), 0, 2, 4)
 //	.AddGlue(0, 3, 4)
 	.Add(fEditablesBox, 0, 4, 4)
 	.Add(fRuntimeBox, 0, 5, 4)
@@ -204,10 +208,10 @@ ProjectSettingsWindow::_InitWindow()
 		B_TRANSLATE("Exit"), new BMessage(MSG_EXIT_CLICKED));
 
 	// Window layout
-	BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
-		.SetInsets(4.0f, 4.0f, 4.0f, 4.0f)
+	BLayoutBuilder::Group<>(this, B_VERTICAL, B_USE_DEFAULT_SPACING)
+//		.SetInsets(2.0f)
 		.AddGroup(B_HORIZONTAL)
-			.AddGroup(B_VERTICAL, 0, 3)
+			.AddGroup(B_VERTICAL)
 				.Add(fProjectBox)
 				.AddGroup(B_HORIZONTAL)
 					.AddGlue()
@@ -231,6 +235,7 @@ ProjectSettingsWindow::_LoadProject(BString name)
 	fBuildCommandText->SetText("");
 	fCleanCommandText->SetText("");
 	fProjectScmText->SetText("");
+	fProjectTypeText->SetText("");
 	fRunArgsText->SetText("");
 	fParselessText->SetText("");
 
@@ -250,6 +255,9 @@ ProjectSettingsWindow::_LoadProject(BString name)
 
 	if (fIdmproFile->FindString("project_scm", &fProjectScmString) == B_OK)
 		fProjectScmText->SetText(fProjectScmString);
+
+	if (fIdmproFile->FindString("project_type", &fProjectTypeString) == B_OK)
+		fProjectTypeText->SetText(fProjectTypeString);
 
 	if (fIdmproFile->FindString("project_run_args", &fRunArgsString) == B_OK)
 		fRunArgsText->SetText(fRunArgsString);
@@ -285,4 +293,8 @@ ProjectSettingsWindow::_SaveChanges()
 	BString scm(fProjectScmText->Text());
 	if (scm != fProjectScmString)
 		fIdmproFile->SetBString("project_scm", scm);
+
+	BString type(fProjectTypeText->Text());
+	if (type != fProjectTypeString)
+		fIdmproFile->SetBString("project_type", type);
 }

@@ -1,6 +1,7 @@
-1	English	application/x-vnd.Ideam-Ideam	2296244921
+1	English	application/x-vnd.Ideam-Ideam	2809265476
 tuned 	SettingsWindow		tuned 
 bytes	IdeamWindow		bytes
+C source file	AddToProjectWindow		C source file
 A C command line \"Hello World!\" application	NewProject Window		A C command line \"Hello World!\" application
 Find	IdeamWindow		Find
 time	SettingsWindow		time
@@ -16,6 +17,7 @@ Run console program	IdeamWindow		Run console program
 written	IdeamWindow		written
 Toggle Projects panes	IdeamWindow		Toggle Projects panes
 Console banner	SettingsWindow		Console banner
+NOTE: Extensions automatically added	AddToProjectWindow		NOTE: Extensions automatically added
 Removing stale dir:	NewProject Window		Removing stale dir:
 Stop	ConsoleIOView		Stop
 Local app dir:	NewProject Window		Local app dir:
@@ -30,6 +32,7 @@ uses:	IdeamApp		uses:
 Parseless files	ProjectSettingsWindow		Parseless files
 You should make sure that the rust package (read cargo binary) is installed and working!	NewProject Window		You should make sure that the rust package (read cargo binary) is installed and working!
 Find Next	IdeamWindow		Find Next
+removed	IdeamWindow		removed
 Help	IdeamWindow		Help
 Programming: Principles and Practice using C++ (2nd edition)	NewProject Window		Programming: Principles and Practice using C++ (2nd edition)
 Removing stale project dir:	NewProject Window		Removing stale project dir:
@@ -45,6 +48,7 @@ Please fill \"Haiku app dir\" field	NewProject Window		Please fill \"Haiku app d
 A project file with an empty project directory.	NewProject Window		A project file with an empty project directory.
 Browse…	NewProject Window		Browse…
 Build mode: Release	IdeamWindow		Build mode: Release
+Delete file dialog	IdeamWindow		Delete file dialog
 A C++ command line \"Hello World!\" application	NewProject Window		A C++ command line \"Hello World!\" application
 Please fill \"Project name\" field	NewProject Window		Please fill \"Project name\" field
 contained in Bjarne Stroustrup' s book:	NewProject Window		contained in Bjarne Stroustrup' s book:
@@ -99,6 +103,7 @@ Default	SettingsWindow		Default
 Ignore	IdeamApp		Ignore
 Build Project	IdeamWindow		Build Project
 Clean started:	IdeamWindow		Clean started:
+Generic	AddToProjectWindow		Generic
 Time	IdeamWindow		Time
 Choose Project:	ProjectSettingsWindow		Choose Project:
 Toggle ToolBar	IdeamWindow		Toggle ToolBar
@@ -131,11 +136,15 @@ Find previous not found	IdeamWindow		Find previous not found
 Discard	IdeamWindow		Discard
 ERROR: Project directory exists!	NewProject Window		ERROR: Project directory exists!
 Window	IdeamWindow		Window
+Generic file	AddToProjectWindow		Generic file
 Set Active	IdeamWindow		Set Active
 Edge column:	SettingsWindow		Edge column:
 Log	IdeamWindow		Log
+Cargo	AddToProjectWindow		Cargo
 Debug	IdeamWindow		Debug
+C++ source file	AddToProjectWindow		C++ source file
 Wrap	IdeamWindow		Wrap
+Directory:	AddToProjectWindow		Directory:
 Debug Project	IdeamWindow		Debug Project
 Set to Dos	IdeamWindow		Set to Dos
 Banner	ConsoleIOView		Banner
@@ -157,7 +166,6 @@ Principles and Practice (2nd)	NewProject Window		Principles and Practice (2nd)
 Select next File	IdeamWindow		Select next File
 Do you want to delete project sources too?	IdeamWindow		Do you want to delete project sources too?
 Review	IdeamApp		Review
-Add file	IdeamWindow		Add file
 Message	IdeamWindow		Message
 Enable Notifications	SettingsWindow		Enable Notifications
 Next Bookmark not found	IdeamWindow		Next Bookmark not found
@@ -166,6 +174,7 @@ File full path in window title	SettingsWindow		File full path in window title
 Wrap	ConsoleIOView		Wrap
 File \"%file%\" was modified externally, reload it?	IdeamWindow		File \"%file%\" was modified externally, reload it?
 Project target:	ProjectSettingsWindow		Project target:
+C/C++ Makefile	AddToProjectWindow		C/C++ Makefile
 A rust cargo project.	NewProject Window		A rust cargo project.
 Clear	ConsoleIOView		Clear
 A GUI application with menu bar and localization	NewProject Window		A GUI application with menu bar and localization
@@ -191,14 +200,17 @@ Exit	ProjectSettingsWindow		Exit
 Index	IdeamWindow		Index
 File	IdeamWindow		File
 Show line number	SettingsWindow		Show line number
+C/C++ header file	AddToProjectWindow		C/C++ header file
 Font:	SettingsWindow		Font:
 Git	IdeamWindow		Git
+C/C++	AddToProjectWindow		C/C++
 * Click \"Create\" button	NewProject Window		* Click \"Create\" button
 No file selected	IdeamWindow		No file selected
 Previous Bookmark not found	IdeamWindow		Previous Bookmark not found
 Apply	SettingsWindow		Apply
 repodir>  git clone https://git.haiku-os.org/haiku	NewProject Window		repodir>  git clone https://git.haiku-os.org/haiku
 ERROR: Project 	NewProject Window		ERROR: Project 
+Do you really want to delete it?	IdeamWindow		Do you really want to delete it?
 Open recent…	IdeamWindow		Open recent…
 Ideam	System name		Ideam
 available under the MIT license.	IdeamApp		available under the MIT license.
@@ -209,6 +221,7 @@ Cargo	IdeamWindow		Cargo
 Indexed File list	IdeamWindow		Indexed File list
 Copy	IdeamWindow		Copy
 Overwrite	IdeamWindow		Overwrite
+Exit	AddToProjectWindow		Exit
 This is the font size preview	SettingsWindow		This is the font size preview
 Project name:	NewProject Window		Project name:
 Rescan	IdeamWindow		Rescan
@@ -217,21 +230,26 @@ Project only	IdeamWindow		Project only
 Modifications	SettingsWindow		Modifications
 Replacements done:	IdeamWindow		Replacements done:
 Save all	IdeamWindow		Save all
+After deletion file will be lost.	IdeamWindow		After deletion file will be lost.
 Cancel	Editor		Cancel
 File close:	IdeamWindow		File close:
 Don't save	IdeamWindow		Don't save
 Save dialog	Editor		Save dialog
 Once done get back here and:	NewProject Window		Once done get back here and:
+Project type:	ProjectSettingsWindow		Project type:
 Browse…	SettingsWindow		Browse…
 Status (Short)	IdeamWindow		Status (Short)
+Name:	AddToProjectWindow		Name:
 App from Haiku sources	NewProject Window		App from Haiku sources
 Show edge line	SettingsWindow		Show edge line
 Save all Files	IdeamWindow		Save all Files
 Notifications	SettingsWindow		Notifications
 Status	IdeamWindow		Status
 Exit	SettingsWindow		Exit
+Makefile	AddToProjectWindow		Makefile
 Reload	IdeamWindow		Reload
 Projects dir:	NewProject Window		Projects dir:
+Add Item	AddToProjectWindow		Add Item
 Clean Project	IdeamWindow		Clean Project
 Please fill \"Add file\" field	NewProject Window		Please fill \"Add file\" field
 Mark all	IdeamWindow		Mark all
@@ -253,6 +271,7 @@ Close	IdeamWindow		Close
 Build comand:	ProjectSettingsWindow		Build comand:
 Enable Syntax highlighting	SettingsWindow		Enable Syntax highlighting
 Visual	SettingsWindow		Visual
+Haiku Makefile	AddToProjectWindow		Haiku Makefile
 Delete project dialog	IdeamWindow		Delete project dialog
 times	SettingsWindow		times
 Save as…	IdeamWindow		Save as…
@@ -261,12 +280,16 @@ Go to previous	IdeamWindow		Go to previous
 Settings file is corrupted or deleted,	IdeamApp		Settings file is corrupted or deleted,
 Find previous	IdeamWindow		Find previous
 Please fill \"Project target\" field	NewProject Window		Please fill \"Project target\" field
+Deleting file:	IdeamWindow		Deleting file:
 or edit Makefile variable (SYSTEM_INCLUDE_PATHS) accordingly	NewProject Window		or edit Makefile variable (SYSTEM_INCLUDE_PATHS) accordingly
 Edit	IdeamWindow		Edit
+C++ class	AddToProjectWindow		C++ class
+Add to Project	IdeamWindow		Add to Project
 Create	NewProject Window		Create
 cargo path:	NewProject Window		cargo path:
 NULL editor pointer	IdeamWindow		NULL editor pointer
 Runtime args:	ProjectSettingsWindow		Runtime args:
+Add	AddToProjectWindow		Add
 repodir/haiku> ./configure --use-gcc-pipe	NewProject Window		repodir/haiku> ./configure --use-gcc-pipe
 Fold	IdeamWindow		Fold
 Application	NewProject Window		Application

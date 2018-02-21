@@ -23,6 +23,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "AddToProjectWindow.h"
 #include "IdeamNamespace.h"
 #include "NewProjectWindow.h"
 #include "ProjectSettingsWindow.h"
@@ -134,7 +135,7 @@ enum {
 	MSG_PROJECT_MENU_DELETE			= 'pmde',
 	MSG_PROJECT_MENU_SET_ACTIVE		= 'pmsa',
 	MSG_PROJECT_MENU_RESCAN			= 'pmre',
-	MSG_PROJECT_MENU_ADD_FILE		= 'pmaf',
+	MSG_PROJECT_MENU_ADD_ITEM		= 'pmai',
 	MSG_PROJECT_MENU_DELETE_FILE	= 'pmdf',
 	MSG_PROJECT_MENU_EXCLUDE_FILE	= 'pmef',
 	MSG_PROJECT_MENU_OPEN_FILE		= 'pmof',
@@ -901,22 +902,26 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 		}
 		case MSG_PROJECT_MENU_DELETE: {
 
+			Project* project = _ProjectPointerFromName(fSelectedProjectName);
+			if (project == nullptr)
+				break;
+
 			BString text;
-			text << "\n"
-				 << B_TRANSLATE("Deleting project:")
-				 << " \"" << fSelectedProjectName << "\"" << "\n"
-				 << B_TRANSLATE("Do you want to delete project sources too?")
-				 << "\n";
+			text << B_TRANSLATE("Deleting project:")
+				 << " \"" << fSelectedProjectName << "\"" << "\n\n"
+				 << B_TRANSLATE("Do you want to delete project sources too?") << "\n";
 
 			BAlert* alert = new BAlert(B_TRANSLATE("Delete project dialog"),
 				text.String(),
 				B_TRANSLATE("Cancel"), B_TRANSLATE("Sources too"), B_TRANSLATE("Project only"),
 				B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
 
-			// Maybe disable sources for haiku project
-			BButton* sourcesButton;
-			sourcesButton = alert->ButtonAt(1);
-			sourcesButton->SetEnabled(false);
+			// Disable sources for haiku project
+			if (project->Type() == "haiku_source") {
+				BButton* sourcesButton;
+				sourcesButton = alert->ButtonAt(1);
+				sourcesButton->SetEnabled(false);
+			}
 
 			alert->SetShortcut(0, B_ESCAPE);
 
@@ -931,8 +936,10 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 
 			break;
 		}
-		case MSG_PROJECT_MENU_ADD_FILE: {
-
+		case MSG_PROJECT_MENU_ADD_ITEM: {
+			AddToProjectWindow *window =
+				new AddToProjectWindow(fSelectedProjectName, _ProjectFileFullPath());
+			window->Show();
 			break;
 		}
 		case MSG_PROJECT_MENU_DELETE_FILE: {
@@ -948,7 +955,7 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			break;
 		}
 		case MSG_PROJECT_MENU_OPEN_FILE: {
-			_ProjectFileOpen();
+			_ProjectFileOpen(_ProjectFileFullPath());
 			break;
 		}
 		case MSG_PROJECT_MENU_RESCAN: {
@@ -1092,13 +1099,26 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 
 			break;
 		}
-		case NEWPROJECTWINDOW_PROJECT_CARGO_NEW: {
+		case IdeamNames::ADDTOPROJECTWINDOW_NEW_ITEM: {
+			BString projectName, filePath, file2Path;
+			if (message->FindString("project", &projectName) == B_OK
+				&& message->FindString("file_path", &filePath) == B_OK) {
+					_ProjectFileOpen(filePath);
+			}
+			if ( message->FindString("file2_path", &file2Path) == B_OK)
+				_ProjectFileOpen(file2Path);
+
+			_ProjectRescan(projectName);
+
+			break;
+		}
+		case IdeamNames::NEWPROJECTWINDOW_PROJECT_CARGO_NEW: {
 			BString args;
 			if (message->FindString("cargo_new_string", &args) == B_OK)
 				_CargoNew(args);
 			break;
 		}
-		case NEWPROJECTWINDOW_PROJECT_OPEN_NEW: {
+		case IdeamNames::NEWPROJECTWINDOW_PROJECT_OPEN_NEW: {
 			BString extensionedName;
 			if (message->FindString("project_extensioned_name", &extensionedName) == B_OK)
 				_ProjectOpen(extensionedName, true);
@@ -2680,8 +2700,8 @@ IdeamWindow::_InitSideSplit()
 		new BMessage(MSG_PROJECT_MENU_SET_ACTIVE));
 	fRescanProjectMenuItem = new BMenuItem(B_TRANSLATE("Rescan"),
 		new BMessage(MSG_PROJECT_MENU_RESCAN));
-	fAddFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Add file"),
-		new BMessage(MSG_PROJECT_MENU_ADD_FILE));
+	fAddProjectMenuItem = new BMenuItem(B_TRANSLATE("Add to Project"),
+		new BMessage(MSG_PROJECT_MENU_ADD_ITEM));
 	fDeleteFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Delete file"),
 		new BMessage(MSG_PROJECT_MENU_DELETE_FILE));
 	fExcludeFileProjectMenuItem = new BMenuItem(B_TRANSLATE("Exclude file"),
@@ -2694,10 +2714,11 @@ IdeamWindow::_InitSideSplit()
 	fProjectMenu->AddItem(fSetActiveProjectMenuItem);
 	fProjectMenu->AddItem(fRescanProjectMenuItem);
 	fProjectMenu->AddSeparatorItem();
-	fProjectMenu->AddItem(fAddFileProjectMenuItem);
-	fProjectMenu->AddItem(fDeleteFileProjectMenuItem);
+	fProjectMenu->AddItem(fAddProjectMenuItem);
 	fProjectMenu->AddItem(fExcludeFileProjectMenuItem);
 	fProjectMenu->AddItem(fOpenFileProjectMenuItem);
+	fProjectMenu->AddSeparatorItem();
+	fProjectMenu->AddItem(fDeleteFileProjectMenuItem);
 	fProjectMenu->SetTargetForItems(this);
 
 	// Project list
@@ -2707,7 +2728,6 @@ IdeamWindow::_InitSideSplit()
 void
 IdeamWindow::_InitWindow()
 {
-
 	_InitToolbar();
 
 	_InitSideSplit();
@@ -2735,7 +2755,6 @@ IdeamWindow::_InitWindow()
 	entry.GetRef(&ref);
 	fOpenProjectPanel = new BFilePanel(B_OPEN_PANEL, new BMessenger(this), &ref, B_FILE_NODE,
 							false, nullptr, new ProjectRefFilter());
-
 }
 
 BIconButton*
@@ -2820,39 +2839,30 @@ IdeamWindow::_MakeBindcatalogs()
  * Creating a new project activates it, opening a project does not.
  * An active project closed does not activate one.
  * Reopen project at startup keeps active flag.
- * Activation could be set/changed in projects outline context menu.
+ * Activation could be set in projects outline context menu.
  */
 void
 IdeamWindow::_ProjectActivate(BString const& projectName)
 {
+	Project* project = _ProjectPointerFromName(projectName);
+	if (project == nullptr)
+		return;
+
 	// There is no active project
 	if (fActiveProject == nullptr) {
-		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
-			Project * project = fProjectObjectList->ItemAt(index);
-			if (project->ExtensionedName() == projectName) {
-				fActiveProject = project;
-				fActiveProject->Activate();
-				_UpdateProjectActivation(true);
-			}
-		}
+		fActiveProject = project;
+		project->Activate();
+		_UpdateProjectActivation(true);
 	}
 	else {
 		// There was an active project already
-		for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
-			Project * project = fProjectObjectList->ItemAt(index);
-			if (project->ExtensionedName() == projectName) {
-				fActiveProject->Deactivate();
-				fActiveProject = project;
-				fActiveProject->Activate();
-				_UpdateProjectActivation(true);
-			}
-		}
+		fActiveProject->Deactivate();
+		fActiveProject = project;
+		project->Activate();
+		_UpdateProjectActivation(true);
 	}
 
 	fProjectsOutline->Invalidate();
-
-	if (fActiveProject == nullptr)
-		return;
 
 	// Update run command working directory tooltip too
 	BString tooltip;
@@ -2863,44 +2873,52 @@ IdeamWindow::_ProjectActivate(BString const& projectName)
 void
 IdeamWindow::_ProjectClose()
 {
+	Project* project = _ProjectPointerFromName(fSelectedProjectName);
+	if (project == nullptr)
+		return;
+
 	BString closed(B_TRANSLATE("Project close:"));
 	BString name = fSelectedProjectName;
 
-	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
-		Project *project = fProjectObjectList->ItemAt(index);
-		if (project->ExtensionedName() == fSelectedProjectName) {
-			// Active project closed
-			if (project == fActiveProject) {
-				fActiveProject = nullptr;
-				closed = B_TRANSLATE("Active project close:");
-				_UpdateProjectActivation(false);
-				// Update run command working directory tooltip too
-				BString tooltip;
-				tooltip << "cwd: " << IdeamNames::Settings.projects_directory;
-				fRunConsoleProgramText->SetToolTip(tooltip);
-			}
-			_ProjectOutlineDepopulate(project);
-			fProjectObjectList->RemoveItem(project);
+	// Active project closed
+	if (project == fActiveProject) {
+		fActiveProject = nullptr;
+		closed = B_TRANSLATE("Active project close:");
+		_UpdateProjectActivation(false);
+		// Update run command working directory tooltip too
+		BString tooltip;
+		tooltip << "cwd: " << IdeamNames::Settings.projects_directory;
+		fRunConsoleProgramText->SetToolTip(tooltip);
+	}
+	_ProjectOutlineDepopulate(project);
+	fProjectObjectList->RemoveItem(project);
 //			delete project; // scan-build claims as released
 
-			BString notification;
-			notification << closed << " "  << name;
-			_SendNotification(notification, "PROJ_CLOSE");
-			break;
-		}
-	}
+	BString notification;
+	notification << closed << " "  << name;
+	_SendNotification(notification, "PROJ_CLOSE");
 }
 
 void
 IdeamWindow::_ProjectDelete(BString name, bool sourcesToo)
 {
-	BString text;
+
 	BPath projectPath;
 
 	if ((find_directory(B_USER_SETTINGS_DIRECTORY, &projectPath)) != B_OK) {
+		BString text;
 		text << B_TRANSLATE("ERROR: Settings directory not found");
 		_SendNotification( text.String(), "PROJ_DELETE");
 		return;
+	}
+
+	// Get base directory for removal
+	BString baseDir("");
+	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+		Project * project = fProjectObjectList->ItemAt(index);
+		if (project->ExtensionedName() == fSelectedProjectName) {
+			baseDir.SetTo(project->BasePath());
+		}
 	}
 
 	_ProjectClose();
@@ -2910,13 +2928,21 @@ IdeamWindow::_ProjectDelete(BString name, bool sourcesToo)
 	BEntry entry(projectPath.Path());
 
 	if (entry.Exists()) {
+		BString notification;
 		entry.Remove();
-		text << B_TRANSLATE("Project delete:") << "  "  << name.String();
-		_SendNotification( text.String(), "PROJ_DELETE");
+		notification << B_TRANSLATE("Project delete:") << "  "  << name.String();
+		_SendNotification(notification, "PROJ_DELETE");
 	}
 
 	if (sourcesToo == true) {
-
+		if (!baseDir.IsEmpty()) {
+			if (rmdir(baseDir) >= B_OK) {
+				BString notification;
+				notification << B_TRANSLATE("Project delete:") << "  "
+					<< B_TRANSLATE("removed") << " " << baseDir;
+				_SendNotification(notification, "PROJ_DELETE");
+			}
+		}
 	}
 }
 
@@ -2934,14 +2960,41 @@ IdeamWindow::_ProjectFileDelete()
 	entry_ref ref;
 	int32 openedIndex;
 	BEntry entry(_ProjectFileFullPath());
-	// Close the file if open
-	if ((openedIndex = _GetEditorIndex(&ref)) != -1)
-		_FileClose(openedIndex, true);
-	// Remove the entry
-	if (entry.Exists())
-		entry.Remove();
+	char name[B_FILE_NAME_LENGTH];
 
-	_ProjectFileRemoveItem(false);
+	if (!entry.Exists())
+		return;
+
+	entry.GetName(name);
+
+	BString text;
+	text
+		 << B_TRANSLATE("Deleting file:")
+		 << " \"" << name << "\"" << ".\n\n"
+		 << B_TRANSLATE("After deletion file will be lost.") << "\n"
+		 << B_TRANSLATE("Do you really want to delete it?") << "\n";
+
+	BAlert* alert = new BAlert(B_TRANSLATE("Delete file dialog"),
+		text.String(),
+		B_TRANSLATE("Cancel"), B_TRANSLATE("Delete file"), nullptr,
+		B_WIDTH_AS_USUAL, B_OFFSET_SPACING, B_WARNING_ALERT);
+
+	alert->SetShortcut(0, B_ESCAPE);
+
+	int32 choice = alert->Go();
+
+	if (choice == 0)
+		return;
+	else if (choice == 1) {
+		// Close the file if open
+		if ((openedIndex = _GetEditorIndex(&ref)) != -1)
+			_FileClose(openedIndex, true);
+		// Remove the entry
+		if (entry.Exists())
+			entry.Remove();
+
+		_ProjectFileRemoveItem(false);
+	}
 }
 
 void
@@ -2954,26 +3007,26 @@ IdeamWindow::_ProjectFileExclude()
  * Full path of a file selected in Project Outline List
  *
  */
-BString
+BString const
 IdeamWindow::_ProjectFileFullPath()
 {
 	BString	selectedFileFullpath;
-	// Selected File Full Path
-	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
-		Project * project = fProjectObjectList->ItemAt(index);
-		if (project->ExtensionedName() == fSelectedProjectName) {
-			selectedFileFullpath = project->BasePath();
-			selectedFileFullpath.Append("/");
-			selectedFileFullpath.Append(fSelectedProjectItem->Text());
-		}
-	}
+
+	Project* project = _ProjectPointerFromName(fSelectedProjectName);
+	if (project == nullptr)
+		return "";
+
+	selectedFileFullpath = project->BasePath();
+	selectedFileFullpath.Append("/");
+	selectedFileFullpath.Append(fSelectedProjectItem->Text());
+
 	return selectedFileFullpath;
 }
 
 void
-IdeamWindow::_ProjectFileOpen()
+IdeamWindow::_ProjectFileOpen(const BString& filePath)
 {
-	BEntry entry(_ProjectFileFullPath());
+	BEntry entry(filePath);
 	entry_ref ref;
 	entry.GetRef(&ref);
 	BMessage msg(B_REFS_RECEIVED);
@@ -3030,7 +3083,7 @@ IdeamWindow::_ProjectItemChosen()
 	fDeleteProjectMenuItem->SetEnabled(false);
 	fSetActiveProjectMenuItem->SetEnabled(false);
 	fRescanProjectMenuItem->SetEnabled(false);
-	fAddFileProjectMenuItem->SetEnabled(false);
+	fAddProjectMenuItem->SetEnabled(false);
 	fDeleteFileProjectMenuItem->SetEnabled(false);
 	fExcludeFileProjectMenuItem->SetEnabled(false);
 	fOpenFileProjectMenuItem->SetEnabled(false);
@@ -3078,12 +3131,13 @@ IdeamWindow::_ProjectItemChosen()
 				return;
 		}
 		fRescanProjectMenuItem->SetEnabled(true);
+		fAddProjectMenuItem->SetEnabled(true);
 	} else if (fSelectedProjectName == B_TRANSLATE("Project Files")
 			|| fSelectedProjectName == B_TRANSLATE("Project Sources")) {
 		// Not getting here but leave it
 		;
 	} else {
-//		fAddFileProjectMenuItem->SetEnabled(true);
+		fAddProjectMenuItem->SetEnabled(true);
 		fDeleteFileProjectMenuItem->SetEnabled(true);
 		fExcludeFileProjectMenuItem->SetEnabled(true);
 		fOpenFileProjectMenuItem->SetEnabled(true);
@@ -3182,21 +3236,26 @@ IdeamWindow::_ProjectOutlinePopulate(Project* project)
 	fProjectsOutline->SortItemsUnder(fFilesItem, true, IdeamWindow::_CompareListItems);
 }
 
+Project*
+IdeamWindow::_ProjectPointerFromName(BString const& projectName)
+{
+	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
+		Project* project = fProjectObjectList->ItemAt(index);
+		if (project->ExtensionedName() == projectName)
+			return project;
+	}
+	return nullptr;
+}
+
 void
 IdeamWindow::_ProjectRescan(BString const& projectName)
 {
-	BString projectDirectory("");
-	Project * project(nullptr);
-
-	for (int32 index = 0; index < fProjectObjectList->CountItems(); index++) {
-		project = fProjectObjectList->ItemAt(index);
-		if (project->ExtensionedName() == projectName) {
-			projectDirectory.SetTo(project->BasePath());
-		}
-	}
-
-	if (project == nullptr || projectDirectory.IsEmpty())
+	Project* project = _ProjectPointerFromName(projectName);
+	if (project == nullptr)
 		return;
+
+	BString projectDirectory("");
+	projectDirectory.SetTo(project->BasePath());
 
 	TPreferences* prefs = new TPreferences(projectName,
 		IdeamNames::kApplicationName, 'LOPR');

@@ -5,16 +5,10 @@
 
 #include "NewProjectWindow.h"
 
-#include <Catalog.h>
-#include <Button.h>
-#include <ListItem.h>
-#include <OutlineListView.h>
-#include <ScrollView.h>
-#include <Architecture.h>
-
 #include <Alignment.h>
 #include <AppFileInfo.h>
 #include <Application.h>
+#include <Architecture.h>
 #include <Bitmap.h>
 #include <Box.h>
 #include <Button.h>
@@ -40,6 +34,7 @@
 #include <OptionPopUp.h>
 
 #include "IdeamNamespace.h"
+#include "IdeamCommon.h"
 #include "TPreferences.h"
 
 #include <iostream>
@@ -79,7 +74,7 @@ NewProjectWindow::NewProjectWindow()
 	BWindow(BRect(0, 0, 799, 599), "New Project", B_TITLED_WINDOW, //B_MODAL_WINDOW,
 													B_ASYNCHRONOUS_CONTROLS | 
 													B_NOT_ZOOMABLE |
-													B_NOT_RESIZABLE |
+//													B_NOT_RESIZABLE |
 													B_AVOID_FRONT |
 													B_AUTO_UPDATE_SIZE_LIMITS |
 													B_CLOSE_ON_ESCAPE)
@@ -255,16 +250,11 @@ NewProjectWindow::_CreateProject()
 	BPath projectsPath(fProjectsDirectoryText->Text());
 	BEntry projectsEntry(projectsPath.Path());
 	if (!projectsEntry.Exists()) {
+		// TODO: Set mask somewhere
 		status = create_directory(projectsPath.Path(), 0755);
 		if (status != B_OK)
 			return status;
 	}
-
-
-	// Get year
-	time_t time = ::time(NULL);
-	struct tm* tm = localtime(&time);
-	fYear = tm->tm_year + 1900;
 
 	if (fCurrentItem == appItem)
 		status = _CreateAppProject();
@@ -310,7 +300,7 @@ NewProjectWindow::_CreateProject()
 			system("git init");
 		}
 		// Post a message
-		BMessage message(NEWPROJECTWINDOW_PROJECT_OPEN_NEW);
+		BMessage message(IdeamNames::NEWPROJECTWINDOW_PROJECT_OPEN_NEW);
 		message.AddString("project_extensioned_name", fProjectExtensionedName);
 		be_app->WindowAt(0)->PostMessage(&message);
 		// Quit
@@ -465,7 +455,7 @@ NewProjectWindow::_CreateCargoProject()
 		args << " --vcs none";
 
 	// Post a message
-	BMessage message(NEWPROJECTWINDOW_PROJECT_CARGO_NEW);
+	BMessage message(IdeamNames::NEWPROJECTWINDOW_PROJECT_CARGO_NEW);
 	message.AddString("cargo_new_string", args);
 	be_app->WindowAt(0)->PostMessage(&message);
 
@@ -614,6 +604,7 @@ NewProjectWindow::_CreateHaikuSourcesProject()
 	fProjectFile->SetBString("project_build_command", "jam -q");
 	fProjectFile->SetBString("project_clean_command", "jam clean");
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
+	fProjectFile->SetBString("project_type", "haiku_source");
 
 	// Scan dir for files
 	ProjectParser parser(fProjectFile);
@@ -738,7 +729,7 @@ NewProjectWindow::_InitWindow()
 	fProjectBox->SetLabel(boxLabel);
 
 	fProjectNameText = new BTextControl("ProjectNameText",
-		B_TRANSLATE("Project name:"), "", nullptr); //new BMessage(MSG_PROJECT_NAME));
+		B_TRANSLATE("Project name:"), "", nullptr);
 	fProjectNameText->SetModificationMessage(new BMessage(MSG_PROJECT_NAME_EDITED));
 	fProjectNameText->SetEnabled(false);
 
@@ -843,7 +834,7 @@ NewProjectWindow::_InitWindow()
 							B_DIRECTORY_NODE, false, NULL);
 
 	BLayoutBuilder::Grid<>(fProjectBox)
-		.SetInsets(20, 20, 10, 10)
+.SetInsets(10.0f, 24.0f, 10.0f, 10.0f)
 		.Add(fProjectNameText->CreateLabelLayoutItem(), 0, 1)
 		.Add(fProjectNameText->CreateTextViewLayoutItem(), 1, 1, 2)
 		.Add(fGitEnabled, 3, 1)
@@ -876,22 +867,21 @@ NewProjectWindow::_InitWindow()
 		;
 
 	// Window layout
-	BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
-		.SetInsets(2)
-
-		.AddGroup(B_HORIZONTAL, 0, 5)
-				.Add(typeListScrollView, 2)
-					.Add(fProjectBox, 5)
+	BLayoutBuilder::Group<>(this, B_VERTICAL, B_USE_DEFAULT_SPACING)
+//		.SetInsets(2.0f)
+		.AddGroup(B_HORIZONTAL, B_USE_DEFAULT_SPACING, 5.0f)
+			.Add(typeListScrollView, 2.0f)
+			.Add(fProjectBox, 5.0f)
 		.End()
-		.AddGroup(B_VERTICAL, 0, 2)
+		.AddGroup(B_VERTICAL, B_USE_DEFAULT_SPACING, 2.0f)
 			.Add(fScrollText)
-				.AddGroup(B_HORIZONTAL)
-					.AddGlue(1)
-					.Add(fExitButton)
-					.AddGlue(5)
-					.Add(fCreateButton)
-					.AddGlue(1)
-				.End()
+			.AddGroup(B_HORIZONTAL)
+				.AddGlue()
+				.Add(fExitButton)
+				.AddGlue(4.0f)
+				.Add(fCreateButton)
+				.AddGlue()
+			.End()
 		.End()
 	;
 }
@@ -1352,19 +1342,18 @@ NewProjectWindow::_WriteMakefile()
 		return status;
 
 	BString makefile;
-	makefile 	<< "#######################################################"
-				<< "#########################\n"
-				<< "## Ideam generated makefile\n"
-				<< "##\n\n";
+	makefile <<
+"## Ideam haiku Makefile ########################################################\n\n";
 	if (f_primary_architecture == "x86_gcc2") {
 	makefile	<< "CC  := gcc-x86\n"
 				<< "CXX := g++-x86\n\n";
 	}
-	makefile	<< "NAME := " << fProjectTargetText->Text() << "\n\n"
-				<< "TARGET_DIR := app\n\n"
-				<< "TYPE := APP\n\n"// TODO get
-				<< "APP_MIME_SIG := \"application/x-vnd.Ideam-"
-				<< fProjectTargetText->Text() <<"\"\n\n";
+	makefile
+		<< "NAME := " << fProjectTargetText->Text() << "\n\n"
+		<< "TARGET_DIR := app\n\n"
+		<< "TYPE := APP\n\n"// TODO get
+		<< "APP_MIME_SIG := \"application/x-vnd.Ideam-"
+		<< fProjectTargetText->Text() <<"\"\n\n";
 
 	if (fCurrentItem == appMenuItem)
 		makefile << "SRCS :=  src/" << fAddFileText->Text() << "\n"
@@ -1372,7 +1361,7 @@ NewProjectWindow::_WriteMakefile()
 	else
 		makefile << "SRCS :=  src/" << fAddFileText->Text() << "\n\n";
 
-		makefile << "RDEFS :=  \n\n";
+	makefile << "RDEFS :=  \n\n";
 
 	if (fCurrentItem == appItem)
 		makefile << "LIBS = be $(STDCPPLIBS)\n\n";
@@ -1397,7 +1386,7 @@ NewProjectWindow::_WriteMakefile()
 
 	makefile << "CXXFLAGS := -std=c++11\n\n"
 		<< "LOCALES :=\n\n"
-		<< "DEBUGGER := TRUE\n\n"
+		<< "DEBUGGER := true\n\n"
 		<< "## Include the Makefile-Engine\n"
 		<< "DEVEL_DIRECTORY := \\\n"
 		<< "\t$(shell findpaths -r \"makefile_engine\" B_FIND_PATH_DEVELOP_DIRECTORY)\n"
@@ -1432,16 +1421,15 @@ NewProjectWindow::_WriteAppfiles()
 	BString hFileName(fileName);
 	hFileName.Append(".h");
 
-	BString headComment;
-	headComment << "/*\n"
-				<< " * Copyright " << fYear << " Your Name <your@email.address>\n"
-				<< " * All rights reserved. Distributed under the terms of the MIT license.\n"
-				<< " */\n\n";
+	BString headComment  = Ideam::Copyright();
+//	headComment << "/*\n"
+//				<< " * Copyright " << fYear << " Your Name <your@email.address>\n"
+//				<< " * All rights reserved. Distributed under the terms of the MIT license.\n"
+//				<< " */\n\n";
 
 	if (fAddHeader->Value() == true) {
-		// TODO add _ on upper letter
-		BString upperFileName(fileName);
-		upperFileName.ToUpper();
+		BString upperFileName = Ideam::HeaderGuard(fileName);
+		upperFileName += "_H";
 
 		hPath.Append(hFileName);
 		status = file.SetTo(hPath.Path(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
@@ -1450,8 +1438,8 @@ NewProjectWindow::_WriteAppfiles()
 
 		BString hFileContent;
 		hFileContent << headComment
-			<< "#ifndef " << upperFileName << "_H\n"
-			<< "#define " << upperFileName << "_H\n\n"
+			<< "#ifndef " << upperFileName << "\n"
+			<< "#define " << upperFileName << "\n\n"
 			<< "#include <Application.h>\n\n"
 			<< "class " << fileName << " : public BApplication {\n"
 			<< "public:\n"
@@ -1459,7 +1447,7 @@ NewProjectWindow::_WriteAppfiles()
 			<< "\tvirtual\t\t\t\t\t\t~" << fileName << "();\n\n"
 			<< "private:\n\n"
 			<< "};\n\n"
-			<< "#endif //" << upperFileName << "_H\n";
+			<< "#endif //" << upperFileName << "\n";
 
 		ssize_t bytes = file.Write(hFileContent.String(), hFileContent.Length());
 		if (bytes != hFileContent.Length())
@@ -1543,17 +1531,13 @@ NewProjectWindow::_WriteAppMenufiles()
 	hFileName.Append(".h");
 	hSecondFileName.Append(".h");
 
-	BString headComment;
-	headComment << "/*\n"
-				<< " * Copyright " << fYear << " Your Name <your@email.address>\n"
-				<< " * All rights reserved. Distributed under the terms of the MIT license.\n"
-				<< " */\n\n";
+	BString headComment  = Ideam::Copyright();
 
 	// App header
 	if (fAddHeader->Value() == true) {
-		// TODO add _ on upper letter
-		BString upperFileName(fileNameStripped);
-		upperFileName.ToUpper();
+		BString upperFileName = Ideam::HeaderGuard(fileNameStripped);
+		upperFileName += "_H";
+
 
 		hPath.Append(hFileName);
 		status = file.SetTo(hPath.Path(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
@@ -1562,8 +1546,8 @@ NewProjectWindow::_WriteAppMenufiles()
 
 		BString hFileContent;
 		hFileContent << headComment
-			<< "#ifndef " << upperFileName << "_H\n"
-			<< "#define " << upperFileName << "_H\n\n"
+			<< "#ifndef " << upperFileName << "\n"
+			<< "#define " << upperFileName << "\n\n"
 			<< "#include <Application.h>\n\n"
 			<< "class " << fileNameStripped << " : public BApplication {\n"
 			<< "public:\n"
@@ -1571,7 +1555,7 @@ NewProjectWindow::_WriteAppMenufiles()
 			<< "\tvirtual\t\t\t\t\t\t~" << fileNameStripped << "();\n\n"
 			<< "private:\n\n"
 			<< "};\n\n"
-			<< "#endif //" << upperFileName << "_H\n";
+			<< "#endif //" << upperFileName << "\n";
 
 		ssize_t bytes = file.Write(hFileContent.String(), hFileContent.Length());
 		if (bytes != hFileContent.Length())
@@ -1583,9 +1567,8 @@ NewProjectWindow::_WriteAppMenufiles()
 
 	// Window header
 	if (fAddSecondHeader->Value() == true) {
-		// TODO add _ on upper letter
-		BString upperFileName(fileSecondNameStripped);
-		upperFileName.ToUpper();
+		BString upperFileName = Ideam::HeaderGuard(fileSecondNameStripped);
+		upperFileName += "_H";
 
 		hSecondPath.Append(hSecondFileName);
 		status = file.SetTo(hSecondPath.Path(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
@@ -1595,8 +1578,8 @@ NewProjectWindow::_WriteAppMenufiles()
 		// TODO Camel case ?
 		BString h2FileContent;
 		h2FileContent << headComment
-			<< "#ifndef " << upperFileName << "_H\n"
-			<< "#define " << upperFileName << "_H\n\n"
+			<< "#ifndef " << upperFileName << "\n"
+			<< "#define " << upperFileName << "\n\n"
 			<< "#include <GroupLayout.h>\n"
 			<< "#include <Window.h>\n\n"
 			<< "class " << fileSecondNameStripped << " : public BWindow\n"
@@ -1608,7 +1591,7 @@ NewProjectWindow::_WriteAppMenufiles()
 			<< "private:\n"
 			<< "\t\t\tBGroupLayout*\t\tfRootLayout;\n"
 			<< "};\n\n"
-			<< "#endif //" << upperFileName << "_H\n";
+			<< "#endif //" << upperFileName << "\n";
 
 		ssize_t bytes = file.Write(h2FileContent.String(), h2FileContent.Length());
 		if (bytes != h2FileContent.Length())
@@ -1839,6 +1822,8 @@ NewProjectWindow::_WritePrinciplesfile()
 	return B_OK;
 }
 
+// Trying to create a simple Makefile for newcomers.
+// Leave room for user improvements.
 status_t
 NewProjectWindow::_WriteHelloCMakefile()
 {
@@ -1857,90 +1842,42 @@ NewProjectWindow::_WriteHelloCMakefile()
 		arch.SetTo("-x86");
 
 	BString makefile;
-	makefile << "#######################################################"
-		<< "#########################\n"
-		<< "CC		:= gcc" << arch << "\n"
-		<< "C++		:= g++" << arch << "\n"
-		<< "LD		:= gcc" << arch << "\n\n"
-
-		<< "# Determine the CPU type\n"
-		<< "CPU = $(shell uname -m)\n"
-		<< "# Get the compiler version.\n"
-		<< "CC_VER = $(word 1, $(subst -, , $(subst ., , $(shell $(CC) -dumpversion))))\n\n"
-
-		<< "DEBUG    := -g -ggdb\n"
-		<< "CFLAGS   := -c -Wall ${DEBUG} -O2\n"
-		<< "CXXFLAGS := -std=c++11\n"
-		<< "ASFLAGS   =\n"
-		<< "LDFLAGS   = -Xlinker -soname=_APP_\n"
-		<< "LIBS	  = -lstdc++ -lsupc++ \n\n"
-
-		<< "#######################################################"
-		<< "#########################\n"
-		<< "# Vars\n"
-		<< "#\n\n"
+	makefile <<
+"## Ideam simple Makefile #######################################################\n"
+		<< "##\n"
+		<< "CC     := gcc" << arch << "\n"
+		<< "LD     := gcc" << arch << "\n"
+		<< "CFLAGS := -c -Wall ${DEBUG} -O2 -g" << "\n\n"
 
 		<< "# application name\n"
 		<< "target	:= app/" << fProjectTargetText->Text() << "\n\n"
 
-		<< "# sources directories\n"
-		<< "dirs	:= src\n\n"
+		<< "# sources\n"
+		<< "sources := src/" << fAddFileText->Text() << "\n\n"
 
-		<< "# find sources\n"
-		<< "sources := $(foreach dir, $(dirs), $(wildcard $(dir)/*.cpp $(dir)/*.c  $(dir)/*.S))\n\n"
-//		<< "sources := $(foreach dir, $(dirs), $(wildcard $(dir)/*.[cpp,c,S]))\n\n"
-		<< "# object files top directory\n"
-		<< "objdir  := objects.$(CPU)-$(CC)$(CC_VER)-$(if $(DEBUG),debug,release)\n\n"
+		<< "# object files\n"
+		<< "objects := $(sources:.c=.o)\n"
+		<<
+"################################################################################\n"
+		<< "all: $(target)\n\n"
 
-		<< "# ensue the object files\n"
-		<< "objects :=	$(patsubst \%.S, $(objdir)/\%.o, $(filter \%.S,$(sources))) \\\n"
-		<< "\t\t\t$(patsubst \%.c, $(objdir)/\%.o, $(filter \%.c,$(sources))) \\\n"
-		<< "\t\t\t$(patsubst \%.cpp, $(objdir)/\%.o, $(filter \%.cpp,$(sources)))\n\n"
-
-		<< "# object files subdirs\n"
-		<< "objdirs := $(addprefix $(objdir)/, $(dirs))\n\n"
-
-		<< "#######################################################"
-		<< "#########################\n"
-
-		<< "all: $(objdirs) $(target)\n\n"
-
-		<< "$(objdir)/\%.o: \%.c\n"
-		<< "\t${CC}  ${CFLAGS} $(includes) $< -o $@\n\n"
-
-		<< "$(objdir)/\%.o: \%.cpp\n"
-		<< "\t${C++}  ${CFLAGS} $(CXXFLAGS) $(includes) $< -o $@\n\n"
-			
-		<< "$(objdir)/\%.o: \%.S\n"
-		<< "\t${CC} ${CFLAGS} ${ASFLAGS} $(includes) $< -o $@\n\n"
-
+		<< "# link objects to make an executable\n"
 		<< "$(target): $(objects)\n"
-		<< "\t${LD} $(DEBUG) ${LDFLAGS} ${LIBS} -o $@ $^\n\n"
+		<< "\t${LD} -o $@ $^\n\n"
 
-		<< "# create needed dirs to store object files\n"
-		<< "$(objdirs):\n"
-		<< "\t@echo Creating dir: $@\n"
-		<< "\t@mkdir -p  $@\n\n"
+		<< "# build objects from sources\n"
+		<< "$(objects): $(sources)\n"
+		<< "\t${CC} ${CFLAGS} $< -o $@\n\n"
 
 		<< "clean:\n"
-		<< "\t@echo cleaning: $(objdir)\n"
+		<< "\t@echo cleaning: $(objects)\n"
 		<< "\t@rm -f $(objects)\n\n"
 
 		<< "rmapp:\n"
 		<< "\t@echo cleaning: $(target)\n"
 		<< "\t@rm -f $(target)\n\n"
 
-		<< "list:\n"
-		<< "\t@echo srcs: $(sources)\n"
-		<< "\t@echo objs: $(objects)\n"
-		<< "\t@echo dirs: $(objdirs)\n\n"
-
-		<< "print-defines:\n"
-		<< "\t@echo | ${CC} -dM -E -\n\n\n"
-
-
-		<< ".PHONY:  clean rmapp list print-defines objdirs\n";
-
+		<< ".PHONY:  clean rmapp\n";
 
 	ssize_t bytes = file.Write(makefile.String(), makefile.Length());
 	if (bytes != makefile.Length())
@@ -1952,3 +1889,4 @@ NewProjectWindow::_WriteHelloCMakefile()
 
 	return B_OK;
 }
+

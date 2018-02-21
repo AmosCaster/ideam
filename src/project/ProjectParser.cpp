@@ -40,6 +40,9 @@ ProjectParser::~ProjectParser()
 status_t
 ProjectParser::ParseProjectFiles(BString directory)
 {
+	if (directory.IsEmpty())
+		throw;
+
 	fPreferences->RemoveName("project_file");
 	fPreferences->RemoveName("project_source");
 	fPreferences->RemoveName("project_scm");
