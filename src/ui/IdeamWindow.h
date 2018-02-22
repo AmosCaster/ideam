@@ -18,6 +18,7 @@
 #include <PopUpMenu.h>
 #include <ScrollView.h>
 #include <StatusBar.h>
+#include <String.h>
 #include <TabView.h>
 #include <TextControl.h>
 #include <Window.h>
@@ -110,6 +111,7 @@ private:
 			void				_ProjectOutlinePopulate(Project* project);
 			Project*			_ProjectPointerFromName(BString const& projectName);
 			void				_ProjectRescan(BString const& projectName);
+			status_t			_ProjectRemoveDir(const BString& dirPath);
 			int					_Replace(int what);
 			bool				_ReplaceAllow();
 			void				_ReplaceGroupShow();

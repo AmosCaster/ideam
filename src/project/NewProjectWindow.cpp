@@ -315,21 +315,12 @@ NewProjectWindow::_CreateProject()
 
 		_RemoveStaleEntries(dirPath.Path());
 
-		entry.SetTo(dirPath.Path());
-		if (entry.Exists()) {
-			entry.Remove();
-			BString text;
-			text <<  "\n" << B_TRANSLATE("Removing stale project dir:")
-				<< " " << entry.Name();
-			fProjectDescription->Insert(text);
-		}
-
 		entry.SetTo(projectPath.Path());
 		if (entry.Exists()) {
 			entry.Remove();
 			BString text;
 			text << "\n" << B_TRANSLATE("Removing stale project file:")
-				<< " " << entry.Name();
+				<< " " << entry.Name() << "\n\n";
 			fProjectDescription->Insert(text);
 		}
 	}
@@ -1038,27 +1029,23 @@ void
 NewProjectWindow::_RemoveStaleEntries(const char* dirpath)
 {
 	BDirectory dir(dirpath);
+	BEntry startEntry(dirpath);
 	BEntry entry;
 
 	while (dir.GetNextEntry(&entry) == B_OK) {
 		BString text;
-
 		if (entry.IsDirectory()) {
 			BDirectory newdir(&entry);
 
 			if (newdir.CountEntries() > 0) {
-				BString newPath(dirpath);
-				newPath << "/" << entry.Name();
+				BPath newPath(dirpath);
+				newPath.Append(entry.Name());
 
-				_RemoveStaleEntries(newPath.String());
-				entry.Remove();
-				text << "\n" << B_TRANSLATE("Removing stale dir:")
-					<< " " << entry.Name();
-				fProjectDescription->Insert(text);
+				_RemoveStaleEntries(newPath.Path());
 			}
 			else {
 				entry.Remove();
-				text << "\n" << B_TRANSLATE("Removing stale dir:")
+				text << "\n" << B_TRANSLATE("Removing stale empty dir:")
 					<< " " << entry.Name();
 				fProjectDescription->Insert(text);
 			}
@@ -1070,6 +1057,11 @@ NewProjectWindow::_RemoveStaleEntries(const char* dirpath)
 			fProjectDescription->Insert(text);
 		}
 	}
+
+	BString str;
+	startEntry.Remove();
+	str << "\n" << B_TRANSLATE("Removing stale dir:") << " " << startEntry.Name();
+	fProjectDescription->Insert(str);
 }
 
 bool

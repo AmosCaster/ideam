@@ -2936,7 +2936,7 @@ IdeamWindow::_ProjectDelete(BString name, bool sourcesToo)
 
 	if (sourcesToo == true) {
 		if (!baseDir.IsEmpty()) {
-			if (rmdir(baseDir) >= B_OK) {
+			if (_ProjectRemoveDir(baseDir) == B_OK) {
 				BString notification;
 				notification << B_TRANSLATE("Project delete:") << "  "
 					<< B_TRANSLATE("removed") << " " << baseDir;
@@ -3275,6 +3275,36 @@ IdeamWindow::_ProjectRescan(BString const& projectName)
 	_ProjectOutlineDepopulate(project);
 	_ProjectOutlinePopulate(project);
 	fProjectsOutline->Invalidate();
+}
+
+status_t
+IdeamWindow::_ProjectRemoveDir(const BString& dirPath)
+{
+	BDirectory dir(dirPath);
+	BEntry startEntry(dirPath);
+	BEntry entry;
+
+	while (dir.GetNextEntry(&entry) == B_OK) {
+
+		if (entry.IsDirectory()) {
+			BDirectory newdir(&entry);
+			if (newdir.CountEntries() == 0) {
+				// Empty dir, remove
+				entry.Remove();
+			} else {
+				// Populated dir, recurse
+				BPath newPath(dirPath);
+				newPath.Append(entry.Name());
+
+				_ProjectRemoveDir(newPath.Path());
+			}
+		} else {
+			// It is a file, remove
+			entry.Remove();
+		}
+	}
+
+	return startEntry.Remove();
 }
 
 int
