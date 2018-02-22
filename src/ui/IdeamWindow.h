@@ -99,7 +99,6 @@ private:
 			void				_ProjectActivate(BString const& projectName);
 			void				_ProjectClose();
 			void				_ProjectDelete(BString name, bool sourcesToo);
-			void				_ProjectFileAdd();
 			void				_ProjectFileDelete();
 			void				_ProjectFileExclude();
 			BString	const		_ProjectFileFullPath();

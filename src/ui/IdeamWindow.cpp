@@ -2947,19 +2947,12 @@ IdeamWindow::_ProjectDelete(BString name, bool sourcesToo)
 }
 
 void
-IdeamWindow::_ProjectFileAdd()
-{
-}
-
-// As of version 0.7.2 deleting a file that is open AND modified issues
-// an external modification warning.
-// Keep it this way as a safety measure.
-void
 IdeamWindow::_ProjectFileDelete()
 {
 	entry_ref ref;
 	int32 openedIndex;
 	BEntry entry(_ProjectFileFullPath());
+	entry.GetRef(&ref);
 	char name[B_FILE_NAME_LENGTH];
 
 	if (!entry.Exists())
@@ -2989,6 +2982,7 @@ IdeamWindow::_ProjectFileDelete()
 		// Close the file if open
 		if ((openedIndex = _GetEditorIndex(&ref)) != -1)
 			_FileClose(openedIndex, true);
+
 		// Remove the entry
 		if (entry.Exists())
 			entry.Remove();
