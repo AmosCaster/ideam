@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include "AddToProjectWindow.h"
+#include "IdeamCommon.h"
 #include "IdeamNamespace.h"
 #include "NewProjectWindow.h"
 #include "ProjectSettingsWindow.h"
@@ -51,8 +52,8 @@ static constexpr auto kFindReplaceMinBytes = 32;
 static constexpr float kFindReplaceOPSize = 120.0f;
 static constexpr auto kFindReplaceMenuItems = 10;
 
-
-static float kEditorWeight  = 3.0f;
+static float kProjectsWeight  = 1.0f;
+static float kEditorWeight  = 3.14f;
 static float kOutputWeight  = 0.4f;
 
 BRect dirtyFrameHack;
@@ -184,6 +185,13 @@ IdeamWindow::IdeamWindow(BRect frame)
 	, fConsoleIOView(nullptr)
 	, fConsoleStdinLine("")
 {
+	// Settings file check.
+	BPath path;
+	find_directory(B_USER_SETTINGS_DIRECTORY, &path);
+	path.Append(IdeamNames::kApplicationName);
+	path.Append(IdeamNames::kSettingsFileName);
+	bool settingsFileMissing = !Ideam::file_exists(path.Path());
+
 	// Fill Settings vars before using
 	IdeamNames::LoadSettingsVars();
 
@@ -192,21 +200,21 @@ IdeamWindow::IdeamWindow(BRect frame)
 	_InitWindow();
 
 	// Layout
-	fRootLayout = BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
-		.SetInsets(0.0f, 0.0f, 0.0f, 0.0f)
+	fRootLayout = BLayoutBuilder::Group<>(this, B_VERTICAL, 0.0f)
+//	.SetInsets(0.0f)
 		.Add(fMenuBar)
 		.Add(fToolBar)
 
-			.AddSplit(B_VERTICAL, 0.0f) // output split
-				.AddSplit(B_HORIZONTAL, 0.0f) // sidebar split
-					.Add(fProjectsTabView)
-					.AddGroup(B_VERTICAL, 0, kEditorWeight)  // Editor
-						//.SetInsets(2.0f, 2.0f, 0.0f, 2.0f)
-						.Add(fEditorTabsGroup)
-					.End() // editor group
-				.End() // sidebar split
-				.Add(fOutputTabView, kOutputWeight)
-			.End() //  output split
+		.AddSplit(B_VERTICAL, 0.0f) // output split
+		   .AddSplit(B_HORIZONTAL, 0.0f) // sidebar split
+				.Add(fProjectsTabView, kProjectsWeight)
+				.AddGroup(B_VERTICAL, B_USE_DEFAULT_SPACING, kEditorWeight)
+				   //.SetInsets(2.0f, 2.0f, 0.0f, 2.0f)
+				   .Add(fEditorTabsGroup)  // Editor
+				.End() // editor group
+		   .End() // sidebar split
+		   .Add(fOutputTabView, kOutputWeight)
+        .End() //  output split
 	;
 
 	// Shortcuts
@@ -219,14 +227,20 @@ IdeamWindow::IdeamWindow(BRect frame)
 	AddShortcut(B_LEFT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_PREVIOUS_SELECTED));
 	AddShortcut(B_RIGHT_ARROW, B_OPTION_KEY, new BMessage(MSG_FILE_NEXT_SELECTED));
 
-	// Interface elements
-	if (IdeamNames::Settings.show_projects == false)
-		fProjectsTabView->Hide();
-	if (IdeamNames::Settings.show_output == false)
-		fOutputTabView->Hide();
-	if (IdeamNames::Settings.show_toolbar == false)
-		fToolBar->View()->Hide();
-
+	// Interface elements. If settings file is missing most probably it is
+	// first time execution, load all elements
+	if (settingsFileMissing == true) {
+		fProjectsTabView->Show();
+		fToolBar->View()->Show();
+		fOutputTabView->Show();
+	} else {
+		if (IdeamNames::Settings.show_projects == false)
+			fProjectsTabView->Hide();
+		if (IdeamNames::Settings.show_output == false)
+			fOutputTabView->Hide();
+		if (IdeamNames::Settings.show_toolbar == false)
+			fToolBar->View()->Hide();
+	}
 	// Reopen projects
 	if (IdeamNames::Settings.reopen_projects == true) {
 		TPreferences projects(IdeamNames::kSettingsProjectsToReopen,
@@ -2220,7 +2234,7 @@ IdeamWindow::_InitCentralSplit()
 	fReplaceAllButton = _LoadIconButton("ReplaceAllButton", MSG_REPLACE_ALL,
 							169, true, B_TRANSLATE("Replace all"));
 
-	fReplaceGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+	fReplaceGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0f)
 		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
 			.Add(fReplaceMenuField)
 			.Add(fReplaceTextControl)
@@ -2229,7 +2243,6 @@ IdeamWindow::_InitCentralSplit()
 			.Add(fReplaceAndFindPrevButton)
 			.Add(fReplaceAllButton)
 			.AddGlue()
-///			.SetInsets(2, 2, 2, 2)
 		)
 		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 	;
@@ -2249,7 +2262,6 @@ IdeamWindow::_InitCentralSplit()
 			.Add(fRunConsoleProgramText)
 			.Add(fRunConsoleProgramButton)
 			.AddGlue()
-			.SetInsets(2, 2, 2, 2)
 		)
 		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 	;
@@ -2267,8 +2279,8 @@ IdeamWindow::_InitCentralSplit()
 	fStatusBar = new BStatusBar("StatusBar");
 	fStatusBar->SetBarHeight(1.0);
 
-	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-//		.SetInsets(1, 1, 1, 1)
+	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, B_USE_DEFAULT_SPACING)
+//		.SetInsets(4.0f)
 		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
 			.Add(fFindGroup)
 			.Add(fReplaceGroup)
@@ -2644,7 +2656,7 @@ IdeamWindow::_InitToolbar()
 			.Add(fFileNextButton)
 			.Add(fFileCloseButton)
 			.Add(fFileMenuButton)
-			.SetInsets(1, 1, 1, 1)
+//			.SetInsets(1, 1, 1, 1)
 		)
 		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 	;

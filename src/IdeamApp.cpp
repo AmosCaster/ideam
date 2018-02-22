@@ -72,7 +72,6 @@ IdeamApp::AboutRequested()
 	window->Show();
 }
 
-
 void
 IdeamApp::ArgvReceived(int32 agrc, char** argv)
 {
