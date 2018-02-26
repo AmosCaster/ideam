@@ -728,7 +728,7 @@ TabManager::TabManager(const BMessenger& target)
 	fTabContainerView = new TabContainerView(fController);
 	fTabContainerGroup = new TabContainerGroup(fTabContainerView);
 
-	fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
+	fTabContainerGroup->GroupLayout()->SetInsets(0.0f, 3.0f, 0.0f, 0.0f);
 
 
 	fController->SetTabContainerGroup(fTabContainerGroup);
@@ -982,5 +982,3 @@ TabManager::SetCloseButtonsAvailable(bool available)
 	fController->SetCloseButtonsAvailable(available);
 	fTabContainerView->Invalidate();
 }
-
-

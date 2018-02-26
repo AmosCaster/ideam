@@ -45,6 +45,7 @@ namespace IdeamNames
 		int32 brace_match;
 		int32 save_caret;
 		int32 show_linenumber;
+		int32 show_commentmargin;
 		int32 mark_caretline;
 		int32 show_edgeline;
 		BString edgeline_column;

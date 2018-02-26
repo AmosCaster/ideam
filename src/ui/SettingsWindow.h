@@ -111,6 +111,7 @@ typedef std::map<BStringItem*, BString>::const_iterator ViewPageIterator;
 			BTextControl*		fEdgeLineColumn;
 			BCheckBox*			fShowEdgeLine;
 			BCheckBox*			fShowLineNumber;
+			BCheckBox*			fShowCommentMargin;
 			BCheckBox*			fMarkCaretLine;
 			BCheckBox*			fEnableFolding;
 

@@ -199,24 +199,6 @@ IdeamWindow::IdeamWindow(BRect frame)
 
 	_InitWindow();
 
-	// Layout
-	fRootLayout = BLayoutBuilder::Group<>(this, B_VERTICAL, 0.0f)
-//	.SetInsets(0.0f)
-		.Add(fMenuBar)
-		.Add(fToolBar)
-
-		.AddSplit(B_VERTICAL, 0.0f) // output split
-		   .AddSplit(B_HORIZONTAL, 0.0f) // sidebar split
-				.Add(fProjectsTabView, kProjectsWeight)
-				.AddGroup(B_VERTICAL, B_USE_DEFAULT_SPACING, kEditorWeight)
-				   //.SetInsets(2.0f, 2.0f, 0.0f, 2.0f)
-				   .Add(fEditorTabsGroup)  // Editor
-				.End() // editor group
-		   .End() // sidebar split
-		   .Add(fOutputTabView, kOutputWeight)
-        .End() //  output split
-	;
-
 	// Shortcuts
 	for (int32 index = 1; index < 10; index++) {
 		constexpr auto kAsciiPos {48};
@@ -2189,17 +2171,17 @@ IdeamWindow::_InitCentralSplit()
 							165, true, B_TRANSLATE("Find previous"));
 	fFindMarkAllButton = _LoadIconButton("FindMarkAllButton", MSG_FIND_MARK_ALL,
 							202, true, B_TRANSLATE("Mark all"));
-//	AddShortcut(B_DOWN_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
-//	AddShortcut(B_UP_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
-//	AddShortcut(B_PAGE_DOWN, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
-//	AddShortcut(B_PAGE_UP, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
+	AddShortcut(B_DOWN_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
+	AddShortcut(B_UP_ARROW, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
+	// AddShortcut(B_PAGE_DOWN, B_COMMAND_KEY, new BMessage(MSG_FIND_NEXT));
+	// AddShortcut(B_PAGE_UP, B_COMMAND_KEY, new BMessage(MSG_FIND_PREVIOUS));
 
 	fFindCaseSensitiveCheck = new BCheckBox(B_TRANSLATE("Match case"));
 	fFindWholeWordCheck = new BCheckBox(B_TRANSLATE("Whole word"));
 	fFindWrapCheck = new BCheckBox(B_TRANSLATE("Wrap"));
 
-	fFindGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+	fFindGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0f)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_HALF_ITEM_SPACING)
 			.Add(fFindMenuField)
 			.Add(fFindTextControl)
 			.Add(fFindNextButton)
@@ -2235,7 +2217,7 @@ IdeamWindow::_InitCentralSplit()
 							169, true, B_TRANSLATE("Replace all"));
 
 	fReplaceGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0f)
-		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_HALF_ITEM_SPACING)
 			.Add(fReplaceMenuField)
 			.Add(fReplaceTextControl)
 			.Add(fReplaceOneButton)
@@ -2257,8 +2239,8 @@ IdeamWindow::_InitCentralSplit()
 	tooltip << IdeamNames::Settings.projects_directory;
 	fRunConsoleProgramText->SetToolTip(tooltip);
 
-	fRunConsoleProgramGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, B_USE_SMALL_SPACING)
+	fRunConsoleProgramGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0f)
+		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, 0.0f)
 			.Add(fRunConsoleProgramText)
 			.Add(fRunConsoleProgramButton)
 			.AddGlue()
@@ -2279,17 +2261,13 @@ IdeamWindow::_InitCentralSplit()
 	fStatusBar = new BStatusBar("StatusBar");
 	fStatusBar->SetBarHeight(1.0);
 
-	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, B_USE_DEFAULT_SPACING)
-//		.SetInsets(4.0f)
-		.Add(BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
+	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0f)
 			.Add(fFindGroup)
 			.Add(fReplaceGroup)
 			.Add(fRunConsoleProgramGroup)
 			.Add(fTabManager->TabGroup())
 			.Add(fTabManager->ContainerView())
-//			.Add(new BSeparatorView(B_HORIZONTAL))
 			.Add(fStatusBar)
-		)
 	;
 }
 
@@ -2747,6 +2725,20 @@ IdeamWindow::_InitWindow()
 	_InitCentralSplit();
 
 	_InitOutputSplit();
+
+	// Layout
+	fRootLayout = BLayoutBuilder::Group<>(this, B_VERTICAL, 0.0f)
+		.Add(fMenuBar)
+		.Add(fToolBar)
+
+		.AddSplit(B_VERTICAL, 0.0f) // output split
+			.AddSplit(B_HORIZONTAL, 0.0f) // sidebar split
+				.Add(fProjectsTabView, kProjectsWeight)
+				.Add(fEditorTabsGroup, kEditorWeight)  // Editor
+			.End() // sidebar split
+			.Add(fOutputTabView, kOutputWeight)
+		.End() //  output split
+	;
 
 	// Panels
 	TPreferences prefs(IdeamNames::kSettingsFileName,

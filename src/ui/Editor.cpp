@@ -34,13 +34,14 @@ using namespace IdeamNames;
 
 Editor::Editor(entry_ref* ref, const BMessenger& target)
 	:
-	BScintillaView(ref->name, 0, true, true, B_NO_BORDER)
+	BScintillaView(ref->name, 0, true, true)
 	, fFileRef(*ref)
 	, fModified(false)
 	, fBraceHighlighted(kNoBrace)
 	, fBracingAvailable(false)
 	, fFoldingAvailable(false)
 	, fSyntaxAvailable(false)
+	, fCommenter("")
 {
 	fName = BString(ref->name);
 	SetTarget(target);
@@ -63,8 +64,8 @@ Editor::Editor(entry_ref* ref, const BMessenger& target)
 									 , UNSET);
 */
 
-//SendMessage(SCI_SETYCARETPOLICY, CARET_SLOP | CARET_STRICT | CARET_JUMPS, 20);
-//CARET_SLOP  CARET_STRICT  CARET_JUMPS  CARET_EVEN
+// SendMessage(SCI_SETYCARETPOLICY, CARET_SLOP | CARET_STRICT | CARET_JUMPS, 20);
+// CARET_SLOP  CARET_STRICT  CARET_JUMPS  CARET_EVEN
 }
 
 Editor::~Editor()
@@ -144,26 +145,34 @@ Editor::ApplySettings()
 		SendMessage(SCI_SETTABWIDTH, Settings.tab_width, UNSET);
 
 	// MARGINS
-	SendMessage(SCI_SETMARGINS, 3, UNSET);
+	SendMessage(SCI_SETMARGINS, 4, UNSET);
+	SendMessage(SCI_STYLESETBACK, STYLE_LINENUMBER, kLineNumberBack);
+
 	// Line numbers
 	if (Settings.show_linenumber == true) {
-
-		int32 pixW = SendMessage(SCI_TEXTWIDTH, STYLE_LINENUMBER, (sptr_t) "_123456");
-
-		SendMessage(SCI_SETMARGINWIDTHN, sci_NUMBER_MARGIN, pixW);
-		SendMessage(SCI_STYLESETBACK, STYLE_LINENUMBER, kLineNumberBack);
+		// Margin width
+		int pixelWidth = SendMessage(SCI_TEXTWIDTH, STYLE_LINENUMBER, (sptr_t) "9");
+		fLinesLog10 = log10(SendMessage(SCI_GETLINECOUNT, UNSET, UNSET));
+		fLinesLog10 += 2;
+		SendMessage(SCI_SETMARGINWIDTHN, sci_NUMBER_MARGIN, pixelWidth * fLinesLog10);
 	}
 
 	// Bookmark margin
 	SendMessage(SCI_SETMARGINTYPEN, sci_BOOKMARK_MARGIN, SC_MARGIN_SYMBOL);
 	SendMessage(SCI_SETMARGINSENSITIVEN, sci_BOOKMARK_MARGIN, 1);
 	SendMessage(SCI_MARKERDEFINE, sci_BOOKMARK, SC_MARK_BOOKMARK);
-//	SendMessage(SCI_MARKERSETFORE, sci_BOOKMARK, 0x3030C0);
-	SendMessage(SCI_MARKERSETBACK, sci_BOOKMARK, kBookmarkColor);
+	SendMessage(SCI_MARKERSETFORE, sci_BOOKMARK, kMarkerForeColor);
+	SendMessage(SCI_MARKERSETBACK, sci_BOOKMARK, kMarkerBackColor);
 
 	// Folding
 	if (Settings.enable_folding == B_CONTROL_ON)
-		_FoldFile();
+		_SetFoldMargin();
+
+	// Line commenter margin
+	if (Settings.show_commentmargin == true && !fCommenter.empty()) {
+		SendMessage(SCI_SETMARGINWIDTHN, sci_COMMENT_MARGIN, 12);
+		SendMessage(SCI_SETMARGINSENSITIVEN, sci_COMMENT_MARGIN, 1);
+	}
 }
 
 void
@@ -625,17 +634,27 @@ Editor::NotificationReceived(SCNotification* notification)
 		case SCN_CHARADDED: {
 			if (notification->ch == '\n' ||
 					(notification->ch == '\r' &&
-					SendMessage(SCI_GETEOLMODE, UNSET, UNSET) == SC_EOL_CR))
+					SendMessage(SCI_GETEOLMODE, UNSET, UNSET) == SC_EOL_CR)) {
 				_AutoIndentLine(); // TODO asociate extensions?
+			}
 			break;
 		}
-		// Bookmark toggle
 		case SCN_MARGINCLICK: {
 			if (notification->margin == sci_BOOKMARK_MARGIN)
+				// Bookmark toggle
 				BookmarkToggle(notification->position);
+			else if (notification->margin == sci_COMMENT_MARGIN)
+				// Line commenter/decommenter
+				_CommentLine(notification->position);
 			break;
 		}
-		case SCN_NEEDSHOWN: {
+		case SCN_MODIFIED: {
+			if (notification->linesAdded != 0)
+				if (Settings.show_linenumber == true)
+					_RedrawNumberMargin();
+			break;
+		}
+	case SCN_NEEDSHOWN: {
 std::cerr << "SCN_NEEDSHOWN " << std::endl;
 		break;
 		}
@@ -1089,6 +1108,7 @@ Editor::_ApplyExtensionSettings()
 		fSyntaxAvailable = true;
 		fFoldingAvailable = true;
 		fBracingAvailable = true;
+		fCommenter = "//";
 		SendMessage(SCI_SETLEXER, SCLEX_CPP, UNSET);
 		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)cppKeywords);
 		SendMessage(SCI_SETKEYWORDS, 1, (sptr_t)haikuClasses);
@@ -1096,12 +1116,13 @@ Editor::_ApplyExtensionSettings()
 		fSyntaxAvailable = true;
 		fFoldingAvailable = true;
 		fBracingAvailable = true;
+		fCommenter = "//";
 		SendMessage(SCI_SETLEXER, SCLEX_RUST, UNSET);
 		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)rustKeywords);
-//		SendMessage(SCI_SETKEYWORDS, 1, (sptr_t)haikuClasses);
 	} else if (fExtension == "make") {
 		fSyntaxAvailable = true;
 		fBracingAvailable = true;
+		fCommenter = "#";
 		SendMessage(SCI_SETLEXER, SCLEX_MAKEFILE, UNSET);
 	}
 }
@@ -1254,6 +1275,35 @@ Editor::_CheckForBraceMatching()
 	}
 }
 
+// Leave line leading spaces when commenting/decommenting
+// Erase spaces from comment char(s) to first non-space when decommenting
+void
+Editor::_CommentLine(int32 position)
+{
+	if (fCommenter.empty())
+		return;
+
+	const std::string lineCommenter = fCommenter + ' ';
+	int32 lineNumber = SendMessage(SCI_LINEFROMPOSITION, position, UNSET);
+	int32 lineLength = SendMessage(SCI_LINELENGTH, lineNumber, UNSET);
+	char *lineBuffer = new char[lineLength];
+	SendMessage(SCI_GETLINE, lineNumber, (sptr_t)lineBuffer);
+	std::string line(lineBuffer);
+	delete[] lineBuffer;
+
+	// Calculate offset of first non-space
+	std::size_t offset = line.find_first_not_of("\t ");
+
+	if (line.substr(offset, fCommenter.length()) != fCommenter) {
+		// Not starting with a comment, comment out
+		SendMessage(SCI_INSERTTEXT, position + offset, (sptr_t)lineCommenter.c_str());
+	} else {
+		 // It was a comment line, decomment erasing commenter trailing spaces
+		std::size_t spaces = line.substr(offset + fCommenter.length()).find_first_not_of("\t ");
+		SendMessage(SCI_DELETERANGE, position + offset, fCommenter.length() + spaces);
+	}
+}
+
 int32
 Editor::_EndOfLine()
 {
@@ -1294,33 +1344,6 @@ Editor::_EndOfLineAssign(char *buffer, int32 size)
 	}
 
 	SendMessage(SCI_SETEOLMODE, eol, UNSET);
-}
-
-void
-Editor::_FoldFile()
-{
-	if (IsFoldingAvailable() == true) {
-		SendMessage(SCI_SETPROPERTY, (sptr_t) "fold", (sptr_t) "1");
-		SendMessage(SCI_SETPROPERTY, (sptr_t) "fold.comment", (sptr_t) "1");
-
-		SendMessage(SCI_SETMARGINTYPEN, sci_FOLD_MARGIN, SC_MARGIN_SYMBOL);
-		SendMessage(SCI_SETMARGINMASKN, sci_FOLD_MARGIN, SC_MASK_FOLDERS);
-		SendMessage(SCI_SETMARGINWIDTHN, sci_FOLD_MARGIN, 16);
-		SendMessage(SCI_SETMARGINSENSITIVEN, sci_FOLD_MARGIN, 1);
-
-		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
-		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
-		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED);
-		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER);
-		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED);
-		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE);
-		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER);
-		SendMessage(SCI_SETFOLDFLAGS, SC_FOLDFLAG_LINEAFTER_CONTRACTED, 0);
-
-		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW, 1);
-		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE, 4);
-		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CLICK, 2);
-	}
 }
 
 BString const
@@ -1428,4 +1451,44 @@ Editor::_IsBrace(char character)
 // TODO !c++ lang add
 //			|| character == '<'
 //			|| character == '>';
+}
+
+void
+Editor::_RedrawNumberMargin()
+{
+	int linesLog10 = log10(SendMessage(SCI_GETLINECOUNT, UNSET, UNSET));
+	linesLog10 += 2;
+
+	if (linesLog10 != fLinesLog10) {
+		fLinesLog10 = linesLog10;
+		int pixelWidth = SendMessage(SCI_TEXTWIDTH, STYLE_LINENUMBER, (sptr_t) "9");
+		SendMessage(SCI_SETMARGINWIDTHN, sci_NUMBER_MARGIN, pixelWidth * fLinesLog10);
+	}
+}
+
+void
+Editor::_SetFoldMargin()
+{
+	if (IsFoldingAvailable() == true) {
+		SendMessage(SCI_SETPROPERTY, (sptr_t) "fold", (sptr_t) "1");
+		SendMessage(SCI_SETPROPERTY, (sptr_t) "fold.comment", (sptr_t) "1");
+
+		SendMessage(SCI_SETMARGINTYPEN, sci_FOLD_MARGIN, SC_MARGIN_SYMBOL);
+		SendMessage(SCI_SETMARGINMASKN, sci_FOLD_MARGIN, SC_MASK_FOLDERS);
+		SendMessage(SCI_SETMARGINWIDTHN, sci_FOLD_MARGIN, 16);
+		SendMessage(SCI_SETMARGINSENSITIVEN, sci_FOLD_MARGIN, 1);
+
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE);
+		SendMessage(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER);
+		SendMessage(SCI_SETFOLDFLAGS, SC_FOLDFLAG_LINEAFTER_CONTRACTED, 0);
+
+		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW, 1);
+		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE, 4);
+		SendMessage(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CLICK, 2);
+	}
 }

@@ -302,5 +302,14 @@ current Scintilla version: HaikuPorts version
 +) Delete project sources available
 
 --------------------------------------------------------------------------------
+0.7.4) Added line commenter margin
+==================================
+
++) Clicking the line commenter margin comments/decomments line
++) Enabling comment margin in settings
++) Number margin reworked
++) Alt+{UP,DOWN}_ARROW finds previous,next
+
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

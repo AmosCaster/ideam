@@ -1,7 +1,7 @@
 Ideam
 ================
-![Screenshot](https://raw.github.com/AmosCaster/ideam/master/data/screenshot/screenshot-0.6.2-eng.png)
-    screenshot-0.6.2-eng.png
+![Screenshot](https://raw.github.com/AmosCaster/ideam/master/data/screenshot/screenshot-0.7.4-eng.png)
+    screenshot-0.7.4-eng.png
 
 Introducing
 ----------------

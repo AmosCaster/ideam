@@ -112,6 +112,7 @@ LoadSettingsVars()
 	status += file.FindInt32("brace_match", &Settings.brace_match);
 	status += file.FindInt32("save_caret", &Settings.save_caret);
 	status += file.FindInt32("show_linenumber", &Settings.show_linenumber);
+	status += file.FindInt32("show_commentmargin", &Settings.show_commentmargin);
 	status += file.FindInt32("mark_caretline", &Settings.mark_caretline);
 	status += file.FindInt32("show_edgeline", &Settings.show_edgeline);
 	status += file.FindString("edgeline_column", &Settings.edgeline_column);
@@ -168,6 +169,8 @@ UpdateSettingsFile()
 	// Editor Visual Page
 	if (settings.FindInt32("show_linenumber", &intVal) != B_OK)
 		settings.SetInt32("show_linenumber", kSKShowLineNumber);
+	if (settings.FindInt32("show_commentmargin", &intVal) != B_OK)
+		settings.SetInt32("show_commentmargin", kSKShowCommentMargin);
 	if (settings.FindInt32("mark_caretline", &intVal) != B_OK)
 		settings.SetInt32("mark_caretline", kSKMarkCaretLine);
 	if (settings.FindInt32("show_edgeline", &intVal) != B_OK)

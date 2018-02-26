@@ -56,7 +56,7 @@ SYSTEM_INCLUDE_PATHS +=	$(shell findpaths -a $(platform) -e B_FIND_PATH_HEADERS_
 ################################################################################
 ## clang++ headers hack
 ifeq ($(platform), x86)
-######## x86 clang++ build (mind scan-build too) ###############################
+###### x86 clang++ build (mind scan-build too) #################################
 ifneq ($(CXX), g++-x86)
 SYSTEM_INCLUDE_PATHS += /boot/system/lib/x86/clang/5.0.0/include \
 	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/5.4.0/include/c++ \

@@ -11,6 +11,8 @@
 #include <ScintillaView.h>
 #include <String.h>
 
+#include <string>
+
 enum {
 	EDITOR_FIND_COUNT			= 'Efco',
 	EDITOR_FIND_NEXT_MISS		= 'Efnm',
@@ -41,6 +43,7 @@ enum {
 constexpr auto sci_NUMBER_MARGIN = 0;
 constexpr auto sci_BOOKMARK_MARGIN = 1;
 constexpr auto sci_FOLD_MARGIN = 2;
+constexpr auto sci_COMMENT_MARGIN = 3;
 
 constexpr auto sci_BOOKMARK = 0;
 
@@ -51,12 +54,12 @@ static constexpr auto kWhiteSpaceBack = 0xB0B0B0;
 static constexpr auto kSelectionBackColor = 0x80FFFF;
 static constexpr auto kCaretLineBackColor = 0xF8EFE9;
 static constexpr auto kEdgeColor = 0xE0E0E0;
-static constexpr auto kBookmarkColor = 0x3030C0;
+static constexpr auto kMarkerForeColor = 0x80FFFF;
+static constexpr auto kMarkerBackColor = 0x3030C0;
 
 constexpr auto kNoBrace = 0;
 constexpr auto kBraceMatch = 1;
 constexpr auto kBraceBad = 2;
-
 
 class Editor : public BScintillaView {
 public:
@@ -140,13 +143,15 @@ private:
 			void				_ApplyExtensionSettings();
 			void				_AutoIndentLine();
 			void				_CheckForBraceMatching();
+			void				_CommentLine(int32 position);
 			int32				_EndOfLine();
 			void				_EndOfLineAssign(char *buffer, int32 size);
-			void				_FoldFile();
 			BString	const		_GetFileExtension();
 			void				_HighlightBraces();
 			void				_HighlightFile();
 			bool				_IsBrace(char character);
+			void				_RedrawNumberMargin();
+			void				_SetFoldMargin();
 
 private:
 
@@ -161,6 +166,8 @@ private:
 			BString				fExtension;
 			bool				fFoldingAvailable;
 			bool				fSyntaxAvailable;
+			std::string			fCommenter;
+			int					fLinesLog10;
 };
 
 #endif // EDITOR_H

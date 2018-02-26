@@ -10,7 +10,6 @@
 #ifndef TITLE_ITEM_H
 #define TITLE_ITEM_H
 
-
 class TitleItem : public BStringItem {
 public:
 	TitleItem(BString title)

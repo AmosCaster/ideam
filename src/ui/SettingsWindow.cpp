@@ -64,6 +64,7 @@ enum {
 	MSG_SAVE_CARET_TOGGLED					= 'sace',
 	MSG_SHOW_EDGE_LINE_TOGGLED				= 'seli',
 	MSG_SHOW_LINE_NUMBER_TOGGLED			= 'slnu',
+	MSG_SHOW_COMMENT_MARGIN_TOGGLED			= 'scmt',
 	MSG_SHOW_OUTPUT_PANES_TOGGLED			= 'sopa',
 	MSG_SHOW_PROJECTS_PANES_TOGGLED			= 'sppa',
 	MSG_SHOW_TOOLBAR_TOGGLED				= 'shto',
@@ -272,6 +273,12 @@ SettingsWindow::MessageReceived(BMessage *msg)
 				_ManageModifications(fShowLineNumber, modified);
 			break;
 		}
+		case MSG_SHOW_COMMENT_MARGIN_TOGGLED: {
+			bool modified = fShowCommentMargin->Value() !=
+								fWindowSettingsFile->FindInt32("show_commentmargin");
+				_ManageModifications(fShowCommentMargin, modified);
+			break;
+		}
 		case MSG_SHOW_OUTPUT_PANES_TOGGLED: {
 			bool modified = fShowOutputPanes->Value() != fWindowSettingsFile->FindInt32("show_output");
 				_ManageModifications(fShowOutputPanes, modified);
@@ -467,7 +474,6 @@ SettingsWindow::_InitWindow()
 
 	// Window layout
 	BLayoutBuilder::Group<>(this, B_VERTICAL, B_USE_DEFAULT_SPACING)
-//		.SetInsets(2.0f)
 		.AddGroup(B_HORIZONTAL)
 			.Add(fSettingsScroll, 4.0f)
 			.Add(fSettingsBaseView, 9.0f)
@@ -480,8 +486,7 @@ SettingsWindow::_InitWindow()
 			.Add(fExitButton)
 			.Add(fApplyButton)
 		.End() // buttons group
-		;
-
+	;
 
 	// Load all Pages
 	fSettingsBaseView->AddChild(_PageGeneralView());
@@ -646,6 +651,15 @@ SettingsWindow::_LoadFromFile(BControl* control, bool loadAll /*= false*/)
 			fControlsDone += loadAll == true;
 		} else
 			fOrphansList->AddItem(fShowLineNumber);
+	}
+	if (control == fShowCommentMargin || loadAll == true) {
+		status = fWindowSettingsFile->FindInt32("show_commentmargin", &intVal);
+		fControlsCount += loadAll == true;
+		if (status == B_OK) {
+			fShowCommentMargin->SetValue(intVal);
+			fControlsDone += loadAll == true;
+		} else
+			fOrphansList->AddItem(fShowCommentMargin);
 	}
 	if (control == fMarkCaretLine || loadAll == true) {
 		status = fWindowSettingsFile->FindInt32("mark_caretline", &intVal);
@@ -886,6 +900,8 @@ SettingsWindow::_PageEditorViewVisual()
 
 	fShowLineNumber = new BCheckBox("ShowLineNumber",
 		B_TRANSLATE("Show line number"), new BMessage(MSG_SHOW_LINE_NUMBER_TOGGLED));
+	fShowCommentMargin = new BCheckBox("ShowCommentMargin",
+		B_TRANSLATE("Show comment margin"), new BMessage(MSG_SHOW_COMMENT_MARGIN_TOGGLED));
 	fMarkCaretLine = new BCheckBox("MarkCaretLine",
 		B_TRANSLATE("Mark caret line"), new BMessage(MSG_MARK_CARET_LINE_TOGGLED));
 	fShowEdgeLine = new BCheckBox("ShowEdgeLine",
@@ -907,11 +923,13 @@ SettingsWindow::_PageEditorViewVisual()
 	BView* view = BGroupLayoutBuilder(B_VERTICAL, 0)
 		.Add(BLayoutBuilder::Grid<>(fEditorVisualBox)
 		.Add(fShowLineNumber, 0, 0)
-		.Add(fMarkCaretLine, 1, 0)
-		.Add(fEnableFolding, 0, 1)
+		.Add(fEnableFolding, 1, 0)
+		.Add(fShowCommentMargin, 2, 0)
+		.Add(fMarkCaretLine, 0, 1)
 		.Add(fShowEdgeLine, 0, 2)
 		.Add(fEdgeLineColumn->CreateLabelLayoutItem(), 1, 2)
 		.Add(fEdgeLineColumn->CreateTextViewLayoutItem(), 2, 2)
+		.AddGlue(3, 2)
 		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER), 0, 3, 4)
 		.AddGlue(0, 4)
 		.SetInsets(10, 20, 10, 10))
@@ -1141,6 +1159,8 @@ SettingsWindow::_StoreToFile(BControl* control)
 	// Editor Visual Page
 	else if (control == fShowLineNumber)
 		status = fWindowSettingsFile->SetInt32("show_linenumber", fShowLineNumber->Value());
+	else if (control == fShowCommentMargin)
+		status = fWindowSettingsFile->SetInt32("show_commentmargin", fShowCommentMargin->Value());
 	else if (control == fMarkCaretLine)
 		status = fWindowSettingsFile->SetInt32("mark_caretline", fMarkCaretLine->Value());
 	else if (control == fShowEdgeLine)
@@ -1195,6 +1215,7 @@ SettingsWindow::_StoreToFileDefaults()
 
 	// Editor Visual Page
 	fWindowSettingsFile->SetInt32("show_linenumber", kSKShowLineNumber);
+	fWindowSettingsFile->SetInt32("show_commentmargin", kSKShowCommentMargin);
 	fWindowSettingsFile->SetInt32("mark_caretline", kSKMarkCaretLine);
 	fWindowSettingsFile->SetInt32("show_edgeline", kSKShowEdgeLine);
 	fWindowSettingsFile->SetBString("edgeline_column", kSKEdgeLineColumn);

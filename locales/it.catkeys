@@ -1,4 +1,4 @@
-1	English	application/x-vnd.Ideam-Ideam	2809265476
+1	English	application/x-vnd.Ideam-Ideam	2426676650
 tuned 	SettingsWindow		settato
 bytes	IdeamWindow		bytes
 C source file	AddToProjectWindow		C source file
@@ -35,7 +35,6 @@ Find Next	IdeamWindow		Trova successivo
 removed	IdeamWindow		removed
 Help	IdeamWindow		Aiuto
 Programming: Principles and Practice using C++ (2nd edition)	NewProject Window		Programming: Principles and Practice using C++ (2nd edition)
-Removing stale project dir:	NewProject Window		Removing stale project dir:
 About…	IdeamWindow		About…
 Reload projects	SettingsWindow		Reload projects
 * Clone Haiku repo and configure it.	NewProject Window		* Clone Haiku repo and configure it.
@@ -180,6 +179,7 @@ Clear	ConsoleIOView		Clear
 A GUI application with menu bar and localization	NewProject Window		A GUI application with menu bar and localization
 Editables	ProjectSettingsWindow		Editables
 stdout	ConsoleIOView		stdout
+Show comment margin	SettingsWindow		Show comment margin
 A simple GUI \"Hello World!\" application	NewProject Window		A simple GUI \"Hello World!\" application
 Delete file	IdeamWindow		Delete file
 Bookmark	IdeamWindow		Segnalibro
@@ -311,6 +311,7 @@ Fold toggle	IdeamWindow		Fold toggle
 Tab width:  	SettingsWindow		Tabulazioni: 
 Project:	ProjectSettingsWindow		Project:
 File info:	IdeamWindow		File info:
+Removing stale empty dir:	NewProject Window		Removing stale empty dir:
 See Credits for a complete list.	IdeamApp		Vedi Credits per una lista completa.
 Projects	IdeamWindow		Progetti
 Projects directory:	SettingsWindow		Directory dei Progetti:
