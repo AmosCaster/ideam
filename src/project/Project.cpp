@@ -98,6 +98,16 @@ Project::Open(bool activate)
 	return B_OK;
 }
 
+bool
+Project::ReleaseModeEnabled()
+{
+	bool releaseMode = false;
+	TPreferences prefs(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
+	prefs.FindBool("release_mode", &releaseMode);
+
+	return releaseMode;
+}
+
 BString const
 Project::Scm()
 {
@@ -106,6 +116,13 @@ Project::Scm()
 	prefs.FindString("project_scm", &scm);
 
 	return scm;
+}
+
+void
+Project::SetReleaseMode(bool releaseMode)
+{
+	TPreferences prefs(fExtensionedName, IdeamNames::kApplicationName, 'LOPR');
+	prefs.SetBool("release_mode", releaseMode);
 }
 
 std::vector<BString> const

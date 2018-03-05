@@ -12,6 +12,8 @@
 #include <Window.h>
 #include <iostream>
 
+#include "IdeamCommon.h"
+
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "ProjectParser"
 
@@ -143,13 +145,13 @@ ProjectParser::_ScanDirectory(BString directory)
 				// Excluded item found: save in a list
 				// If a parseless item was not found it means it has been
 				// deleted, so one may like to delete the reference as well
-				if (_in_container(path.Path(), parseless_items))
+				if (Ideam::_in_container(path.Path(), parseless_items))
 					parseless_found.push_back(path.Path());
 				// Excluded extension: skip
-				else if (_in_container(extension, excluded_extensions))
+				else if (Ideam::_in_container(extension, excluded_extensions))
 					;
 				// Sources list
-				else if (_in_container(extension, source_extensions)) {
+				else if (Ideam::_in_container(extension, source_extensions)) {
 					fPreferences->AddString("project_source", path.Path());
 					fSourcesCount++;
 				}

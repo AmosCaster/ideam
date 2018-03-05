@@ -7,6 +7,7 @@
 
 #include <String.h>
 
+#include <algorithm>
 #include <string>
 
 
@@ -18,7 +19,12 @@ namespace Ideam
 	BString const Copyright();
 	BString const HeaderGuard(const BString&  fileName);
 
-
+	template<class Element, class Container>
+	bool _in_container(const Element & element, const Container & container)
+	{
+		return std::find(std::begin(container), std::end(container), element)
+				!= std::end(container);
+	}
 
 
 

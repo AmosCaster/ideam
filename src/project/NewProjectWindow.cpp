@@ -368,6 +368,7 @@ NewProjectWindow::_CreateSkeleton()
 	fProjectFile->SetBString("project_build_command", "make");
 	fProjectFile->SetBString("project_clean_command", "make clean rmapp");
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
+	fProjectFile->SetBool("release_mode", false);
 
 	if (fGitEnabled->Value() == true)
 		fProjectFile->SetBString("project_scm", "git");
@@ -472,6 +473,7 @@ NewProjectWindow::_CreateCargoProject()
 	projectFile.SetBString("project_build_command", build_command);
 	projectFile.SetBString("project_clean_command", clean_command);
 	projectFile.SetBool("run_in_terminal", fRunInTeminal->Value());
+	projectFile.SetBool("release_mode", false);
 
 	// Cargo specific
 	projectFile.SetBString("project_type", "cargo");
@@ -570,6 +572,8 @@ NewProjectWindow::_CreateEmptyProject()
 	fProjectFile->SetBString("project_name", fProjectNameText->Text());
 	fProjectFile->SetBString("project_directory", path.Path());
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
+	fProjectFile->SetBool("release_mode", false);
+
 	if (fGitEnabled->Value() == true)
 		fProjectFile->SetBString("project_scm", "git");
 
@@ -595,6 +599,7 @@ NewProjectWindow::_CreateHaikuSourcesProject()
 	fProjectFile->SetBString("project_build_command", "jam -q");
 	fProjectFile->SetBString("project_clean_command", "jam clean");
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
+	fProjectFile->SetBool("release_mode", false);
 	fProjectFile->SetBString("project_type", "haiku_source");
 
 	// Scan dir for files
@@ -623,6 +628,7 @@ NewProjectWindow::_CreateLocalSourcesProject()
 	fProjectFile->SetBString("project_build_command", "make");
 	fProjectFile->SetBString("project_clean_command", "make clean");
 	fProjectFile->SetBool("run_in_terminal", fRunInTeminal->Value());
+	fProjectFile->SetBool("release_mode", false);
 
 	// Scan dir for files
 	ProjectParser parser(fProjectFile);
@@ -1839,7 +1845,7 @@ NewProjectWindow::_WriteHelloCMakefile()
 		<< "##\n"
 		<< "CC     := gcc" << arch << "\n"
 		<< "LD     := gcc" << arch << "\n"
-		<< "CFLAGS := -c -Wall ${DEBUG} -O2 -g" << "\n\n"
+		<< "CFLAGS := -c -Wall -O2 -g" << "\n\n"
 
 		<< "# application name\n"
 		<< "target	:= app/" << fProjectTargetText->Text() << "\n\n"

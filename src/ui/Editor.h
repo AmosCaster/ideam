@@ -88,7 +88,7 @@ public:
 			void				EndOfLineConvert(int32 eolMode);
 			void				EnsureVisiblePolicy();
 		const BString			FilePath() const;
-			entry_ref*			FileRef() { return &fFileRef; }
+			entry_ref *const	FileRef() { return &fFileRef; }
 			int32				Find(const BString&  text, int flags, bool backwards = false);
 			int					FindInTarget(const BString& search, int flags, int startPosition, int endPosition);
 			int32				FindMarkAll(const BString& text, int flags);
@@ -106,7 +106,7 @@ public:
 			bool				IsTextSelected();
 			status_t			LoadFromFile();
 			BString				Name() const { return fName; }
-			node_ref*			NodeRef() { return &fNodeRef; }
+			node_ref *const		NodeRef() { return &fNodeRef; }
 			void				NotificationReceived(SCNotification* n);
 			void				OverwriteToggle();
 			void				Paste();

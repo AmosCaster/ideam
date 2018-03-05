@@ -311,5 +311,15 @@ current Scintilla version: HaikuPorts version
 +) Alt+{UP,DOWN}_ARROW finds previous,next
 
 --------------------------------------------------------------------------------
+0.7.5) Build mode makefile tuning
+=================================
+
++) Makefile modified when changing build mode
+
+ ] Only Ideam's Makefiles managed
+ ] Debug/Release build dir just honours variable presence not value in
+   makefile-engine
+
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

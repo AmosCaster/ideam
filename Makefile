@@ -1,6 +1,4 @@
-################################################################################
-## Ideam makefile
-##
+## Ideam haiku Makefile ########################################################
 
 arch := $(shell getarch)
 platform := $(shell uname -p)
@@ -79,8 +77,7 @@ CXXFLAGS := -std=c++11
 
 LOCALES := en it
 
-DEBUGGER := TRUE
-
+DEBUGGER := true
 
 ## Include the Makefile-Engine
 DEVEL_DIRECTORY := \

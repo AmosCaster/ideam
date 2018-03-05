@@ -20,8 +20,10 @@
 #include <SeparatorView.h>
 
 #include <cassert>
+#include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 #include "AddToProjectWindow.h"
 #include "IdeamCommon.h"
@@ -551,7 +553,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index = _GetEditorIndex(&ref);
 				_UpdateLabel(index, true);
-std::cerr << "EDITOR_SAVEPOINT_LEFT " << "index: " << index << std::endl;
+// std::cerr << "EDITOR_SAVEPOINT_LEFT " << "index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 			}
 
@@ -562,7 +564,7 @@ std::cerr << "EDITOR_SAVEPOINT_LEFT " << "index: " << index << std::endl;
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index = _GetEditorIndex(&ref);
 				_UpdateLabel(index, false);
-std::cerr << "EDITOR_SAVEPOINT_REACHED " << "index: " << index << std::endl;
+// std::cerr << "EDITOR_SAVEPOINT_REACHED " << "index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 			}
 #if defined MULTIFILE_OPEN_SELECT_FIRST_FILE
@@ -573,7 +575,7 @@ std::cerr << "EDITOR_SAVEPOINT_REACHED " << "index: " << index << std::endl;
 				 */
 				int32 index = fTabManager->SelectedTabIndex();
 				fEditor = fEditorObjectList->ItemAt(index);
-std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
+// std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 				_UpdateSelectionChange(index);
 #endif
 			break;
@@ -637,16 +639,18 @@ std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
 			break;
 		}
 		case MSG_BUILD_MODE_DEBUG: {
-			fBuildModeButton->SetEnabled(true);
+			// fBuildModeButton->SetEnabled(true);
 			fBuildModeButton->SetToolTip(B_TRANSLATE("Build mode: Debug"));
-			fReleaseModeEnabled = false;
+			fActiveProject->SetReleaseMode(false);
+			_MakefileSetBuildMode(false);
 			_UpdateProjectActivation(fActiveProject != nullptr);
 			break;
 		}
 		case MSG_BUILD_MODE_RELEASE: {
-			fBuildModeButton->SetEnabled(false);
+			// fBuildModeButton->SetEnabled(false);
 			fBuildModeButton->SetToolTip(B_TRANSLATE("Build mode: Release"));
-			fReleaseModeEnabled = true;
+			fActiveProject->SetReleaseMode(true);
+			_MakefileSetBuildMode(true);
 			_UpdateProjectActivation(fActiveProject != nullptr);
 			break;
 		}
@@ -1135,7 +1139,7 @@ std::cerr << "TABMANAGER_TAB_CHANGED " << "NULL on index: " << index << std::end
 					// TODO caret policy
 					fEditor->EnsureVisiblePolicy();
 
-std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index << std::endl;
+// std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index << std::endl;
 				fEditor->SendCurrentPosition();
 				_UpdateSelectionChange(index);
 				_UpdateStatusBarTrailing(index);
@@ -1152,7 +1156,7 @@ std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index
 		case TABMANAGER_TAB_NEW_OPENED: {
 			int32 index;
 			if (message->FindInt32("index", &index) == B_OK) {
-std::cerr << "TABMANAGER_TAB_NEW_OPENED" << " index: " << index << std::endl;
+// std::cerr << "TABMANAGER_TAB_NEW_OPENED" << " index: " << index << std::endl;
 				fEditor = fEditorObjectList->ItemAt(index);
 				fEditor->SetSavedCaretPosition();
 			}
@@ -1280,7 +1284,7 @@ IdeamWindow::_BuildProject()
 
 	// Honour build mode for cargo projects
 	if (fActiveProject->Type() == "cargo") {
-		if (fReleaseModeEnabled == true)
+		if (fActiveProject->ReleaseModeEnabled() == true)
 			command << " --release";
 	}
 
@@ -1402,7 +1406,7 @@ IdeamWindow::_DebugProject()
 		return B_ERROR;
 
 	// Release mode enabled, should not happen
-	if (fReleaseModeEnabled == true)
+	if (fActiveProject->ReleaseModeEnabled() == true)
 		return B_ERROR;
 
 	// TODO: args
@@ -2262,12 +2266,12 @@ IdeamWindow::_InitCentralSplit()
 	fStatusBar->SetBarHeight(1.0);
 
 	fEditorTabsGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0f)
-			.Add(fFindGroup)
-			.Add(fReplaceGroup)
-			.Add(fRunConsoleProgramGroup)
-			.Add(fTabManager->TabGroup())
-			.Add(fTabManager->ContainerView())
-			.Add(fStatusBar)
+		.Add(fRunConsoleProgramGroup)
+		.Add(fFindGroup)
+		.Add(fReplaceGroup)
+		.Add(fTabManager->TabGroup())
+		.Add(fTabManager->ContainerView())
+		.Add(fStatusBar)
 	;
 }
 
@@ -2421,14 +2425,14 @@ IdeamWindow::_InitMenu()
 		new BMessage(MSG_RUN_TARGET)));
 	menu->AddSeparatorItem();
 
-	BMenu* submenu = new BMenu(B_TRANSLATE("Build mode"));
-	submenu->SetRadioMode(true);
-	submenu->AddItem(fReleaseModeItem = new BMenuItem(B_TRANSLATE("Release"),
+	fBuildModeItem = new BMenu(B_TRANSLATE("Build mode"));
+	fBuildModeItem->SetRadioMode(true);
+	fBuildModeItem->AddItem(fReleaseModeItem = new BMenuItem(B_TRANSLATE("Release"),
 		new BMessage(MSG_BUILD_MODE_RELEASE)));
-	submenu->AddItem(fDebugModeItem = new BMenuItem(B_TRANSLATE("Debug"),
+	fBuildModeItem->AddItem(fDebugModeItem = new BMenuItem(B_TRANSLATE("Debug"),
 		new BMessage(MSG_BUILD_MODE_DEBUG)));
 	fDebugModeItem->SetMarked(true);
-	menu->AddItem(submenu);
+	menu->AddItem(fBuildModeItem);
 	menu->AddSeparatorItem();
 
 	fCargoMenu = new BMenu(B_TRANSLATE("Cargo"));
@@ -2448,8 +2452,9 @@ IdeamWindow::_InitMenu()
 	fBuildItem->SetEnabled(false);
 	fCleanItem->SetEnabled(false);
 	fRunItem->SetEnabled(false);
-	fDebugItem->SetEnabled(false);
+	fBuildModeItem->SetEnabled(false);
 	fCargoMenu->SetEnabled(false);
+	fDebugItem->SetEnabled(false);
 	fMakeCatkeysItem->SetEnabled(false);
 	fMakeBindcatalogsItem->SetEnabled(false);
 
@@ -2520,7 +2525,7 @@ IdeamWindow::_InitMenu()
 	menu = new BMenu(B_TRANSLATE("Window"));
 	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
 		new BMessage(MSG_WINDOW_SETTINGS), 'P', B_OPTION_KEY));
-	submenu = new BMenu(B_TRANSLATE("Interface"));
+	BMenu* submenu = new BMenu(B_TRANSLATE("Interface"));
 	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Projects panes"),
 		new BMessage(MSG_SHOW_HIDE_PROJECTS)));
 	submenu->AddItem(new BMenuItem(B_TRANSLATE("Toggle Output panes"),
@@ -2577,9 +2582,7 @@ IdeamWindow::_InitToolbar()
 		227, true, B_TRANSLATE("Run console program"));
 
 	fBuildModeButton = _LoadIconButton("BuildMode", MSG_BUILD_MODE,
-						221, true, B_TRANSLATE("Build mode: Debug"));
-
-	fReleaseModeEnabled = false;
+						221, false, B_TRANSLATE("Build mode: Debug"));
 
 	fFileUnlockedButton = _LoadIconButton("FileUnlockedButton", MSG_BUFFER_LOCK,
 						212, false, B_TRANSLATE("Set buffer read-only"));
@@ -2794,6 +2797,29 @@ IdeamWindow::_LoadSizedVectorIcon(int32 resourceID, int32 size)
 }
 
 void
+IdeamWindow::_MakeBindcatalogs()
+{
+	// Should not happen
+	if (fActiveProject == nullptr)
+		return;
+
+	fBuildLogView->Clear();
+	_ShowLog(kBuildLog);
+
+	BMessage message;
+	message.AddString("cmd", "make bindcatalogs");
+	message.AddString("cmd_type", "bindcatalogs");
+
+	// Go to appropriate directory
+	chdir(fActiveProject->BasePath());
+
+	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
+		BMessenger(fBuildLogView));
+
+	fConsoleIOThread->Start();
+}
+
+void
 IdeamWindow::_MakeCatkeys()
 {
 	// Should not happen
@@ -2816,27 +2842,258 @@ IdeamWindow::_MakeCatkeys()
 	fConsoleIOThread->Start();
 }
 
+// As of release 0.7.5 3 Ideam's Makefiles are managed:
+// ## Ideam haiku Makefile	 (Comment/Decomment DEBUGGER var)
+// ## Ideam simple Makefile  (Insert/Erase -g in CFLAGS var)
+// ## Ideam generic Makefile (Comment/Decomment Debug var)
+//
+// Just put these lines at Makefile (or makefile) top
+// to allow that behaviour
 void
-IdeamWindow::_MakeBindcatalogs()
+IdeamWindow::_MakefileSetBuildMode(bool isReleaseMode)
 {
 	// Should not happen
 	if (fActiveProject == nullptr)
 		return;
 
-	fBuildLogView->Clear();
-	_ShowLog(kBuildLog);
+	BDirectory dir(fActiveProject->BasePath());
+	BEntry entry;
+	BPath path;
+	entry_ref ref;
+	char name[B_FILE_NAME_LENGTH];
+	std::vector<std::string> file_lines;
+	bool found = false;
 
-	BMessage message;
-	message.AddString("cmd", "make bindcatalogs");
-	message.AddString("cmd_type", "bindcatalogs");
+	while ((dir.GetNextEntry(&entry)) == B_OK && found == false) {
 
-	// Go to appropriate directory
-	chdir(fActiveProject->BasePath());
+		if (entry.IsDirectory())
+			continue;
 
-	fConsoleIOThread = new ConsoleIOThread(&message,  BMessenger(this),
-		BMessenger(fBuildLogView));
+		entry.GetName(name);
+		BString fileName(name);
 
-	fConsoleIOThread->Start();
+		if (fileName == "makefile" || fileName == "Makefile") {
+
+			entry.GetPath(&path);
+			std::ifstream file_in(path.Path());
+			std::string line;
+			std::getline(file_in, line);
+			file_lines.push_back(line + "\n");
+
+			// Check first line to see if it is Ideam's makefile
+			if (line.find("## Ideam haiku Makefile") == 0) {
+
+				while (std::getline(file_in, line)) {
+					// Empty line, just put back newline
+					if (line.length() == 0) {
+						file_lines.push_back("\n");
+						continue;
+					}
+					// Calculate offset of first non-space
+					std::size_t offset = line.find_first_not_of("\t ");
+					std::string match = "DEBUGGER";
+					if (isReleaseMode == false)
+						match.insert(0, 1, '#');
+
+					// Match found, push back accorded line
+					if (line.substr(offset).find(match) == 0) {
+
+						if (isReleaseMode == false)
+							line.erase(0, 1);
+						else
+							line.insert(0, 1, '#');
+
+						file_lines.push_back(line + "\n");
+
+						// makefile-engine just recognizes DEBUGGER presence
+						// and not value. When it will one may adapt this instead
+						// std::ostringstream oss;
+						// oss << "DEBUGGER := " << std::boolalpha << !isReleaseMode << "\n";
+						// file_lines.push_back(oss.str());
+
+						found = true;
+					} else
+						file_lines.push_back(line + "\n");
+				}
+				file_in.close();
+
+			} else if (line.find("## Ideam simple Makefile") == 0) {
+
+				while (std::getline(file_in, line)) {
+					// Empty line, just put back newline
+					if (line.length() == 0) {
+						file_lines.push_back("\n");
+						continue;
+					}
+					// Calculate offset of first non-space
+					std::size_t offset = line.find_first_not_of("\t ");
+					// Match found
+					if (line.substr(offset).find("CFLAGS") == 0) {
+						// Ignore CFLAGS variable without '='
+						if (Ideam::_in_container('=', line) == false)
+							continue;
+						// Whatever after '=' sign is the starting point for parsing
+						std::size_t start = line.find_first_of('=') + 1;
+						// Save line start
+						std::string line_start = line.substr(0, start);
+						line_start.append(" ");
+
+						// Tokenize args
+						bool isToken = false;
+						bool isComment = false;
+						std::vector<std::string> tokens;
+						std::string token_str;
+						std::string comment_str;
+
+						for (auto it = line.cbegin() + start; it != line.cend(); it++) {
+							switch (*it) {
+								// Start comment unless a comment already
+								// Close possible open token
+								case '#':
+									if (isComment == true)
+										comment_str.append(1, *it);
+									else {
+										isComment = true;
+										comment_str = "#";
+										if (isToken == true) {
+											tokens.push_back(token_str);
+											isToken = false;
+										}
+									}
+									break;
+								// Start a token unless in comment
+								case '-':
+									if (isComment == true)
+										comment_str.append(1, *it);
+									else {
+										isToken = true;
+										token_str = "-";
+									}
+									break;
+								// Space found, close token if open unless in comment
+								case ' ':
+								case '\t':
+									if (isComment == true)
+										comment_str.append(1, *it);
+									else if (isToken == true) {
+										tokens.push_back(token_str);
+										isToken = false;
+									}
+									break;
+								// Continuation character found, preserve unless in comment
+								// Close possible open token
+								case '\\':
+									if (isComment == true)
+										comment_str.append(1, *it);
+									else {
+										if (isToken == true) {
+											tokens.push_back(token_str);
+											isToken = false;
+										}
+										tokens.push_back("\\");
+									}
+									break;
+								default:
+									if (isComment == true)
+										comment_str.append(1, *it);
+									else if (isToken == true)
+										token_str.append(1, *it);
+									break;
+							}
+						}
+						// Close possible open token
+						if (isToken == true)
+							tokens.push_back(token_str);
+
+						if (isReleaseMode == true) {
+							line = line_start;
+							std::ostringstream oss;
+							for (auto it = tokens.cbegin(); it < tokens.cend(); it++) {
+								// Exclude debug flag(s)
+								if (*it == "-g")
+									continue;
+								// Don't put spaces after continuation char
+								else if (*it == "\\")
+									oss << *it;
+								else
+									oss << *it << ' ';
+							}
+							if (!comment_str.empty())
+								oss << comment_str;
+
+							line += oss.str();
+						} else {
+							// Debug mode
+							line = line_start;
+							std::ostringstream oss;
+							// Put it at the beginning as last token could be
+							// a continuation character.
+							oss << "-g ";
+							for (auto it = tokens.cbegin(); it < tokens.cend(); it++) {
+								// Don't put spaces after continuation char
+								if (*it == "\\")
+									oss << *it;
+								else
+									oss << *it << ' ';
+							}
+							if (!comment_str.empty())
+								oss << comment_str;
+
+							line += oss.str();
+						}
+						found = true;
+					}
+					file_lines.push_back(line + "\n");
+				}
+				file_in.close();
+
+			} else if (line.find("## Ideam generic Makefile") == 0) {
+
+				while (std::getline(file_in, line)) {
+					// Empty line, just put back newline
+					if (line.length() == 0) {
+						file_lines.push_back("\n");
+						continue;
+					}
+					// Calculate offset of first non-space
+					std::size_t offset = line.find_first_not_of("\t ");
+					std::string match = "Debug";
+					if (isReleaseMode == false)
+						match.insert(0, 1, '#');
+
+					// Match found, push back accorded line
+					if (line.substr(offset).find(match) == 0) {
+						if (isReleaseMode == false)
+							line.erase(0, 1);
+						else
+							line.insert(0, 1, '#');
+
+						file_lines.push_back(line + "\n");
+						found = true;
+					} else
+						file_lines.push_back(line + "\n");
+				}
+				file_in.close();
+
+			} else {
+				;// TODO: Not Ideam's makefile
+			}
+
+		} else if (fileName.IStartsWith("MAKEFILE")) {
+			;// TODO: Not Ideam's makefile
+		} else
+			// Makefile not found
+			continue;
+	}
+
+	// Rewrite makefile if needed
+	if (found == true) {
+		std::ofstream file_out(path.Path());
+		if (!file_out.is_open())
+			return;
+		for (auto it = file_lines.begin(); it != file_lines.end(); it++)
+				file_out<< *it;
+	}
 }
 
 /*
@@ -3485,7 +3742,7 @@ IdeamWindow::_RunTarget()
 			else
 				command << "cargo run";
 			// Honour run mode for cargo projects
-			if (fReleaseModeEnabled == true)
+			if (fActiveProject->ReleaseModeEnabled() == true)
 				command << " --release";
 			// Go to appropriate directory
 			chdir(fActiveProject->BasePath());
@@ -3531,6 +3788,11 @@ IdeamWindow::_SendNotification(BString message, BString type)
        fRow->SetField(new BStringField(message), kMessageColumn);
        fRow->SetField(new BStringField(type), kTypeColumn);
        fNotificationsListView->AddRow(fRow, int32(0));
+}
+
+void
+IdeamWindow::_SetMakefileBuildMode()
+{
 }
 
 void
@@ -3583,6 +3845,7 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 	if (active == true) {
 		fBuildItem->SetEnabled(true);
 		fCleanItem->SetEnabled(true);
+		fBuildModeItem->SetEnabled(true);
 		fMakeCatkeysItem->SetEnabled(true);
 		fMakeBindcatalogsItem->SetEnabled(true);
 		fBuildButton->SetEnabled(true);
@@ -3602,19 +3865,22 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 			fDebugButton->SetEnabled(false);
 			return;
 		}
+		// Build mode
+		bool releaseMode = fActiveProject->ReleaseModeEnabled();
+		// Build mode menu
+		fBuildModeButton->SetEnabled(!releaseMode);
+		fDebugModeItem->SetMarked(!releaseMode);
+		fReleaseModeItem->SetMarked(releaseMode);
+
 		// Target exists: enable run button
 		BEntry entry(fActiveProject->Target());
 		if (entry.Exists()) {
 			fRunItem->SetEnabled(true);
 			fRunButton->SetEnabled(true);
 			// Enable debug button in debug mode only
-			if (fReleaseModeEnabled == true) {
-				fDebugItem->SetEnabled(false);
-				fDebugButton->SetEnabled(false);
-			} else {
-				fDebugItem->SetEnabled(true);
-				fDebugButton->SetEnabled(true);
-			}
+			fDebugItem->SetEnabled(!releaseMode);
+			fDebugButton->SetEnabled(!releaseMode);
+
 		} else {
 			fRunItem->SetEnabled(false);
 			fDebugItem->SetEnabled(false);
@@ -3625,6 +3891,7 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 		fBuildItem->SetEnabled(false);
 		fCleanItem->SetEnabled(false);
 		fRunItem->SetEnabled(false);
+		fBuildModeItem->SetEnabled(false);
 		fDebugItem->SetEnabled(false);
 		fMakeCatkeysItem->SetEnabled(false);
 		fMakeBindcatalogsItem->SetEnabled(false);
@@ -3632,6 +3899,7 @@ IdeamWindow::_UpdateProjectActivation(bool active)
 		fBuildButton->SetEnabled(false);
 		fRunButton->SetEnabled(false);
 		fDebugButton->SetEnabled(false);
+		fBuildModeButton->SetEnabled(false);
 	}
 }
 

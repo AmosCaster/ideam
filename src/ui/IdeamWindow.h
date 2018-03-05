@@ -96,6 +96,7 @@ private:
 			BBitmap*			_LoadSizedVectorIcon(int32 resourceID, int32 size);
 			void				_MakeBindcatalogs();
 			void				_MakeCatkeys();
+			void				_MakefileSetBuildMode(bool isReleaseMode);
 			void				_ProjectActivate(BString const& projectName);
 			void				_ProjectClose();
 			void				_ProjectDelete(BString name, bool sourcesToo);
@@ -118,6 +119,7 @@ private:
 			status_t			_RunInConsole(const BString& command);
 			void				_RunTarget();
 			void				_SendNotification(BString message, BString type);
+			void				_SetMakefileBuildMode();
 			void				_ShowLog(int32 index);
 			void				_UpdateFindMenuItems(const BString& text);
 			status_t			_UpdateLabel(int32 index, bool isModified);
@@ -157,6 +159,7 @@ private:
 			BMenuItem*			fBuildItem;
 			BMenuItem*			fCleanItem;
 			BMenuItem*			fRunItem;
+			BMenu*				fBuildModeItem;
 			BMenuItem*			fReleaseModeItem;
 			BMenuItem*			fDebugModeItem;
 			BMenu*				fCargoMenu;
@@ -219,8 +222,7 @@ private:
 			BMenuItem*			fCloseProjectMenuItem;
 			BMenuItem*			fDeleteProjectMenuItem;
 			BMenuItem*			fSetActiveProjectMenuItem;
-			BMenuItem*			fRescanProjectMenuItem
-			;
+			BMenuItem*			fRescanProjectMenuItem;
 			BMenuItem*			fAddProjectMenuItem;
 			BMenuItem*			fExcludeFileProjectMenuItem;
 			BMenuItem*			fDeleteFileProjectMenuItem;
@@ -228,7 +230,6 @@ private:
 
 			Project*			fActiveProject;
 			bool				fIsBuilding;
-			bool				fReleaseModeEnabled;
 			BString				fSelectedProjectName;
 			BStringItem*		fSelectedProjectItem;
 			BString				fSelectedProjectItemName;

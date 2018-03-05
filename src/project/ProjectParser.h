@@ -2,22 +2,24 @@
  * Copyright 2018 A. Mosca <amoscaster@gmail.com>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
-/*
+/**
    This is what a project preferences file may contain
 
 // These are "static" data read once, when the project is opened
+
 
 BString "project_extensioned_name"			// Project name with .idmpro
 BString "project_name"						// Project name
 BString "project_directory"					// Base directory
 BString "project_type" (c++, cargo, haiku_source)
-Bool    "run_in_terminal"
+bool    "run_in_terminal"
+
  
 // These are "runtime" data read from file when requested
 // Normally set in NewProjectWindow class or in Project->Settings
-// project_source and project_file set in ProjectParser class
-// parseless_item set in context menu: Exclude File
-
+// "project_source" and "project_file" set in ProjectParser class
+// "parseless_item" set in context menu: Exclude File
+// "release_mode" set in menu Build->Build mode
 
 BString "project_target"					// Executable path
 											// or base directory in cargo
@@ -28,6 +30,7 @@ BString "project_file"   []
 BString "project_source" []
 BString "parseless_item" []	 				// an excluded file or source
 BString "project_run_args" []	 			// run arguments
+bool    "release_mode"
 
 Possible future settings
 BString "parseless_dirs"  []
@@ -58,13 +61,6 @@ private:
 			int32				_SetParselessItems();
 
 			TPreferences*		fPreferences;
-
-	template<class Element, class Container>
-	bool _in_container(const Element & element, const Container & container)
-	{
-		return std::find(std::begin(container), std::end(container), element)
-				!= std::end(container);
-	}
 
 	static const std::vector<std::string> source_extensions;
 	static const std::vector<std::string> excluded_extensions;

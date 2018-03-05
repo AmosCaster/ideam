@@ -26,8 +26,10 @@ public:
 			bool				IsActive() { return isActive; }
 			BString	const		Name() const { return fName; }
 			status_t			Open(bool activate);
+			bool 				ReleaseModeEnabled();
 			bool				RunInTerminal() { return fRunInTerminal; }
 			BString	const		Scm();
+			void				SetReleaseMode(bool releaseMode);
 	std::vector<BString> const	SourcesList();
 			BString	const	 	Target();
 			ProjectTitleItem*	Title() const { return fProjectTitle; }

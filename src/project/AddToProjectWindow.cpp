@@ -109,12 +109,13 @@ AddToProjectWindow::_Add()
 
 	BEntry entry(path.Path());
 
-// 	Path should start with default Projects directory
+// 	Path should start with default Projects directory ?
 //	BString projectsDir(IdeamNames::Settings.projects_directory);
 	
 	// Path leaf is not exixting, create or return
 	if (!entry.Exists()) {
-		if (create_directory(path.Path(), 0755) != B_OK) // TODO: Set mask somewhere
+		// TODO: Set mask somewhere + check permissions
+		if (create_directory(path.Path(), 0755) != B_OK)
 			return;
 	} else {
 		// Path leaf is existing and not a directory, return
@@ -396,8 +397,8 @@ AddToProjectWindow::_WriteGenericMakefile(const BString& filePath)
 		<< "# Get the compiler version.\n"
 		<< "CC_VER = $(word 1, $(subst -, , $(subst ., , $(shell $(CC) -dumpversion))))\n\n"
 
-		<< "DEBUG    := -g -ggdb\n"
-		<< "CFLAGS   := -c -Wall ${DEBUG} -O2 -g \n"
+		<< "Debug    := -g -ggdb\n"
+		<< "CFLAGS   := -c -Wall -O2 ${Debug}\n"
 		<< "CXXFLAGS := -std=c++11\n"
 		<< "ASFLAGS   =\n"
 		<< "LDFLAGS   = -Xlinker -soname=_APP_\n"
@@ -417,7 +418,7 @@ AddToProjectWindow::_WriteGenericMakefile(const BString& filePath)
 		<< "sources := $(foreach dir, $(dirs), $(wildcard $(dir)/*.cpp $(dir)/*.c  $(dir)/*.S))\n\n"
 //		<< "sources := $(foreach dir, $(dirs), $(wildcard $(dir)/*.[cpp,c,S]))\n\n"
 		<< "# object files top directory\n"
-		<< "objdir  := objects.$(CPU)-$(CC)$(CC_VER)-$(if $(DEBUG),debug,release)\n\n"
+		<< "objdir  := objects.$(CPU)-$(CC)$(CC_VER)-$(if $(Debug),debug,release)\n\n"
 
 		<< "# ensue the object files\n"
 		<< "objects :=	$(patsubst \%.S, $(objdir)/\%.o, $(filter \%.S,$(sources))) \\\n"
