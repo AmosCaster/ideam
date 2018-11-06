@@ -362,8 +362,7 @@ public:
 
 	virtual void TabSelected(int32 index)
 	{
-std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
-		fManager->SelectTab(index);
+		fManager->SelectTab(index, true);
 	}
 
 	virtual bool HasFrames()
@@ -844,24 +843,28 @@ extern BRect dirtyFrameHack;
 #define DIRTY_HACK
 
 /*
- * Need to know if it is a new tab, so to load caret position
+ * fTabContainerView-> SelectTab(tabIndex) calls
+ * fController->TabSelected(index) who calls myself
+ * fManager->SelectTab(index) so set sendMessage to true not to send message twice
+ * but allowing caret position
  */
 void
-TabManager::SelectTab(int32 tabIndex, bool isNew /*= false */)
+TabManager::SelectTab(int32 tabIndex, bool sendMessage /*= false */)
 {
-//	if (tabIndex == SelectedTabIndex())
-//		return;
-
+// if(tabIndex == SelectedTabIndex() && sendMessage == false) return;
 #if defined DIRTY_HACK
 	fCardLayout->SetFrame(dirtyFrameHack);
 #endif
+
 	fCardLayout->SetVisibleItem(tabIndex);
 	
 	fTabContainerView->SelectTab(tabIndex);
-std::cerr << __PRETTY_FUNCTION__ << " index: " << tabIndex << std::endl;	
 
-	if (isNew == false) {
-		BMessage message(TABMANAGER_TAB_CHANGED);
+std::cerr << __PRETTY_FUNCTION__ << " index: " << tabIndex << " sendMessage: "
+			<< std::boolalpha << sendMessage << std::endl;
+
+	if (sendMessage == true) {
+		BMessage message(TABMANAGER_TAB_SELECTED);
 		message.AddInt32("index", tabIndex);
 		fTarget.SendMessage(&message);
 	}

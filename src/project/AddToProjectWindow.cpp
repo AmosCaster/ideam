@@ -33,9 +33,10 @@ enum
 	MSG_ITEM_CHOSEN					= 'itch'
 };
 
-const BString kCppExtension {".cpp"};
-const BString kCExtension {".c"};
-const BString kCppHeaderExtension {".h"};
+const std::string kCppExtension {".cpp"};
+const std::string kCExtension {".c"};
+const std::string kCppHeaderExtension {".h"};
+const std::string kCppClassExtension {".{cpp,h}"};
 
 AddToProjectWindow::AddToProjectWindow(const BString&  projectName,
 	const BString& itemPath)
@@ -99,9 +100,9 @@ AddToProjectWindow::MessageReceived(BMessage *msg)
 void
 AddToProjectWindow::_Add()
 {
-	BString filename(fFileName->Text());
+	std::string filename(fFileName->Text());
 	// Empty string, return
-	if (filename.IsEmpty())
+	if (filename.empty())
 		return;
 
 	BPath path(fDirectoryPath->Text());
@@ -127,57 +128,57 @@ AddToProjectWindow::_Add()
 
 	if (fCurrentItem == fCppSourceItem) {
 		// Cpp file
-		filename.Append(kCppExtension);
-		path.Append(filename);
+		filename.append(kCppExtension);
+		path.Append(filename.c_str());
 
 		if (_WriteCCppSourceFile(path.Path(), fFileName->Text()) != B_OK)
 			return;
 
 	} else if (fCurrentItem == fCSourceItem) {
 		// C file
-		filename.Append(kCExtension);
-		path.Append(filename);
+		filename.append(kCExtension);
+		path.Append(filename.c_str());
 
 		if (_WriteCCppSourceFile(path.Path(), fFileName->Text()) != B_OK)
 			return;
 
 	} else if (fCurrentItem == fCppHeaderItem) {
 		// Header file
-		filename.Append(kCppHeaderExtension);
-		path.Append(filename);
+		filename.append(kCppHeaderExtension);
+		path.Append(filename.c_str());
 
 		if (_WriteCppHeaderFile(path.Path(), fFileName->Text()) != B_OK)
 			return;;
 
 	} else if (fCurrentItem == fCppClassItem) {
 		// Cpp file
-		filename.Append(kCppExtension);
-		path.Append(filename);
+		filename.append(kCppExtension);
+		path.Append(filename.c_str());
 
 		if (_WriteCCppSourceFile(path.Path(), fFileName->Text()) != B_OK)
 			return;
 
 		// Header file
-		BString filename2(fFileName->Text());
-		filename2.Append(kCppHeaderExtension);
-		secondPath.Append(filename2);
+		std::string filename2(fFileName->Text());
+		filename2.append(kCppHeaderExtension);
+		secondPath.Append(filename2.c_str());
 
 		if (_WriteCppHeaderFile(secondPath.Path(), fFileName->Text()) != B_OK)
 			return;
 
 	} else if (fCurrentItem == fCppMakefileItem) {
-		path.Append(filename);
+		path.Append(filename.c_str());
 		if (_WriteGenericMakefile(path.Path()) != B_OK)
 			return;
 	
 	} else if (fCurrentItem == fHaikuMakefileItem) {
-		path.Append(filename);
+		path.Append(filename.c_str());
 		if (_WriteHaikuMakefile(path.Path()) != B_OK)
 			return;
 
 	} else if (fCurrentItem == fFileItem) {
 		// Generic empty file, no extension added
-		path.Append(filename);
+		path.Append(filename.c_str());
 		if (_CreateFile(file, path.Path()) != B_OK)
 			return;
 	} else
@@ -200,9 +201,9 @@ AddToProjectWindow::_Add()
 }
 
 status_t
-AddToProjectWindow::_CreateFile(BFile& file, const BString& filePath)
+AddToProjectWindow::_CreateFile(BFile& file, const std::string& filePath)
 {
-	return file.SetTo(filePath, B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
+	return file.SetTo(filePath.c_str(), B_WRITE_ONLY | B_CREATE_FILE | B_FAIL_IF_EXISTS);
 }
 
 BString	const
@@ -275,6 +276,9 @@ AddToProjectWindow::_InitWindow()
 	fFileName = new BTextControl("Name", B_TRANSLATE("Name:"), "", nullptr);
 //	fFileName->SetModificationMessage(new BMessage(MSG_ITEM_NAME_EDITED));
 
+	fExtensionShown = new BTextControl("ExtensionText", "", "", nullptr);
+	fExtensionShown->SetEnabled(false);
+
 	fDirectoryPath = new BTextControl("DirectoryPath",
 		B_TRANSLATE("Directory:"), "", nullptr);
 //	fDirectoryPath->SetModificationMessage(new BMessage(MSG_DIRECTORY_PATH_EDITED));
@@ -295,7 +299,7 @@ AddToProjectWindow::_InitWindow()
 	.AddGlue(0, 0)
 	.Add(fFileName->CreateLabelLayoutItem(), 0, 1, 1)
 	.Add(fFileName->CreateTextViewLayoutItem(), 1, 1, 3)
-	.AddGlue(5, 0)
+	.Add(fExtensionShown->CreateTextViewLayoutItem(), 4, 1, 1)
 	.Add(fDirectoryPath->CreateLabelLayoutItem(), 0, 2, 1)
 	.Add(fDirectoryPath->CreateTextViewLayoutItem(), 1, 2, 5)
 	.AddGlue(0, 3)
@@ -324,18 +328,30 @@ AddToProjectWindow::_ItemChosen(int32 selection)
 	if (selection < 0 ) {
 		fCurrentItem = nullptr;
 		fAddButton->SetEnabled(false);
+		fExtensionShown->SetText("");
 		return;
 	}
 
 	fCurrentItem = dynamic_cast<BStringItem*>(fItemListView->ItemAt(selection));
 	fAddButton->SetEnabled(true);
+
+	if (fCurrentItem == fCppSourceItem)
+		fExtensionShown->SetText(kCppExtension.c_str());
+	else if (fCurrentItem == fCSourceItem)
+		fExtensionShown->SetText(kCExtension.c_str());
+	else if (fCurrentItem == fCppHeaderItem)
+		fExtensionShown->SetText(kCppHeaderExtension.c_str());
+	else if (fCurrentItem == fCppClassItem)
+		fExtensionShown->SetText(kCppClassExtension.c_str());
+	else
+		fExtensionShown->SetText("");
 }
 
 status_t
-AddToProjectWindow::_WriteCCppSourceFile(const BString& filePath,
-										const BString& fileLeaf)
+AddToProjectWindow::_WriteCCppSourceFile(const std::string& filePath,
+										const std::string& fileLeaf)
 {
-	if(Ideam::file_exists(filePath.String()))
+	if(Ideam::file_exists(filePath))
 		return B_ERROR;	
 
 	std::ofstream file_out(filePath);	
@@ -343,38 +359,52 @@ AddToProjectWindow::_WriteCCppSourceFile(const BString& filePath,
 		return B_ERROR;
 
 	file_out << Ideam::Copyright()
-			 << "#include \"" << fileLeaf << kCppHeaderExtension <<  "\"\n\n";
+		<< "#include \"" << fileLeaf << kCppHeaderExtension <<  "\"\n\n\n"
+		<< fFileName->Text() << "::" << fFileName->Text() << "()" << "\n"
+		<< "{" << "\n"
+		<< "}" << "\n\n"
+		<< fFileName->Text() << "::" << "~" << fFileName->Text() << "()" << "\n"
+		<< "{" << "\n"
+		<< "}" << "\n\n"
+	;
 
 	return B_OK;
 }
 
 status_t
-AddToProjectWindow::_WriteCppHeaderFile(const BString& filePath,
-									const BString& fileLeaf)
+AddToProjectWindow::_WriteCppHeaderFile(const std::string& filePath,
+									const std::string& fileLeaf)
 {
-	if(Ideam::file_exists(filePath.String()))
+	if(Ideam::file_exists(filePath))
 		return B_ERROR;	
 
 	std::ofstream file_out(filePath);	
 	if (!file_out.is_open())
 		return B_ERROR;
 
-	BString headerGuard = Ideam::HeaderGuard(fileLeaf);
+	std::string headerGuard = Ideam::HeaderGuard(fileLeaf);
 	headerGuard += "_H";
 
 	file_out
 		<< Ideam::Copyright()
-		<< "#ifndef " << headerGuard << "\n"
-		<< "#define " << headerGuard << "\n\n\n\n\n"
-		<< "#endif // " << headerGuard << "\n";
+		<< "#ifndef " << headerGuard.c_str() << "\n"
+		<< "#define " << headerGuard.c_str() << "\n\n"
+		<< "class " << fFileName->Text() << " {" << "\n"
+		<< "public:\n"
+		<< "\t\t\t\t\t\t\t\t" << fFileName->Text() << "();" << "\n"
+		<< "\t\t\t\t\t\t\t\t" << "~" << fFileName->Text() << "();" << "\n\n\n"
+		<< "private:\n\n"
+		<< "};\n\n\n"
+		<< "#endif // " << headerGuard.c_str() << "\n"
+	;
 
 	return B_OK;
 }
 
 status_t
-AddToProjectWindow::_WriteGenericMakefile(const BString& filePath)
+AddToProjectWindow::_WriteGenericMakefile(const std::string& filePath)
 {
-	if(Ideam::file_exists(filePath.String()))
+	if(Ideam::file_exists(filePath))
 		return B_ERROR;
 
 	std::ofstream file_out(filePath);	
@@ -473,9 +503,9 @@ AddToProjectWindow::_WriteGenericMakefile(const BString& filePath)
 }
 
 status_t
-AddToProjectWindow::_WriteHaikuMakefile(const BString& filePath)
+AddToProjectWindow::_WriteHaikuMakefile(const std::string& filePath)
 {
-	if(Ideam::file_exists(filePath.String()))
+	if(Ideam::file_exists(filePath))
 		return B_ERROR;
 
 	status_t status;

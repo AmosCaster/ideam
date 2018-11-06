@@ -17,7 +17,7 @@
 #include "TabView.h"
 
 enum {
-    TABMANAGER_TAB_CHANGED		= 'Ttch',
+    TABMANAGER_TAB_SELECTED		= 'Ttse',
     TABMANAGER_TAB_CLOSE		= 'Ttcl',
     TABMANAGER_TAB_NEW_OPENED	= 'Ttno'
 };

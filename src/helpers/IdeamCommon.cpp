@@ -7,21 +7,22 @@
 #include <cctype>
 #include <ctime>
 #include <fstream>
+#include <sstream>
 #include <string>
 
 namespace Ideam
 {
 
-BString const Copyright()
+std::string const Copyright()
 {
-	BString header;
+	std::ostringstream header;
 	header
 		<< "/*\n"
 		<< " * Copyright " << get_year() << " Your_Name <your@email.address>\n"
 		<< " * All rights reserved. Distributed under the terms of the MIT license.\n"
 		<< " */\n";
 
-	return header;
+	return header.str();
 }
 
 /*
@@ -30,17 +31,19 @@ BString const Copyright()
  *     all_lower = ALL_LOWER
  *     CamelCase = CAMEL_CASE
  */
-BString const HeaderGuard(const BString& fileName)
+std::string const HeaderGuard(const std::string& fileName)
 {
-	BString upper(fileName);
-	BString lower(fileName);
+	std::string upper(fileName);
+	std::string lower(fileName);
+	std::transform (upper.begin(), upper.end(), upper.begin(), ::toupper);
+	std::transform (lower.begin(), lower.end(), lower.begin(), ::toupper);
 
 	// Filename is UPPER case, leave it
-	if (fileName == upper.ToUpper())
+	if (fileName == upper)
 		return fileName;
 	// Filename is lower case, make it UPPER
-	else if (fileName == lower.ToLower())
-		return lower.ToUpper();
+	else if (fileName == lower)
+		return upper;
 
 	std::string in(fileName);
 	std::string out("");
@@ -50,7 +53,7 @@ BString const HeaderGuard(const BString& fileName)
 			out += static_cast<unsigned char>('_');
 		out += std::toupper(static_cast<unsigned char>(*iter));
 	}
-	return out.c_str();
+	return out;
 }
 
 bool file_exists(const std::string& filename)
@@ -62,6 +65,26 @@ bool file_exists(const std::string& filename)
 		return true;
 	}
 	return false;
+}
+
+std::string const file_type(const std::string& filename)
+{
+ 	if (filename.find("Jamfile") == 0) {
+		return "jam";
+	}
+	if (filename.find("Makefile") == 0
+		|| filename.find("makefile") == 0) {
+		return "make";
+	}
+
+	std::string extension = filename.substr(filename.find_last_of('.') + 1);
+	if (extension == "cpp" || extension == "cxx" || extension == "cc"
+			 || extension == "h" || extension == "c")
+		return "c++";
+	else if (extension == "rs")
+		return "rust";
+
+	return "";
 }
 
 int get_year()

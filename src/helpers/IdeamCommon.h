@@ -5,19 +5,19 @@
 #ifndef IDEAM_COMMON_H
 #define IDEAM_COMMON_H
 
-#include <String.h>
-
 #include <algorithm>
 #include <string>
 
 
 namespace Ideam
 {
-	bool file_exists(const std::string& filename);
-	int get_year();
+	std::string const	Copyright();
+	std::string const	HeaderGuard(const std::string&  fileName);
 
-	BString const Copyright();
-	BString const HeaderGuard(const BString&  fileName);
+	bool				file_exists(const std::string& filename);
+	std::string const	file_type(const std::string& filename);
+	int					get_year();
+
 
 	template<class Element, class Container>
 	bool _in_container(const Element & element, const Container & container)

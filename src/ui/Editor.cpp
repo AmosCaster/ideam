@@ -17,6 +17,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "IdeamCommon.h"
 #include "IdeamNamespace.h"
 #include "keywords.h"
 
@@ -41,9 +42,12 @@ Editor::Editor(entry_ref* ref, const BMessenger& target)
 	, fBracingAvailable(false)
 	, fFoldingAvailable(false)
 	, fSyntaxAvailable(false)
+	, fParsingAvailable(false)
 	, fCommenter("")
+	, fCurrentLine(-1)
+	, fCurrentColumn(-1)
 {
-	fName = BString(ref->name);
+	fFileName = BString(ref->name);
 	SetTarget(target);
 
 	// Filter notifying changes
@@ -137,7 +141,7 @@ Editor::ApplySettings()
 	}
 
 	// Tab width
-	if (fExtension == "rust") {
+	if (fFileType == "rust") {
 		// Use rust style (4 spaces)
 		SendMessage(SCI_SETTABWIDTH, 4, UNSET);
 		SendMessage(SCI_SETUSETABS, false, UNSET);
@@ -619,9 +623,18 @@ Editor::LoadFromFile()
 	// Monitor node
 	StartMonitoring();
 
-	fExtension = _GetFileExtension();
+	fFileType = Ideam::file_type(fFileName.String());
 
 	return B_OK;
+}
+
+BString const
+Editor::ModeString()
+{
+	if (IsReadOnly())
+			return "RO";
+
+	return "RW";
 }
 
 void
@@ -654,10 +667,10 @@ Editor::NotificationReceived(SCNotification* notification)
 					_RedrawNumberMargin();
 			break;
 		}
-	case SCN_NEEDSHOWN: {
-std::cerr << "SCN_NEEDSHOWN " << std::endl;
-		break;
-		}
+	// case SCN_NEEDSHOWN: {
+// std::cerr << "SCN_NEEDSHOWN " << std::endl;
+		// break;
+		// }
 		case SCN_SAVEPOINTLEFT: {
 			fModified = true;
 			BMessage message(EDITOR_SAVEPOINT_LEFT);
@@ -714,6 +727,20 @@ Editor::Paste()
 {
 	if (SendMessage(SCI_CANPASTE, UNSET, UNSET))
 		SendMessage(SCI_PASTE, UNSET, UNSET);
+}
+
+void
+Editor::PretendPositionChanged()
+{
+	int32 position = GetCurrentPosition();
+	int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET) + 1;
+	int column = SendMessage(SCI_GETCOLUMN, position, UNSET) + 1;
+
+	BMessage message(EDITOR_PRETEND_POSITION_CHANGED);
+	message.AddRef("ref", &fFileRef);
+	message.AddInt32("line", line);
+	message.AddInt32("column", column);
+	fTarget.SendMessage(&message);
 }
 
 void
@@ -931,20 +958,27 @@ Editor::Selection()
 	return text;
 }
 
-/*
- * Name is misleading: it sends Selection/Position changes
- */
+
+// Name is misleading: it sends Selection/Position changes.
+// Position is not changed when reselecting a different tab,
+// so send an EDITOR_PRETEND_POSITION_CHANGED message.
 void
 Editor::SendCurrentPosition()
 {
 	int32 position = GetCurrentPosition();
-
-	BMessage message(EDITOR_SELECTION_CHANGED);
-	message.AddRef("ref", &fFileRef);
 	int line = SendMessage(SCI_LINEFROMPOSITION, position, UNSET) + 1;
 	int column = SendMessage(SCI_GETCOLUMN, position, UNSET) + 1;
-	message.AddInt32("line", line);
-	message.AddInt32("column", column);
+
+//	if (line == fCurrentLine && column == fCurrentColumn)
+// return;
+
+	fCurrentLine = line;
+	fCurrentColumn = column;
+
+	BMessage message(EDITOR_POSITION_CHANGED);
+	message.AddRef("ref", &fFileRef);
+	message.AddInt32("line", fCurrentLine);
+	message.AddInt32("column", fCurrentColumn);
 	fTarget.SendMessage(&message);
 }
 
@@ -969,7 +1003,7 @@ Editor::SetFileRef(entry_ref* ref)
 		return B_ERROR;
 
 	fFileRef = *ref;
-	fName = BString(fFileRef.name);
+	fFileName = BString(fFileRef.name);
 
 	return B_OK;
 }
@@ -1104,22 +1138,23 @@ Editor::Undo()
 void
 Editor::_ApplyExtensionSettings()
 {
-	if (fExtension == "c++") {
+	if (fFileType == "c++") {
 		fSyntaxAvailable = true;
 		fFoldingAvailable = true;
 		fBracingAvailable = true;
+		fParsingAvailable = true;
 		fCommenter = "//";
 		SendMessage(SCI_SETLEXER, SCLEX_CPP, UNSET);
 		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)cppKeywords);
 		SendMessage(SCI_SETKEYWORDS, 1, (sptr_t)haikuClasses);
-	} else if (fExtension == "rust") {
+	} else if (fFileType == "rust") {
 		fSyntaxAvailable = true;
 		fFoldingAvailable = true;
 		fBracingAvailable = true;
 		fCommenter = "//";
 		SendMessage(SCI_SETLEXER, SCLEX_RUST, UNSET);
 		SendMessage(SCI_SETKEYWORDS, 0, (sptr_t)rustKeywords);
-	} else if (fExtension == "make") {
+	} else if (fFileType == "make") {
 		fSyntaxAvailable = true;
 		fBracingAvailable = true;
 		fCommenter = "#";
@@ -1138,7 +1173,7 @@ Editor::_AutoIndentLine()
 	auto charInsertions = 0;
 
 	BString lineIndent = "\t";
-	if (fExtension == "rust")
+	if (fFileType == "rust")
 		lineIndent = "    ";
 
 	// Get current line number
@@ -1346,30 +1381,6 @@ Editor::_EndOfLineAssign(char *buffer, int32 size)
 	SendMessage(SCI_SETEOLMODE, eol, UNSET);
 }
 
-BString const
-Editor::_GetFileExtension()
-{
-	BString extension;
-
-	if (fName.FindFirst("Jamfile") >= 0) {
-		return "jam";
-	}
-	if (fName.IFindFirst("Makefile") >= 0) {
-		return "make";
-	}
-
-	fName.CopyInto(extension, fName.FindLast('.') + 1, fName.Length());
-
-	if (extension == "cpp" || extension == "cxx" || extension == "cc"
-			 || extension == "h" || extension == "c")
-		return "c++";
-	else if (extension == "rs")
-		return "rust";
-
-	return "";
-}
-
-
 void
 Editor::_HighlightBraces()
 {
@@ -1389,7 +1400,7 @@ Editor::_HighlightFile()
 {
 	if (fSyntaxAvailable == true) {
 		// Rust colors taken from rustbook, second edition
-		if (fExtension == "rust") {
+		if (fFileType == "rust") {
 			SendMessage(SCI_STYLESETFORE, SCE_RUST_DEFAULT, 0x000000);
 			SendMessage(SCI_STYLESETFORE, SCE_RUST_COMMENTBLOCK, 0x6E5B5E);
 			SendMessage(SCI_STYLESETFORE, SCE_RUST_COMMENTBLOCKDOC, 0x6E5B5E);

@@ -13,6 +13,8 @@
 #include <TextControl.h>
 #include <Window.h>
 
+#include <string>
+
 #include "TitleItem.h"
 
 
@@ -27,16 +29,16 @@ public:
 	virtual	bool				QuitRequested();
 private:
 			void				_Add();
-			status_t			_CreateFile(BFile& file, const BString& filePath);
+			status_t			_CreateFile(BFile& file, const std::string& filePath);
 			BString const		_CurrentDirectory(const BString& itemPath);
 			void				_InitWindow();
 			void				_ItemChosen(int32 selection);
-			status_t			_WriteCCppSourceFile(const BString& filePath,
-									const BString& fileLeaf);
-			status_t			_WriteCppHeaderFile(const BString& filePath,
-									const BString& fileLeaf);
-			status_t			_WriteGenericMakefile(const BString& filePath);
-			status_t			_WriteHaikuMakefile(const BString& filePath);
+			status_t			_WriteCCppSourceFile(const std::string& filePath,
+									const std::string& fileLeaf);
+			status_t			_WriteCppHeaderFile(const std::string& filePath,
+									const std::string& fileLeaf);
+			status_t			_WriteGenericMakefile(const std::string& filePath);
+			status_t			_WriteHaikuMakefile(const std::string& filePath);
 
 
 			BString	const		fProjectName;
@@ -53,6 +55,7 @@ private:
 			BStringItem*		fCurrentItem;
 
 			BTextControl* 		fFileName;
+			BTextControl* 		fExtensionShown;
 			BTextControl* 		fDirectoryPath;
 			BButton* 			fAddButton;
 };

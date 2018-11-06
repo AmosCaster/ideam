@@ -36,8 +36,6 @@
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "IdeamWindow"
 
-#define MULTIFILE_OPEN_SELECT_FIRST_FILE
-
 
 constexpr auto kRecentFilesNumber = 14 + 1;
 
@@ -182,10 +180,10 @@ IdeamWindow::IdeamWindow(BRect frame)
 												B_QUIT_ON_WINDOW_CLOSE)
 	, fActiveProject(nullptr)
 	, fIsBuilding(false)
+	, fConsoleStdinLine("")
 	, fConsoleIOThread(nullptr)
 	, fBuildLogView(nullptr)
 	, fConsoleIOView(nullptr)
-	, fConsoleStdinLine("")
 {
 	// Settings file check.
 	BPath path;
@@ -390,7 +388,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 				fEditor = fEditorObjectList->ItemAt(index);
 				if (fEditor->CanRedo())
 					fEditor->Redo();
-				_UpdateSelectionChange(index);
+				_UpdateSavepointChange(index, "Redo");
 			}
 			break;
 		}
@@ -417,7 +415,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 				fEditor = fEditorObjectList->ItemAt(index);
 				if (fEditor->CanUndo())
 					fEditor->Undo();
-				_UpdateSelectionChange(index);
+				_UpdateSavepointChange(index, "Undo");
 			}
 			break;
 		}
@@ -499,6 +497,21 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+		case EDITOR_PRETEND_POSITION_CHANGED: {
+			entry_ref ref;
+			if (message->FindRef("ref", &ref) == B_OK) {
+				int32 index =  _GetEditorIndex(&ref);
+				if (index == fTabManager->SelectedTabIndex()) {
+					int32 line, column;
+					if (message->FindInt32("line", &line) == B_OK
+						&& message->FindInt32("column", &column) == B_OK)
+
+							_UpdateStatusBarText(line, column);
+				}
+			}
+			break;
+		}
+
 		case EDITOR_REPLACE_ALL_COUNT: {
 			int32 count;
 			if (message->FindInt32("count", &count) == B_OK) {
@@ -532,17 +545,16 @@ IdeamWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
-		case EDITOR_SELECTION_CHANGED: {
+		case EDITOR_POSITION_CHANGED: {
 			entry_ref ref;
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index =  _GetEditorIndex(&ref);
 				if (index == fTabManager->SelectedTabIndex()) {
 					int32 line, column;
-					_UpdateSelectionChange(index);
+					// Enable Cut,Copy,Paste shortcuts
+					_UpdateSavepointChange(index, "EDITOR_POSITION_CHANGED");
 					if (message->FindInt32("line", &line) == B_OK
 						&& message->FindInt32("column", &column) == B_OK)
-						// Do not leave garbage on last file closed
-						if (fTabManager->CountTabs() > 0)
 							_UpdateStatusBarText(line, column);
 				}
 			}
@@ -553,8 +565,7 @@ IdeamWindow::MessageReceived(BMessage* message)
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index = _GetEditorIndex(&ref);
 				_UpdateLabel(index, true);
-// std::cerr << "EDITOR_SAVEPOINT_LEFT " << "index: " << index << std::endl;
-				_UpdateSelectionChange(index);
+				_UpdateSavepointChange(index, "Left");
 			}
 
 			break;
@@ -564,20 +575,9 @@ IdeamWindow::MessageReceived(BMessage* message)
 			if (message->FindRef("ref", &ref) == B_OK) {
 				int32 index = _GetEditorIndex(&ref);
 				_UpdateLabel(index, false);
-// std::cerr << "EDITOR_SAVEPOINT_REACHED " << "index: " << index << std::endl;
-				_UpdateSelectionChange(index);
+				_UpdateSavepointChange(index, "Reached");
 			}
-#if defined MULTIFILE_OPEN_SELECT_FIRST_FILE
-				/* Have to call _UpdateSelectionChange again because SAVEPOINT_REACHED
-				 * comes after file selection. On multifile open first the first
-				 * newly open file is selected but savepoint reached is for the
-				 * last file and previous/next arrows get wrong.
-				 */
-				int32 index = fTabManager->SelectedTabIndex();
-				fEditor = fEditorObjectList->ItemAt(index);
-// std::cerr << "SELECT_FIRST_FILE " << "index: " << index << std::endl;
-				_UpdateSelectionChange(index);
-#endif
+
 			break;
 		}
 		case MSG_BOOKMARK_CLEAR_ALL: {
@@ -634,7 +634,8 @@ IdeamWindow::MessageReceived(BMessage* message)
 			if (index > -1 && index < fTabManager->CountTabs()) {
 				fEditor = fEditorObjectList->ItemAt(index);
 				fEditor->SetReadOnly();
-				_UpdateSelectionChange(index);
+				fFileUnlockedButton->SetEnabled(!fEditor->IsReadOnly());
+				_UpdateStatusBarTrailing(fTabManager->SelectedTabIndex());
 			}
 			break;
 		}
@@ -1124,24 +1125,23 @@ IdeamWindow::MessageReceived(BMessage* message)
 				_ProjectOpen(extensionedName, true);
 			break;
 		}
-		case TABMANAGER_TAB_CHANGED: {
+		case TABMANAGER_TAB_SELECTED: {
 			int32 index;
 			if (message->FindInt32("index", &index) == B_OK) {
-					fEditor = fEditorObjectList->ItemAt(index);
-					// TODO notify and check index too
-/*					if (fEditor == nullptr) {
-std::cerr << "TABMANAGER_TAB_CHANGED " << "NULL on index: " << index << std::endl;
-						break;
-					}	
-*/					fEditor->GrabFocus();
-					// In multifile open not-focused files place scroll just after
-					// caret line when reselected. Ensure visibility.
-					// TODO caret policy
-					fEditor->EnsureVisiblePolicy();
+				fEditor = fEditorObjectList->ItemAt(index);
+				// TODO notify and check index too
+				if (fEditor == nullptr) {
+// std::cerr << "TABMANAGER_TAB_SELECTED " << "NULL on index: " << index << std::endl;
+					break;
+				}	
+				fEditor->GrabFocus();
+				// In multifile open not-focused files place scroll just after
+				// caret line when reselected. Ensure visibility.
+				// TODO caret policy
+				fEditor->EnsureVisiblePolicy();
 
-// std::cerr << "TABMANAGER_TAB_CHANGED " << fEditor->Name() << " index: " << index << std::endl;
-				fEditor->SendCurrentPosition();
-				_UpdateSelectionChange(index);
+				fEditor->PretendPositionChanged();
+				_UpdateTabChange(index, "TABMANAGER_TAB_SELECTED");
 				_UpdateStatusBarTrailing(index);
 			}
 			break;
@@ -1472,7 +1472,7 @@ IdeamWindow::_FileClose(int32 index, bool ignoreModifications /* = false */)
 
 	// Was it the last one?
 	if (fTabManager->CountTabs() == 0)
-		_UpdateSelectionChange(-1);
+		_UpdateTabChange(-1, "_FileClose");
 
 	return B_OK;
 }
@@ -1526,7 +1526,7 @@ IdeamWindow::_FileOpen(BMessage* msg)
 		}
 
 		int32 index = fTabManager->CountTabs();
-std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
+// std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 
 		if (_AddEditorTab(&ref, index) != B_OK)
 			continue;
@@ -1553,7 +1553,7 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 
 		// First tab gets selected by tabview
 		if (index > 0)
-			fTabManager->SelectTab(index, true);
+			fTabManager->SelectTab(index);
 
 		notification << B_TRANSLATE("File open:")  << "  "
 			<< fEditor->Name()
@@ -1562,24 +1562,10 @@ std::cerr << __PRETTY_FUNCTION__ << " index: " << index << std::endl;
 		notification.SetTo("");
 	}
 
-#if defined MULTIFILE_OPEN_SELECT_FIRST_FILE
-	// Needs modified libscintilla
 	// If at least 1 item or more were added select the first
-	// of them. see below
-	if (nextIndex < fTabManager->CountTabs()) {
+	// of them.
+	if (nextIndex < fTabManager->CountTabs())
 		fTabManager->SelectTab(nextIndex);
-//		fEditor->GrabFocus();
-}
-#else
-	// If at least one item added, select last opened file:
-	// it grabs keyboard focus anyway so fix that if you want to change
-	//  selection management on multi-open.
-	int32 tabs = fTabManager->CountTabs();
-	if (nextIndex < tabs) {
-		fTabManager->SelectTab(tabs - 1);
-		fEditor->GrabFocus();
-	}
-#endif
 
 	return status;
 }
@@ -2650,7 +2636,7 @@ IdeamWindow::_InitOutputSplit()
 	fOutputTabView = new BTabView("OutputTabview");
 
 	fNotificationsListView = new BColumnListView(B_TRANSLATE("Notifications"),
-									B_NAVIGABLE, B_PLAIN_BORDER, true);
+									B_NAVIGABLE, B_FANCY_BORDER, true);
 	fNotificationsListView->AddColumn(new BDateColumn(B_TRANSLATE("Time"),
 								200.0, 200.0, 200.0), kTimeColumn);
 	fNotificationsListView->AddColumn(new BStringColumn(B_TRANSLATE("Message"),
@@ -2677,9 +2663,14 @@ IdeamWindow::_InitSideSplit()
 	fProjectsTabView = new BTabView("ProjectsTabview");
 	fProjectsOutline = new BOutlineListView("ProjectsOutline", B_SINGLE_SELECTION_LIST);
 	fProjectsScroll = new BScrollView(B_TRANSLATE("Projects"),
-		fProjectsOutline, B_FRAME_EVENTS | B_WILL_DRAW, true, true, B_NO_BORDER);
+		fProjectsOutline, B_FRAME_EVENTS | B_WILL_DRAW, true, true, B_FANCY_BORDER);
 	fProjectsTabView->AddTab(fProjectsScroll);
 
+#if defined CLASSES_VIEW
+	// Classes View
+	fClassesView = ClassesView::Create(BMessenger(this));
+	fProjectsTabView->AddTab(fClassesView);
+#endif
 	fProjectsOutline->SetSelectionMessage(new BMessage(MSG_PROJECT_MENU_ITEM_CHOSEN));
 	fProjectsOutline->SetInvocationMessage(new BMessage(MSG_PROJECT_MENU_OPEN_FILE));
 
@@ -2947,7 +2938,7 @@ IdeamWindow::_MakefileSetBuildMode(bool isReleaseMode)
 
 						for (auto it = line.cbegin() + start; it != line.cend(); it++) {
 							switch (*it) {
-								// Start comment unless a comment already
+								// Start comment unless in comment already
 								// Close possible open token
 								case '#':
 									if (isComment == true)
@@ -3091,7 +3082,7 @@ IdeamWindow::_MakefileSetBuildMode(bool isReleaseMode)
 		std::ofstream file_out(path.Path());
 		if (!file_out.is_open())
 			return;
-		for (auto it = file_lines.begin(); it != file_lines.end(); it++)
+		for (auto it = file_lines.cbegin(); it != file_lines.cend(); it++)
 				file_out<< *it;
 	}
 }
@@ -3916,17 +3907,83 @@ IdeamWindow::_UpdateReplaceMenuItems(const BString& text)
 		fReplaceMenuField->Menu()->RemoveItem(items);
 }
 
+// Called by:
+// Savepoint Reached
+// Savepoint Left
+// Undo
+// Redo
+void
+IdeamWindow::_UpdateSavepointChange(int32 index, const BString& caller)
+{
+	assert (index > -1 && index < fTabManager->CountTabs());
+
+	fEditor = fEditorObjectList->ItemAt(index);
+
+	// Menu Items
+	fSaveMenuItem->SetEnabled(fEditor->IsModified());
+	fUndoMenuItem->SetEnabled(fEditor->CanUndo());
+	fRedoMenuItem->SetEnabled(fEditor->CanRedo());
+	fCutMenuItem->SetEnabled(fEditor->CanCut());
+	fCopyMenuItem->SetEnabled(fEditor->CanCopy());
+	fPasteMenuItem->SetEnabled(fEditor->CanPaste());
+	fDeleteMenuItem->SetEnabled(fEditor->CanClear());
+
+	// ToolBar Items
+	fUndoButton->SetEnabled(fEditor->CanUndo());
+	fRedoButton->SetEnabled(fEditor->CanRedo());
+	fFileSaveButton->SetEnabled(fEditor->IsModified());
+
+	// fEditor is modified by _FilesNeedSave so it should be the last
+	// or reload editor pointer
+	bool filesNeedSave = _FilesNeedSave();
+	fFileSaveAllButton->SetEnabled(filesNeedSave);
+	fSaveAllMenuItem->SetEnabled(filesNeedSave);
+/*	fEditor = fEditorObjectList->ItemAt(index);
+	// This could be checked too
+	if (fTabManager->SelectedTabIndex() != index);
+*/
+// std::cerr << __PRETTY_FUNCTION__ << " called by: " << caller << " :"<< index << std::endl;
+
+}
 
 /*
- * Updating menu, toolbar, title.
- * Also cleaning statusbar if no open files
+ * Status bar is cleaned (both text and trailing) when
+ * _UpdateTabChange is called with -1 index
+ *
  */
 void
-IdeamWindow::_UpdateSelectionChange(int32 index)
+IdeamWindow::_UpdateStatusBarText(int line, int column)
 {
-	// Should not happen
-	if (index < -1)
-		return;
+	BString text;
+	text << "  " << line << ':' << column;
+	fStatusBar->SetText(text.String());
+}
+
+/*
+ * Index has to be verified before the call
+ * so it is not checked here too
+ */
+void
+IdeamWindow::_UpdateStatusBarTrailing(int32 index)
+{
+	fEditor = fEditorObjectList->ItemAt(index);
+
+	BString trailing;
+	trailing << fEditor->IsOverwriteString() << '\t';
+	trailing << fEditor->EndOfLineString() << '\t';
+	trailing << fEditor->ModeString() << '\t';
+	//trailing << fEditor->EncodingString() << '\t';
+
+	fStatusBar->SetTrailingText(trailing.String());
+}
+
+// Updating menu, toolbar, title, classes.
+// Also cleaning Status bar if no open files
+// and Classes view if class parsing not available
+void
+IdeamWindow::_UpdateTabChange(int32 index, const BString& caller)
+{
+	assert (index >= -1 && index < fTabManager->CountTabs());
 
 	// All files are closed
 	if (index == -1) {
@@ -3968,7 +4025,10 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 		fReplaceItem->SetEnabled(false);
 		fGoToLineItem->SetEnabled(false);
 		fBookmarksMenu->SetEnabled(false);
-
+#if defined CLASSES_VIEW
+		// Clean class view
+		fClassesView->Clear();
+#endif
 		// Clean Status bar
 		fStatusBar->Reset();
 
@@ -3989,8 +4049,8 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 	fFileCloseButton->SetEnabled(true);
 	fFileMenuButton->SetEnabled(true);
 
+	// Arrows
 	int32 maxTabIndex = (fTabManager->CountTabs() - 1);
-
 	if (index == 0) {
 		fFilePreviousButton->SetEnabled(false);
 		if (maxTabIndex > 0)
@@ -4017,7 +4077,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 	fDeleteMenuItem->SetEnabled(fEditor->CanClear());
 	fSelectAllMenuItem->SetEnabled(true);
 	fOverwiteItem->SetEnabled(true);
-//fOverwiteItem->SetMarked(fEditor->IsOverwrite());
+	// fOverwiteItem->SetMarked(fEditor->IsOverwrite());
 	fToggleWhiteSpacesItem->SetEnabled(true);
 	fToggleLineEndingsItem->SetEnabled(true);
 	fLineEndingsMenu->SetEnabled(!fEditor->IsReadOnly());
@@ -4026,6 +4086,7 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 	fGoToLineItem->SetEnabled(true);
 	fBookmarksMenu->SetEnabled(true);
 
+	// File full path in window title
 	if (IdeamNames::Settings.fullpath_title == true) {
 		BString title;
 		title << IdeamNames::kApplicationName << ": " << fEditor->FilePath();
@@ -4037,39 +4098,15 @@ IdeamWindow::_UpdateSelectionChange(int32 index)
 	bool filesNeedSave = _FilesNeedSave();
 	fFileSaveAllButton->SetEnabled(filesNeedSave);
 	fSaveAllMenuItem->SetEnabled(filesNeedSave);
-/*	fEditor = fEditorObjectList->ItemAt(index);
-	// This could be checked too
-	if (fTabManager->SelectedTabIndex() != index);
-*/
 
-}
+#if defined CLASSES_VIEW
+	// Update class view
+	if (fEditor->IsParsingAvailable())
+		fClassesView->ParseFile(fEditor->FileRef());
+	else
+		fClassesView->Clear();
+#endif
 
-/*
- * Status bar is cleaned (both text and trailing) when
- * _UpdateSelectionChange is called with -1 index
- *
- */
-void
-IdeamWindow::_UpdateStatusBarText(int line, int column)
-{
-	BString text;
-	text << "  " << line << ':' << column;
-	fStatusBar->SetText(text.String());
-}
+std::cerr << __PRETTY_FUNCTION__ << " called by: " << caller << " :"<< index << std::endl;
 
-/*
- * Index has to be verified before the call
- * so it is not checked here too
- */
-void
-IdeamWindow::_UpdateStatusBarTrailing(int32 index)
-{
-	fEditor = fEditorObjectList->ItemAt(index);
-
-	BString trailing;
-	trailing << fEditor->IsOverwriteString();
-	trailing << '\t' << fEditor->EndOfLineString() << '\t';
-	//trailing << '\t' << fEditor->EncodingString() << '\t';
-
-	fStatusBar->SetTrailingText(trailing.String());
 }

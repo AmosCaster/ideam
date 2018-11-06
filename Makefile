@@ -8,7 +8,7 @@ CC   := gcc-x86
 CXX  := g++-x86
 #CXX  := clang++
 else
-#CXX  := clang++
+# CXX  := clang++
 endif
 
 NAME := Ideam
@@ -31,6 +31,8 @@ SRCS +=  src/project/ProjectParser.cpp
 SRCS +=  src/project/ProjectSettingsWindow.cpp
 SRCS +=  src/helpers/IdeamCommon.cpp
 SRCS +=  src/helpers/TPreferences.cpp
+# SRCS +=  src/helpers/class_parser/ClassParser.cpp
+# SRCS +=  src/helpers/class_parser/ClassesView.cpp
 SRCS +=  src/helpers/console_io/ConsoleIOView.cpp
 SRCS +=  src/helpers/console_io/ConsoleIOThread.cpp
 SRCS +=  src/helpers/console_io/GenericThread.cpp
@@ -45,6 +47,7 @@ LIBS = be shared translation localestub $(STDCPPLIBS)
 LIBS += scintilla columnlistview tracker
 
 LIBPATHS = $(shell findpaths -a $(platform) B_FIND_PATH_DEVELOP_LIB_DIRECTORY)
+# LIBPATHS  = /boot/home/config/non-packaged/lib
 #$(info LIBPATHS="$(LIBPATHS)")
 
 SYSTEM_INCLUDE_PATHS  = $(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/interface)
@@ -57,19 +60,18 @@ ifeq ($(platform), x86)
 ###### x86 clang++ build (mind scan-build too) #################################
 ifneq ($(CXX), g++-x86)
 SYSTEM_INCLUDE_PATHS += /boot/system/lib/x86/clang/5.0.0/include \
-	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/5.4.0/include/c++ \
-	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/5.4.0/include/c++/i586-pc-haiku
+	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/7.3.0/include/c++ \
+	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/7.3.0/include/c++/i586-pc-haiku
 endif
 else
 ######## x86_64 clang++ build (mind scan-build too) ############################
 ifneq ($(CXX), g++)
 SYSTEM_INCLUDE_PATHS += \
-	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++ \
-	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/5.4.0/include/c++/x86_64-unknown-haiku
-endif
+	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/7.3.0/include/c++ \
+	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/7.3.0/include/c++/x86_64-unknown-haiku
 endif
 
-OPTIMIZE := FULL
+endif
 
 CFLAGS := -Wall -Werror
 

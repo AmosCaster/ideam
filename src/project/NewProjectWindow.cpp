@@ -202,12 +202,18 @@ NewProjectWindow::_CreateProject()
 	fCurrentItem = dynamic_cast<BStringItem*>(fTypeListView->ItemAt(selection));
 
 	// Little validation for controls
+
 	// Warn if project name is empty
 	if ((strcmp(fProjectNameText->Text(), "") == 0)) {
 		fProjectDescription->SetText(B_TRANSLATE("Please fill \"Project name\" field"));
 		return B_ERROR;
 	}
 
+	// Trim spaces (to avoid messing class names)
+	// Thanx to Sofia for bug discovering
+	BString projectName = fProjectNameText->Text();
+	fProjectNameText->SetText(projectName.Trim());
+	
 	// Warn if project directory exists
 	BPath dirPath(fProjectsDirectoryText->Text());
 	dirPath.Append(fProjectNameText->Text());
@@ -1419,14 +1425,14 @@ NewProjectWindow::_WriteAppfiles()
 	BString hFileName(fileName);
 	hFileName.Append(".h");
 
-	BString headComment  = Ideam::Copyright();
+	std::string headComment  = Ideam::Copyright();
 //	headComment << "/*\n"
 //				<< " * Copyright " << fYear << " Your Name <your@email.address>\n"
 //				<< " * All rights reserved. Distributed under the terms of the MIT license.\n"
 //				<< " */\n\n";
 
 	if (fAddHeader->Value() == true) {
-		BString upperFileName = Ideam::HeaderGuard(fileName);
+		std::string upperFileName = Ideam::HeaderGuard(fileName.String());
 		upperFileName += "_H";
 
 		hPath.Append(hFileName);
@@ -1435,9 +1441,9 @@ NewProjectWindow::_WriteAppfiles()
 			return status;
 
 		BString hFileContent;
-		hFileContent << headComment
-			<< "#ifndef " << upperFileName << "\n"
-			<< "#define " << upperFileName << "\n\n"
+		hFileContent << headComment.c_str()
+			<< "#ifndef " << upperFileName.c_str() << "\n"
+			<< "#define " << upperFileName.c_str() << "\n\n"
 			<< "#include <Application.h>\n\n"
 			<< "class " << fileName << " : public BApplication {\n"
 			<< "public:\n"
@@ -1445,7 +1451,7 @@ NewProjectWindow::_WriteAppfiles()
 			<< "\tvirtual\t\t\t\t\t\t~" << fileName << "();\n\n"
 			<< "private:\n\n"
 			<< "};\n\n"
-			<< "#endif //" << upperFileName << "\n";
+			<< "#endif //" << upperFileName.c_str() << "\n";
 
 		ssize_t bytes = file.Write(hFileContent.String(), hFileContent.Length());
 		if (bytes != hFileContent.Length())
@@ -1461,7 +1467,7 @@ NewProjectWindow::_WriteAppfiles()
 		return status;
 
 	BString cppFileContent;
-	cppFileContent << headComment
+	cppFileContent << headComment.c_str()
 		<< "#include \"" << hFileName <<  "\"\n\n"
 		<< "#include <String.h>\n"
 		<< "#include <StringView.h>\n"
@@ -1529,11 +1535,11 @@ NewProjectWindow::_WriteAppMenufiles()
 	hFileName.Append(".h");
 	hSecondFileName.Append(".h");
 
-	BString headComment  = Ideam::Copyright();
+	std::string headComment  = Ideam::Copyright();
 
 	// App header
 	if (fAddHeader->Value() == true) {
-		BString upperFileName = Ideam::HeaderGuard(fileNameStripped);
+		std::string upperFileName = Ideam::HeaderGuard(fileNameStripped.String());
 		upperFileName += "_H";
 
 
@@ -1543,9 +1549,9 @@ NewProjectWindow::_WriteAppMenufiles()
 			return status;
 
 		BString hFileContent;
-		hFileContent << headComment
-			<< "#ifndef " << upperFileName << "\n"
-			<< "#define " << upperFileName << "\n\n"
+		hFileContent << headComment.c_str()
+			<< "#ifndef " << upperFileName.c_str() << "\n"
+			<< "#define " << upperFileName.c_str() << "\n\n"
 			<< "#include <Application.h>\n\n"
 			<< "class " << fileNameStripped << " : public BApplication {\n"
 			<< "public:\n"
@@ -1553,7 +1559,7 @@ NewProjectWindow::_WriteAppMenufiles()
 			<< "\tvirtual\t\t\t\t\t\t~" << fileNameStripped << "();\n\n"
 			<< "private:\n\n"
 			<< "};\n\n"
-			<< "#endif //" << upperFileName << "\n";
+			<< "#endif //" << upperFileName.c_str() << "\n";
 
 		ssize_t bytes = file.Write(hFileContent.String(), hFileContent.Length());
 		if (bytes != hFileContent.Length())
@@ -1565,7 +1571,7 @@ NewProjectWindow::_WriteAppMenufiles()
 
 	// Window header
 	if (fAddSecondHeader->Value() == true) {
-		BString upperFileName = Ideam::HeaderGuard(fileSecondNameStripped);
+		std::string upperFileName = Ideam::HeaderGuard(fileSecondNameStripped.String());
 		upperFileName += "_H";
 
 		hSecondPath.Append(hSecondFileName);
@@ -1575,9 +1581,9 @@ NewProjectWindow::_WriteAppMenufiles()
 
 		// TODO Camel case ?
 		BString h2FileContent;
-		h2FileContent << headComment
-			<< "#ifndef " << upperFileName << "\n"
-			<< "#define " << upperFileName << "\n\n"
+		h2FileContent << headComment.c_str()
+			<< "#ifndef " << upperFileName.c_str() << "\n"
+			<< "#define " << upperFileName.c_str() << "\n\n"
 			<< "#include <GroupLayout.h>\n"
 			<< "#include <Window.h>\n\n"
 			<< "class " << fileSecondNameStripped << " : public BWindow\n"
@@ -1589,7 +1595,7 @@ NewProjectWindow::_WriteAppMenufiles()
 			<< "private:\n"
 			<< "\t\t\tBGroupLayout*\t\tfRootLayout;\n"
 			<< "};\n\n"
-			<< "#endif //" << upperFileName << "\n";
+			<< "#endif //" << upperFileName.c_str() << "\n";
 
 		ssize_t bytes = file.Write(h2FileContent.String(), h2FileContent.Length());
 		if (bytes != h2FileContent.Length())
@@ -1606,7 +1612,7 @@ NewProjectWindow::_WriteAppMenufiles()
 		return status;
 
 	BString cppFileContent;
-	cppFileContent << headComment
+	cppFileContent << headComment.c_str()
 		<< "#include \"" << hFileName <<  "\"\n\n"
 		<< "#include <String.h>\n\n"
 		<< "#include \"" << hSecondFileName <<  "\"\n\n"
@@ -1657,7 +1663,7 @@ NewProjectWindow::_WriteAppMenufiles()
 		return status;
 
 	BString cpp2FileContent;
-	cpp2FileContent << headComment
+	cpp2FileContent << headComment.c_str()
 		<< "#include \"" << hSecondFileName <<  "\"\n\n"
 		<< "#include <Catalog.h>\n"
 		<< "#include <LayoutBuilder.h>\n"

@@ -6,13 +6,13 @@ resource app_flags B_SINGLE_LAUNCH;
 resource app_version {
 	major  = 0,
 	middle = 7,
-	minor  = 5,
+	minor  = 6,
 
 	variety = B_APPV_DEVELOPMENT,
 	internal = 0,
 
 	short_info = "An IDE for Haiku",
-	long_info = "An open source development environment similar to ..."
+	long_info  = "An open source development environment suited for beginners"
 };
 
 resource file_types message {

@@ -14,20 +14,21 @@
 #include <string>
 
 enum {
-	EDITOR_FIND_COUNT			= 'Efco',
-	EDITOR_FIND_NEXT_MISS		= 'Efnm',
-	EDITOR_FIND_PREV_MISS		= 'Efpm',
-	EDITOR_FIND_SET_MARK		= 'Efsm',
-	EDITOR_REPLACE_ONE			= 'Ereo',
-	EDITOR_REPLACE_ALL_COUNT	= 'Erac',
-	EDITOR_SAVEPOINT_REACHED	= 'Esre',
-	EDITOR_SAVEPOINT_LEFT		= 'Esle',
-	EDITOR_SELECTION_CHANGED	= 'Esch',
+	EDITOR_FIND_COUNT				= 'Efco',
+	EDITOR_FIND_NEXT_MISS			= 'Efnm',
+	EDITOR_FIND_PREV_MISS			= 'Efpm',
+	EDITOR_FIND_SET_MARK			= 'Efsm',
+	EDITOR_POSITION_CHANGED			= 'Epch',
+	EDITOR_PRETEND_POSITION_CHANGED	= 'Eppc',
+	EDITOR_REPLACE_ONE				= 'Ereo',
+	EDITOR_REPLACE_ALL_COUNT		= 'Erac',
+	EDITOR_SAVEPOINT_REACHED		= 'Esre',
+	EDITOR_SAVEPOINT_LEFT			= 'Esle',
 };
 
 /*
- * Not very smart: NONE,SKIP,DONE is Status
- * while the other are Function placeholders
+ * Not very smart: NONE,SKIP,DONE are Status
+ * while the others are Function placeholders
  *
  */
 enum {
@@ -101,15 +102,18 @@ public:
 			bool				IsModified() { return fModified; }
 			bool				IsOverwrite();
 			BString const		IsOverwriteString();
+			bool				IsParsingAvailable() { return fParsingAvailable; }
 			bool				IsReadOnly();
 			bool				IsSearchSelected(const BString& search, int flags);
 			bool				IsTextSelected();
 			status_t			LoadFromFile();
-			BString				Name() const { return fName; }
+			BString const		ModeString();
+			BString				Name() const { return fFileName; }
 			node_ref *const		NodeRef() { return &fNodeRef; }
 			void				NotificationReceived(SCNotification* n);
 			void				OverwriteToggle();
 			void				Paste();
+			void				PretendPositionChanged();
 			void				Redo();
 			status_t			Reload();
 			int					ReplaceAndFindNext(const BString& selection,
@@ -146,7 +150,6 @@ private:
 			void				_CommentLine(int32 position);
 			int32				_EndOfLine();
 			void				_EndOfLineAssign(char *buffer, int32 size);
-			BString	const		_GetFileExtension();
 			void				_HighlightBraces();
 			void				_HighlightFile();
 			bool				_IsBrace(char character);
@@ -157,17 +160,21 @@ private:
 
 			entry_ref			fFileRef;
 			bool				fModified;
-			BString				fName;
+			BString				fFileName;
 			node_ref			fNodeRef;
 			BMessenger			fTarget;
 
 			int32				fBraceHighlighted;
 			bool				fBracingAvailable;
-			BString				fExtension;
+			std::string			fFileType;
 			bool				fFoldingAvailable;
 			bool				fSyntaxAvailable;
+			bool				fParsingAvailable;
 			std::string			fCommenter;
 			int					fLinesLog10;
+
+			int					fCurrentLine;
+			int					fCurrentColumn;
 };
 
 #endif // EDITOR_H

@@ -321,5 +321,15 @@ current Scintilla version: HaikuPorts version
    makefile-engine
 
 --------------------------------------------------------------------------------
+0.7.6) Some reworking
+=====================================
+
++) "Add to project" class template adds ctor,dtor
++) Added buffer mode to status bar
++) Show added extension in AddToProjectWindow
++) Reworked tab management and ui update
++) Reworked IdeamCommon, AddToProjectWindow, NewProjectWindow
+
+--------------------------------------------------------------------------------
 ________________________________________________________________________________
 ________________________________________________________________________________

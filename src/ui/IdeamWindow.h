@@ -23,6 +23,9 @@
 #include <TextControl.h>
 #include <Window.h>
 
+#if defined CLASSES_VIEW
+#include "ClassesView.h"
+#endif
 #include "ConsoleIOThread.h"
 #include "ConsoleIOView.h"
 #include "Editor.h"
@@ -31,7 +34,10 @@
 #include "TabManager.h"
 #include "TPreferences.h"
 
-
+enum {
+	kProjectsOutline = 0,
+	kClassesOutline,
+};
 enum {
 	kTimeColumn = 0,
 	kMessageColumn,
@@ -125,7 +131,8 @@ private:
 			status_t			_UpdateLabel(int32 index, bool isModified);
 			void				_UpdateProjectActivation(bool active);
 			void				_UpdateReplaceMenuItems(const BString& text);
-			void				_UpdateSelectionChange(int32 index);
+			void				_UpdateSavepointChange(int32 index, const BString& caller = "");
+			void				_UpdateTabChange(int32 index, const BString& caller = "");
 			void				_UpdateStatusBarText(int line, int column);
 			void				_UpdateStatusBarTrailing(int32 index);
 private:
@@ -214,10 +221,11 @@ private:
 			BIconButton*		fReplaceAndFindPrevButton;
 			BIconButton*		fReplaceAllButton;
 
+			// Left panels
 			BTabView*	  		fProjectsTabView;
 			BOutlineListView*	fProjectsOutline;
 			BScrollView*		fProjectsScroll;
-
+			// ClassesView*		fClassesView;
 			BPopUpMenu*			fProjectMenu;
 			BMenuItem*			fCloseProjectMenuItem;
 			BMenuItem*			fDeleteProjectMenuItem;
@@ -237,7 +245,10 @@ private:
 			BStringItem*		fSourcesItem;
 			BStringItem*		fFilesItem;
 
+			// Editor group
 			TabManager*			fTabManager;
+		BObjectList<Editor>*	fEditorObjectList;
+			Editor*				fEditor;
 
 			BGroupLayout*		fFindGroup;
 			BGroupLayout*		fReplaceGroup;
@@ -251,22 +262,19 @@ private:
 			BGroupLayout*		fRunConsoleProgramGroup;
 			BTextControl*		fRunConsoleProgramText;
 			BButton*			fRunConsoleProgramButton;
-
-
-		BObjectList<Editor>*	fEditorObjectList;
-			Editor*				fEditor;
+			BString				fConsoleStdinLine;
 
 			BStatusBar*			fStatusBar;
 			BFilePanel*			fOpenPanel;
 			BFilePanel*			fSavePanel;
 			BFilePanel*			fOpenProjectPanel;
 
+			// Bottom panels
 			BTabView*			fOutputTabView;
 			BColumnListView*	fNotificationsListView;
 			ConsoleIOThread*	fConsoleIOThread;
 			ConsoleIOView*		fBuildLogView;
 			ConsoleIOView*		fConsoleIOView;
-			BString				fConsoleStdinLine;
 
 };
 
