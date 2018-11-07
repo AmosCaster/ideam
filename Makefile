@@ -46,9 +46,9 @@ RDEFS := Ideam.rdef
 LIBS = be shared translation localestub $(STDCPPLIBS)
 LIBS += scintilla columnlistview tracker
 
-LIBPATHS = $(shell findpaths -a $(platform) B_FIND_PATH_DEVELOP_LIB_DIRECTORY)
+# LIBPATHS = $(shell findpaths -a $(platform) B_FIND_PATH_DEVELOP_LIB_DIRECTORY)
 # LIBPATHS  = /boot/home/config/non-packaged/lib
-#$(info LIBPATHS="$(LIBPATHS)")
+# $(info LIBPATHS="$(LIBPATHS)")
 
 SYSTEM_INCLUDE_PATHS  = $(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/interface)
 SYSTEM_INCLUDE_PATHS +=	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/shared)
@@ -75,7 +75,7 @@ endif
 
 CFLAGS := -Wall -Werror
 
-CXXFLAGS := -std=c++11
+# CXXFLAGS := -std=c++11
 
 LOCALES := en it
 
@@ -87,6 +87,6 @@ DEVEL_DIRECTORY := \
  include $(DEVEL_DIRECTORY)/etc/makefile-engine
 
 ## CXXFLAGS rule
-$(OBJ_DIR)/%.o : %.cpp
-	$(CXX) -c $< $(INCLUDES) $(CFLAGS) $(CXXFLAGS) -o "$@"
+# $(OBJ_DIR)/%.o : %.cpp
+	# $(CXX) -c $< $(INCLUDES) $(CFLAGS) $(CXXFLAGS) -o "$@"
 
