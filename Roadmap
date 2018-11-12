@@ -322,13 +322,20 @@ current Scintilla version: HaikuPorts version
 
 --------------------------------------------------------------------------------
 0.7.6) Some reworking
-=====================================
+=====================
 
 +) "Add to project" class template adds ctor,dtor
 +) Added buffer mode to status bar
 +) Show added extension in AddToProjectWindow
 +) Reworked tab management and ui update
 +) Reworked IdeamCommon, AddToProjectWindow, NewProjectWindow
+
+--------------------------------------------------------------------------------
+0.7.7) Update tabview modifications
+===================================
+
++) Port last modifications from Webpositive tabview
++) Revert Makefile CXXFLAGS, update to c++14 (needed by scan-build)
 
 --------------------------------------------------------------------------------
 ________________________________________________________________________________

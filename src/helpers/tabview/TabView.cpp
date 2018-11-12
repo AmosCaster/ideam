@@ -81,9 +81,8 @@ TabView::Draw(BRect updateRect)
 			frame.left--;
 		if (!fIsLast)
 			frame.right++;
-
-		frame.bottom++;
 	}
+	frame.bottom++;
 
 	DrawBackground(fContainerView, frame, updateRect, fIsFirst, fIsLast,
 		fIsFront);

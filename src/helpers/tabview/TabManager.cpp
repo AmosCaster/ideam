@@ -66,9 +66,6 @@ public:
 	{
 		BRect bounds(Bounds());
 		rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
-		SetHighColor(tint_color(base, B_DARKEN_2_TINT));
-		StrokeLine(bounds.LeftBottom(), bounds.RightBottom());
-		bounds.bottom--;
 		uint32 flags = be_control_look->Flags(this);
 		uint32 borders = BControlLook::B_TOP_BORDER
 			| BControlLook::B_BOTTOM_BORDER;
@@ -517,6 +514,8 @@ WebTabView::DrawContents(BView* owner, BRect frame, const BRect& updateRect,
 				iconBounds.bottom = (fIcon->Bounds().Height() + 1) / scale - 1;
 			}
 		}
+		// account for borders
+		frame.top -= 2.0f;
 		BPoint iconPos(frame.left + kIconInset - 1,
 			frame.top + floorf((frame.Height() - iconBounds.Height()) / 2));
 		iconBounds.OffsetTo(iconPos);
@@ -571,18 +570,18 @@ void
 WebTabView::MouseMoved(BPoint where, uint32 transit,
 	const BMessage* dragMessage)
 {
-	if (fController->CloseButtonsAvailable()) {
-		BRect closeRect = _CloseRectFrame(Frame());
-		bool overCloseRect = closeRect.Contains(where);
-		if (overCloseRect != fOverCloseRect) {
-			fOverCloseRect = overCloseRect;
-			ContainerView()->Invalidate(closeRect);
-		}
+	BRect closeRect = _CloseRectFrame(Frame());
+	bool overCloseRect = closeRect.Contains(where);
+
+	if (overCloseRect != fOverCloseRect
+		&& fController->CloseButtonsAvailable()) {
+		fOverCloseRect = overCloseRect;
+		ContainerView()->Invalidate(closeRect);
 	}
 
 	// Set the tool tip
 	#if 0
-	fController->SetToolTip(Label());
+	fController->SetToolTip(overCloseRect ? "" : Label());
 	#endif
 	TabView::MouseMoved(where, transit, dragMessage);
 }

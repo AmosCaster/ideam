@@ -75,7 +75,7 @@ endif
 
 CFLAGS := -Wall -Werror
 
-# CXXFLAGS := -std=c++11
+CXXFLAGS := -std=c++14
 
 LOCALES := en it
 
@@ -87,6 +87,6 @@ DEVEL_DIRECTORY := \
  include $(DEVEL_DIRECTORY)/etc/makefile-engine
 
 ## CXXFLAGS rule
-# $(OBJ_DIR)/%.o : %.cpp
-	# $(CXX) -c $< $(INCLUDES) $(CFLAGS) $(CXXFLAGS) -o "$@"
+$(OBJ_DIR)/%.o : %.cpp
+	$(CXX) -c $< $(INCLUDES) $(CFLAGS) $(CXXFLAGS) -o "$@"
 
