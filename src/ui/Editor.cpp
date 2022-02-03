@@ -110,7 +110,7 @@ Editor::ApplySettings()
 	SendMessage(SCI_SETSELBACK, 1, kSelectionBackColor);
 
 	// Font & Size
-	SendMessage(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t) "Noto Mono");
+	SendMessage(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t) "Noto Sans Mono");
 	SendMessage(SCI_STYLESETSIZE, STYLE_DEFAULT, Settings.edit_fontsize);
 	SendMessage(SCI_STYLECLEARALL, UNSET, UNSET);
 
