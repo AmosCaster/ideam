@@ -22,7 +22,7 @@ The executable is created in `app` subdirectory.
 
 If you would like to try a clang++ build:
 * Install `llvm_clang` hpkg from HaikuPorts
-* Accord `CXX` to `clang++` in `Makefile`
+* Set `BUILD_WITH_CLANG` to `1` in `Makefile`
 
 
 License

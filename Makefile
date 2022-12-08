@@ -3,12 +3,20 @@
 arch := $(shell getarch)
 platform := $(shell uname -p)
 
-ifeq ($(arch), x86_gcc2)
-CC   := gcc-x86
-CXX  := g++-x86
-#CXX  := clang++
+## clang build #################################################################
+BUILD_WITH_CLANG := 0
+GCCVERSION  :=  $(shell gcc --version | grep ^gcc | sed 's/^.* //g')
+############################################################################
+
+ifeq ($(BUILD_WITH_CLANG), 0)
+  ifeq ($(arch), x86_gcc2)
+	CC   := gcc-x86
+	CXX  := g++-x86
+   endif
 else
-# CXX  := clang++
+	CC  := clang
+	CXX := clang++
+	LD  := clang++
 endif
 
 NAME := Ideam
@@ -59,16 +67,16 @@ SYSTEM_INCLUDE_PATHS +=	$(shell findpaths -a $(platform) -e B_FIND_PATH_HEADERS_
 ifeq ($(platform), x86)
 ###### x86 clang++ build (mind scan-build too) #################################
 ifneq ($(CXX), g++-x86)
-SYSTEM_INCLUDE_PATHS += /boot/system/lib/x86/clang/5.0.0/include \
-	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/7.3.0/include/c++ \
-	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/7.3.0/include/c++/i586-pc-haiku
+SYSTEM_INCLUDE_PATHS +=  \
+	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/$(GCCVERSION)/include/c++ \
+	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/$(GCCVERSION)/include/c++/i586-pc-haiku
 endif
 else
 ######## x86_64 clang++ build (mind scan-build too) ############################
 ifneq ($(CXX), g++)
 SYSTEM_INCLUDE_PATHS += \
-	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/7.3.0/include/c++ \
-	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/7.3.0/include/c++/x86_64-unknown-haiku
+	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/$(GCCVERSION)/include/c++ \
+	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/$(GCCVERSION)/include/c++/x86_64-unknown-haiku
 endif
 
 endif
