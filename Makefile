@@ -3,20 +3,25 @@
 arch := $(shell getarch)
 platform := $(shell uname -p)
 
-## clang build #################################################################
+## clang build flag ############################################################
 BUILD_WITH_CLANG := 0
-GCCVERSION  :=  $(shell gcc --version | grep ^gcc | sed 's/^.* //g')
-############################################################################
+################################################################################
 
-ifeq ($(BUILD_WITH_CLANG), 0)
-  ifeq ($(arch), x86_gcc2)
+ifeq ($(BUILD_WITH_CLANG), 0)		# gcc build
+  ifeq ($(platform), x86)			# x86
 	CC   := gcc-x86
 	CXX  := g++-x86
    endif
-else
+else								# clang build
 	CC  := clang
 	CXX := clang++
 	LD  := clang++
+	ifeq ($(platform), x86)			# x86
+		INCLUDE_PATH_HACK  :=  $(shell gcc-x86 --version | grep ^gcc | sed 's/^.* //g')
+	endif
+	ifeq ($(platform), x86_64)		# x86_64
+		INCLUDE_PATH_HACK  :=  $(shell gcc --version | grep ^gcc | sed 's/^.* //g')
+	endif 
 endif
 
 NAME := Ideam
@@ -62,24 +67,27 @@ SYSTEM_INCLUDE_PATHS  = $(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY priva
 SYSTEM_INCLUDE_PATHS +=	$(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/shared)
 SYSTEM_INCLUDE_PATHS +=	$(shell findpaths -a $(platform) -e B_FIND_PATH_HEADERS_DIRECTORY scintilla)
 
+
 ################################################################################
 ## clang++ headers hack
+ifneq ($(BUILD_WITH_CLANG), 0)
+
+TOOLS_PATH := $(shell findpaths -e B_FIND_PATH_DEVELOP_DIRECTORY tools)
+
 ifeq ($(platform), x86)
 ###### x86 clang++ build (mind scan-build too) #################################
-ifneq ($(CXX), g++-x86)
 SYSTEM_INCLUDE_PATHS +=  \
-	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/$(GCCVERSION)/include/c++ \
-	/system/develop/tools/x86/lib/gcc/i586-pc-haiku/$(GCCVERSION)/include/c++/i586-pc-haiku
+	$(TOOLS_PATH)/x86/lib/gcc/i586-pc-haiku/$(INCLUDE_PATH_HACK)/include/c++ \
+	$(TOOLS_PATH)/x86/lib/gcc/i586-pc-haiku/$(INCLUDE_PATH_HACK)/include/c++/i586-pc-haiku
 endif
-else
+ifeq ($(platform), x86_64)
 ######## x86_64 clang++ build (mind scan-build too) ############################
-ifneq ($(CXX), g++)
 SYSTEM_INCLUDE_PATHS += \
-	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/$(GCCVERSION)/include/c++ \
-	/system/develop/tools/lib/gcc/x86_64-unknown-haiku/$(GCCVERSION)/include/c++/x86_64-unknown-haiku
+	$(TOOLS_PATH)/lib/gcc/x86_64-unknown-haiku/$(INCLUDE_PATH_HACK)/include/c++ \
+	$(TOOLS_PATH)/lib/gcc/x86_64-unknown-haiku/$(INCLUDE_PATH_HACK)/include/c++/x86_64-unknown-haiku
+endif
 endif
 
-endif
 
 CFLAGS := -Wall -Werror
 
@@ -90,9 +98,8 @@ LOCALES := en it
 DEBUGGER := true
 
 ## Include the Makefile-Engine
-DEVEL_DIRECTORY := \
-	$(shell findpaths -r "makefile_engine" B_FIND_PATH_DEVELOP_DIRECTORY)
- include $(DEVEL_DIRECTORY)/etc/makefile-engine
+ENGINE_DIRECTORY := $(shell findpaths -r "makefile_engine" B_FIND_PATH_DEVELOP_DIRECTORY)
+include $(ENGINE_DIRECTORY)/etc/makefile-engine
 
 ## CXXFLAGS rule
 $(OBJ_DIR)/%.o : %.cpp
