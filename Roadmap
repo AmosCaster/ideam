@@ -347,7 +347,7 @@ current Scintilla version: HaikuPorts version
 0.7.9) Fix clang building
 ===================================
 
-+) Fix building with clang (both x6 versions)
++) Fix building with clang (both x86 versions)
 
 --------------------------------------------------------------------------------
 ________________________________________________________________________________
