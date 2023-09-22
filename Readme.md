@@ -26,7 +26,7 @@ If you would like to try a clang++ build:
 
 Notice
 ----------------
-Currently (2023) Ideam is on hold. You may have a look at [Genio] (https://github.com/Genio-The-Haiku-IDE/Genio).
+Currently (2023) Ideam is on hold. You may have a look at [Genio](https://github.com/Genio-The-Haiku-IDE/Genio).
 
 License
 ----------------
